@@ -26,14 +26,14 @@ import org.flossware.hotspot.MainActivity
 import org.flossware.hotspot.R
 import org.flossware.hotspot.model.HotspotState
 import org.flossware.hotspot.proxy.DnsRelay
-import org.flossware.hotspot.proxy.ProxyServer
+import org.flossware.hotspot.proxy.Socks5Server
 import java.net.InetAddress
 
 class HotspotService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private val wifiDirectManager = WifiDirectManager()
-    private var proxyServer: ProxyServer? = null
+    private var socksServer: Socks5Server? = null
     private var dnsRelay: DnsRelay? = null
     private var mobileNetwork: Network? = null
     private var upstreamDns: InetAddress? = null
@@ -57,7 +57,7 @@ class HotspotService : Service() {
             wifiDirectManager.state.collect { wifiState ->
                 when (wifiState) {
                     is WifiDirectState.GroupCreated -> {
-                        startProxyAndDns(wifiState)
+                        startSocksAndDns(wifiState)
                         updateState(wifiState)
                     }
                     is WifiDirectState.Error -> {
@@ -74,11 +74,11 @@ class HotspotService : Service() {
         scope.launch {
             while (true) {
                 delay(2000)
-                val proxy = proxyServer ?: continue
+                val socks = socksServer ?: continue
                 val current = _state.value
                 if (current.isRunning) {
                     _state.value = current.copy(
-                        bytesTransferred = proxy.bytesTransferred,
+                        bytesTransferred = socks.bytesTransferred,
                     )
                     wifiDirectManager.refreshPeers()
                 }
@@ -88,14 +88,14 @@ class HotspotService : Service() {
         wifiDirectManager.start(this)
     }
 
-    private fun startProxyAndDns(wifiState: WifiDirectState.GroupCreated) {
-        if (proxyServer != null) return
+    private fun startSocksAndDns(wifiState: WifiDirectState.GroupCreated) {
+        if (socksServer != null) return
 
         val bindAddr = InetAddress.getByName(wifiState.groupOwnerAddress)
 
-        proxyServer = ProxyServer(
+        socksServer = Socks5Server(
             bindAddress = bindAddr,
-            port = HotspotState.DEFAULT_PROXY_PORT,
+            port = HotspotState.DEFAULT_SOCKS_PORT,
             socketFactoryProvider = { mobileNetwork?.socketFactory ?: SocketFactory.getDefault() },
         ).also { it.start() }
 
@@ -112,9 +112,9 @@ class HotspotService : Service() {
             isRunning = true,
             networkName = wifiState.networkName,
             passphrase = wifiState.passphrase,
-            proxyHost = wifiState.groupOwnerAddress,
+            socksHost = wifiState.groupOwnerAddress,
             connectedDevices = wifiState.connectedDevices,
-            bytesTransferred = proxyServer?.bytesTransferred ?: 0,
+            bytesTransferred = socksServer?.bytesTransferred ?: 0,
         )
         updateNotification(wifiState.connectedDevices.size)
     }
@@ -122,8 +122,8 @@ class HotspotService : Service() {
     private fun stopHotspot() {
         dnsRelay?.stop()
         dnsRelay = null
-        proxyServer?.stop()
-        proxyServer = null
+        socksServer?.stop()
+        socksServer = null
         wifiDirectManager.stop()
         unregisterMobileNetwork()
         _state.value = HotspotState()

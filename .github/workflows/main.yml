@@ -44,18 +44,32 @@ jobs:
       - name: Run unit tests
         run: ./gradlew test
 
-      - name: Upload debug APK
+      - name: Upload host debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: host-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      - name: Upload release APK
+      - name: Upload host release APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-unsigned
+          name: host-release-unsigned
           path: app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 90
+
+      - name: Upload client debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-debug
+          path: client/build/outputs/apk/debug/client-debug.apk
+          retention-days: 30
+
+      - name: Upload client release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-release-unsigned
+          path: client/build/outputs/apk/release/client-release-unsigned.apk
           retention-days: 90
 
       - name: Configure git for version bump

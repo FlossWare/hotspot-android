@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "hotspot-android"
 include(":app")
+include(":client")

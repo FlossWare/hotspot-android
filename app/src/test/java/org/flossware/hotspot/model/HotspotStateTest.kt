@@ -14,8 +14,8 @@ class HotspotStateTest {
         assertFalse(state.isRunning)
         assertEquals("", state.networkName)
         assertEquals("", state.passphrase)
-        assertEquals("192.168.49.1", state.proxyHost)
-        assertEquals(8080, state.proxyPort)
+        assertEquals("192.168.49.1", state.socksHost)
+        assertEquals(1080, state.socksPort)
         assertEquals(5353, state.dnsPort)
         assertTrue(state.connectedDevices.isEmpty())
         assertNull(state.error)
@@ -23,15 +23,15 @@ class HotspotStateTest {
     }
 
     @Test
-    fun `proxyAddress formats correctly`() {
+    fun `socksAddress formats correctly`() {
         val state = HotspotState()
-        assertEquals("192.168.49.1:8080", state.proxyAddress)
+        assertEquals("192.168.49.1:1080", state.socksAddress)
     }
 
     @Test
-    fun `proxyAddress with custom host and port`() {
-        val state = HotspotState(proxyHost = "10.0.0.1", proxyPort = 9090)
-        assertEquals("10.0.0.1:9090", state.proxyAddress)
+    fun `socksAddress with custom host and port`() {
+        val state = HotspotState(socksHost = "10.0.0.1", socksPort = 9090)
+        assertEquals("10.0.0.1:9090", state.socksAddress)
     }
 
     @Test
@@ -42,7 +42,7 @@ class HotspotStateTest {
 
     @Test
     fun `dnsAddress with custom host and port`() {
-        val state = HotspotState(proxyHost = "10.0.0.1", dnsPort = 5354)
+        val state = HotspotState(socksHost = "10.0.0.1", dnsPort = 5354)
         assertEquals("10.0.0.1:5354", state.dnsAddress)
     }
 
@@ -76,7 +76,7 @@ class HotspotStateTest {
     @Test
     fun `companion constants are correct`() {
         assertEquals("192.168.49.1", HotspotState.DEFAULT_HOST)
-        assertEquals(8080, HotspotState.DEFAULT_PROXY_PORT)
+        assertEquals(1080, HotspotState.DEFAULT_SOCKS_PORT)
         assertEquals(5353, HotspotState.DEFAULT_DNS_PORT)
     }
 

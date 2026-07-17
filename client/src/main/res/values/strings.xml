@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot Client</string>
+
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+
+    <string name="socks_server_label">SOCKS5 Server</string>
+    <string name="socks_server_hint">192.168.49.1:1080</string>
+
+    <string name="notification_channel_name">VPN Tunnel</string>
+    <string name="notification_title">FlossWare Tunnel</string>
+    <string name="notification_text">Routing traffic through hotspot</string>
+    <string name="notification_action_disconnect">Disconnect</string>
+
+    <string name="vpn_consent_required">VPN permission is required to route all traffic through the hotspot</string>
+
+    <string name="error_vpn_denied">VPN permission was denied</string>
+    <string name="error_connection_failed">Failed to connect to SOCKS5 server</string>
+</resources>

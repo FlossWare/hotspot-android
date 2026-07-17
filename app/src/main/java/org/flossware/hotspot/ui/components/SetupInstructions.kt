@@ -61,11 +61,15 @@ fun SetupInstructions(
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                     Text(
-                        stringResource(R.string.step_3_proxy, state.proxyAddress),
+                        stringResource(R.string.step_3_client),
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                     Text(
-                        stringResource(R.string.step_4_dns, state.dnsAddress),
+                        stringResource(R.string.step_4_connect),
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    Text(
+                        stringResource(R.string.step_5_manual, state.socksAddress),
                         modifier = Modifier.padding(bottom = 16.dp),
                     )
                 }

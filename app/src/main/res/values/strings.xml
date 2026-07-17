@@ -9,7 +9,7 @@
 
     <string name="network_name">Network Name</string>
     <string name="password">Password</string>
-    <string name="proxy_address">Proxy Address</string>
+    <string name="socks_address">SOCKS5 Address</string>
     <string name="dns_address">DNS Address</string>
     <string name="data_transferred">Data Transferred</string>
 
@@ -21,8 +21,9 @@
     <string name="setup_instructions">Setup Instructions</string>
     <string name="step_1_connect">1. Connect to Wi-Fi network: %1$s</string>
     <string name="step_2_password">2. Enter password: %1$s</string>
-    <string name="step_3_proxy">3. In Wi-Fi settings, set HTTP proxy to %1$s</string>
-    <string name="step_4_dns">4. (Optional) Set DNS to %1$s</string>
+    <string name="step_3_client">3. Install FlossWare Hotspot Client on the connecting device</string>
+    <string name="step_4_connect">4. Open the client app and tap Connect</string>
+    <string name="step_5_manual">5. (Manual) Or configure SOCKS5 proxy to %1$s in individual apps</string>
 
     <string name="copied_to_clipboard">Copied to clipboard</string>
 
@@ -40,5 +41,5 @@
     <string name="error_no_wifi_direct">Wi-Fi Direct is not supported on this device</string>
     <string name="error_no_mobile_data">Mobile data is not available</string>
     <string name="error_group_creation_failed">Failed to create hotspot network</string>
-    <string name="error_proxy_failed">Failed to start proxy server</string>
+    <string name="error_socks_failed">Failed to start SOCKS5 server</string>
 </resources>

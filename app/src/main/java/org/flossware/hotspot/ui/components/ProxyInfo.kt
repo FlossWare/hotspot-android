@@ -60,8 +60,8 @@ fun ProxyInfo(
                 },
             )
             InfoRow(
-                label = stringResource(R.string.proxy_address),
-                value = state.proxyAddress,
+                label = stringResource(R.string.socks_address),
+                value = state.socksAddress,
                 context = context,
             )
             InfoRow(

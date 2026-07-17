@@ -98,15 +98,21 @@ jobs:
           mkdir -p release-apks
 
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "release-apks/flossware-hotspot-${VERSION}-debug.apk"
+            "release-apks/flossware-hotspot-host-${VERSION}-debug.apk"
 
           if [ -f "${{ steps.sign.outputs.signedReleaseFile }}" ]; then
             cp "${{ steps.sign.outputs.signedReleaseFile }}" \
-              "release-apks/flossware-hotspot-${VERSION}-release.apk"
+              "release-apks/flossware-hotspot-host-${VERSION}-release.apk"
           else
             cp app/build/outputs/apk/release/app-release-unsigned.apk \
-              "release-apks/flossware-hotspot-${VERSION}-release-unsigned.apk"
+              "release-apks/flossware-hotspot-host-${VERSION}-release-unsigned.apk"
           fi
+
+          cp client/build/outputs/apk/debug/client-debug.apk \
+            "release-apks/flossware-hotspot-client-${VERSION}-debug.apk"
+
+          cp client/build/outputs/apk/release/client-release-unsigned.apk \
+            "release-apks/flossware-hotspot-client-${VERSION}-release-unsigned.apk"
 
       - name: Upload release APKs
         uses: actions/upload-artifact@v4
@@ -149,12 +155,20 @@ jobs:
 
             Free Android hotspot app — share mobile data without carrier tethering plans.
 
-            ### Installation
+            ### Two Apps
 
-            1. Download the APK below
-            2. Enable "Install from unknown sources" in Android settings
-            3. Install the APK
-            4. Open FlossWare Hotspot and tap Start
+            | App | Purpose |
+            |-----|---------|
+            | **Host** (`flossware-hotspot-host-*.apk`) | Install on the phone sharing data. Creates Wi-Fi Direct network + SOCKS5 server. |
+            | **Client** (`flossware-hotspot-client-*.apk`) | Install on connecting devices. VPN tunnel routes all traffic through the host. |
+
+            ### Quick Start
+
+            1. Install the **Host** APK on the phone with mobile data
+            2. Open FlossWare Hotspot, tap Start
+            3. Install the **Client** APK on the device that needs internet
+            4. Connect to the displayed Wi-Fi network
+            5. Open FlossWare Hotspot Client, tap Connect
 
             ### Platform
 
