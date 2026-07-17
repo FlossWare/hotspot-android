@@ -1,0 +1,190 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.3)'
+        required: true
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION} (tag: ${TAG})"
+
+      - name: Verify version in build.gradle.kts
+        run: |
+          GRADLE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "build.gradle.kts versionName: ${GRADLE_VERSION}"
+          echo "Tag version: ${{ steps.version.outputs.version }}"
+          if [ "${GRADLE_VERSION}" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::warning::Version mismatch: build.gradle.kts=${GRADLE_VERSION}, tag=${{ steps.version.outputs.version }}"
+          fi
+
+  build-android:
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Run unit tests
+        run: ./gradlew test
+
+      - name: Sign release APK
+        if: env.HAS_SIGNING_KEY == 'true'
+        uses: r0adkll/sign-android-release@v1
+        id: sign
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        env:
+          HAS_SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY != '' }}
+          BUILD_TOOLS_VERSION: "35.0.0"
+
+      - name: Rename APKs with version
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          mkdir -p release-apks
+
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "release-apks/flossware-hotspot-${VERSION}-debug.apk"
+
+          if [ -f "${{ steps.sign.outputs.signedReleaseFile }}" ]; then
+            cp "${{ steps.sign.outputs.signedReleaseFile }}" \
+              "release-apks/flossware-hotspot-${VERSION}-release.apk"
+          else
+            cp app/build/outputs/apk/release/app-release-unsigned.apk \
+              "release-apks/flossware-hotspot-${VERSION}-release-unsigned.apk"
+          fi
+
+      - name: Upload release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: release-apks/
+          retention-days: 90
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-android]
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APK artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apks
+          path: release-files/
+
+      - name: List release files
+        run: ls -la release-files/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: "FlossWare Hotspot ${{ needs.prepare.outputs.tag }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: release-files/*
+          body: |
+            ## FlossWare Hotspot ${{ needs.prepare.outputs.tag }}
+
+            Free Android hotspot app — share mobile data without carrier tethering plans.
+
+            ### Installation
+
+            1. Download the APK below
+            2. Enable "Install from unknown sources" in Android settings
+            3. Install the APK
+            4. Open FlossWare Hotspot and tap Start
+
+            ### Platform
+
+            | Component | Details |
+            |-----------|---------|
+            | Min Android | 8.0 (API 26) |
+            | Architecture | Universal |
+            | Root Required | No |
+
+            ### What's New
+
+            See commit history for changes since last release.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-android, create-release]
+    if: always()
+
+    steps:
+      - name: Release summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Prepare | ${{ needs.prepare.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Android | ${{ needs.build-android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Create Release | ${{ needs.create-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.prepare.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
