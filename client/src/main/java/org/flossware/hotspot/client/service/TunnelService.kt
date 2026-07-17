@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.flossware.hotspot.client.ClientApp
 import org.flossware.hotspot.client.MainActivity
@@ -30,7 +31,7 @@ class TunnelService : VpnService() {
     private var tunInterface: ParcelFileDescriptor? = null
     private var socksTunnel: SocksTunnel? = null
     private var bluetoothTunnel: BluetoothTunnel? = null
-    private val scope = CoroutineScope(Dispatchers.Main + Job())
+    private var scope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -138,6 +139,8 @@ class TunnelService : VpnService() {
     }
 
     private fun disconnect() {
+        scope.cancel()
+        scope = CoroutineScope(Dispatchers.Main + Job())
         socksTunnel?.stop()
         socksTunnel = null
         bluetoothTunnel?.stop()

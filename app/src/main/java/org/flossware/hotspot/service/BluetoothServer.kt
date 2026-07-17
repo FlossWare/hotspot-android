@@ -40,7 +40,10 @@ class BluetoothServer {
     private val running = AtomicBoolean(false)
     private var serverSocket: BluetoothServerSocket? = null
     private val activeConnections = CopyOnWriteArrayList<BluetoothSocket>()
-    private val executor = ThreadPoolExecutor(2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue())
+    private val executor = ThreadPoolExecutor(
+        2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        ThreadPoolExecutor.CallerRunsPolicy(),
+    )
 
     @SuppressLint("MissingPermission")
     fun start(context: Context, socksPort: Int = 1080) {
@@ -119,11 +122,9 @@ class BluetoothServer {
 
             val btToTcp = Thread {
                 relay(btSocket.inputStream, tcpSocket.getOutputStream())
-                tcpSocket.closeSilently()
             }
             val tcpToBt = Thread {
                 relay(tcpSocket.getInputStream(), btSocket.outputStream)
-                btSocket.closeSilently()
             }
             btToTcp.start()
             tcpToBt.start()

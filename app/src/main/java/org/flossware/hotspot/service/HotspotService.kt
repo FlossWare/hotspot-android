@@ -39,8 +39,8 @@ class HotspotService : Service() {
     private var dnsRelay: DnsRelay? = null
     private var bluetoothServer: BluetoothServer? = null
     private val httpCache = HttpCache()
-    private var mobileNetwork: Network? = null
-    private var upstreamDns: InetAddress? = null
+    @Volatile private var mobileNetwork: Network? = null
+    @Volatile private var upstreamDns: InetAddress? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -56,6 +56,7 @@ class HotspotService : Service() {
     private fun startHotspot() {
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
+        unregisterMobileNetwork()
         startForeground(NOTIFICATION_ID, buildNotification(0))
         registerMobileNetwork()
 

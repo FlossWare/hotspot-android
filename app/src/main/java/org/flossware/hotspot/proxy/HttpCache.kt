@@ -53,7 +53,6 @@ class HttpCache(
         clientOutput.write(entry.statusLine.toByteArray())
         clientOutput.write(CRLF)
         clientOutput.write(entry.responseHeaders.toByteArray())
-        clientOutput.write(CRLF)
         clientOutput.write(entry.body)
         clientOutput.flush()
         return true
@@ -123,6 +122,7 @@ class HttpCache(
         val bodyBuffer = ByteArrayOutputStream()
         val buf = ByteArray(8192)
         var totalRead = 0
+        var ioError = false
         try {
             while (true) {
                 val n = responseStream.read(buf)
@@ -137,10 +137,11 @@ class HttpCache(
                 }
             }
         } catch (_: IOException) {
+            ioError = true
         }
 
         val body = bodyBuffer.toByteArray()
-        if (body.isNotEmpty() && body.size <= maxEntryBytes) {
+        if (!ioError && body.isNotEmpty() && body.size <= maxEntryBytes) {
             evictIfNeeded(body.size.toLong())
             val newEntry = CacheEntry(
                 statusLine = statusLine,
@@ -165,8 +166,9 @@ class HttpCache(
     private fun evictIfNeeded(neededBytes: Long) {
         while (currentSize.get() + neededBytes > maxTotalBytes && entries.isNotEmpty()) {
             val oldest = entries.entries.minByOrNull { it.value.expiresAt } ?: break
-            entries.remove(oldest.key)
-            currentSize.addAndGet(-oldest.value.body.size.toLong())
+            if (entries.remove(oldest.key, oldest.value)) {
+                currentSize.addAndGet(-oldest.value.body.size.toLong())
+            }
         }
     }
 
@@ -199,11 +201,13 @@ class HttpCache(
         const val DEFAULT_MAX_TOTAL_BYTES = 50L * 1024 * 1024 // 50 MB
         const val DEFAULT_MAX_ENTRY_BYTES = 5 * 1024 * 1024 // 5 MB
         const val DEFAULT_MAX_AGE = 3600
+        const val MAX_LINE_LENGTH = 8192
         private val CRLF = "\r\n".toByteArray()
 
-        internal fun readLine(input: InputStream): String? {
+        internal fun readLine(input: InputStream, maxLength: Int = MAX_LINE_LENGTH): String? {
             val sb = StringBuilder()
             while (true) {
+                if (sb.length >= maxLength) throw IOException("HTTP line exceeds max length")
                 val b = input.read()
                 if (b == -1) return if (sb.isEmpty()) null else sb.toString()
                 if (b == '\r'.code) {

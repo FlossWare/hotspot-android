@@ -26,7 +26,7 @@ class Socks5Server(
     private val dnsResolver: (String) -> InetAddress = { InetAddress.getByName(it) },
     private val httpCache: HttpCache? = null,
 ) {
-    private var serverSocket: ServerSocket? = null
+    @Volatile private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(
         4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue(), ThreadPoolExecutor.CallerRunsPolicy(),
     )
@@ -37,8 +37,9 @@ class Socks5Server(
     fun start() {
         if (running.getAndSet(true)) return
         executor.execute {
+            var ss: ServerSocket? = null
             try {
-                val ss = ServerSocket(port, 50, bindAddress)
+                ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
                 log.info("SOCKS5 listening on $bindAddress:$port")
@@ -52,6 +53,8 @@ class Socks5Server(
                 }
             } catch (e: IOException) {
                 log.log(Level.SEVERE, "SOCKS5 server error", e)
+            } finally {
+                ss?.close()
             }
         }
     }
@@ -137,6 +140,7 @@ class Socks5Server(
             }
             ADDR_DOMAIN.toInt() and 0xFF -> {
                 val len = input.read()
+                if (len <= 0) throw IOException("Invalid domain length")
                 val domain = ByteArray(len)
                 readFully(input, domain)
                 String(domain, Charsets.US_ASCII)
@@ -151,6 +155,7 @@ class Socks5Server(
 
         val portHigh = input.read()
         val portLow = input.read()
+        if (portHigh == -1 || portLow == -1) throw IOException("Unexpected end of stream reading port")
         val port = (portHigh shl 8) or portLow
 
         return host to port
@@ -196,11 +201,9 @@ class Socks5Server(
 
             val clientToServer = Thread {
                 relay(input, upstream.getOutputStream())
-                upstream.closeSilently()
             }
             val serverToClient = Thread {
                 relay(upstream.getInputStream(), client.getOutputStream())
-                client.closeSilently()
             }
             clientToServer.start()
             serverToClient.start()
@@ -208,6 +211,7 @@ class Socks5Server(
             serverToClient.join()
         } finally {
             upstream.closeSilently()
+            client.closeSilently()
         }
     }
 

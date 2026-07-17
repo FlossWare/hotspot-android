@@ -35,7 +35,10 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
     private val running = AtomicBoolean(false)
     private var localServer: ServerSocket? = null
     private val activeConnections = CopyOnWriteArrayList<Socket>()
-    private val executor = ThreadPoolExecutor(2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue())
+    private val executor = ThreadPoolExecutor(
+        2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        ThreadPoolExecutor.CallerRunsPolicy(),
+    )
 
     @SuppressLint("MissingPermission")
     fun start() {
@@ -94,11 +97,9 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
 
             val localToBt = Thread {
                 relay(localSocket.getInputStream(), btSocket.outputStream)
-                btSocket.closeSilently()
             }
             val btToLocal = Thread {
                 relay(btSocket.inputStream, localSocket.getOutputStream())
-                localSocket.closeSilently()
             }
             localToBt.start()
             btToLocal.start()

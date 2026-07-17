@@ -6,6 +6,9 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Level
@@ -18,11 +21,15 @@ class DnsRelay(
     private val upstreamPort: Int = 53,
     private val socketBinder: (DatagramSocket) -> Unit = {},
 ) {
-    private var socket: DatagramSocket? = null
+    @Volatile private var socket: DatagramSocket? = null
     private val running = AtomicBoolean(false)
     private var thread: Thread? = null
 
     private val cache = ConcurrentHashMap<ByteArrayKey, CachedDnsResponse>()
+    private val queryExecutor = ThreadPoolExecutor(
+        2, 8, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        ThreadPoolExecutor.CallerRunsPolicy(),
+    )
     private val _cacheHits = AtomicLong(0)
     private val _cacheMisses = AtomicLong(0)
 
@@ -33,8 +40,9 @@ class DnsRelay(
     fun start() {
         if (running.getAndSet(true)) return
         thread = Thread {
+            var sock: DatagramSocket? = null
             try {
-                val sock = DatagramSocket(listenPort, bindAddress)
+                sock = DatagramSocket(listenPort, bindAddress)
                 sock.soTimeout = 1000
                 socket = sock
                 log.info("DNS relay listening on $bindAddress:$listenPort")
@@ -52,14 +60,16 @@ class DnsRelay(
                     val clientPort = packet.port
                     val queryData = packet.data.copyOf(packet.length)
 
-                    Thread {
+                    queryExecutor.execute {
                         forwardQuery(sock, queryData, clientAddr, clientPort)
-                    }.start()
+                    }
                 }
             } catch (e: IOException) {
                 if (running.get()) {
                     log.log(Level.SEVERE, "DNS relay error", e)
                 }
+            } finally {
+                sock?.close()
             }
         }.apply {
             name = "dns-relay"
@@ -74,6 +84,7 @@ class DnsRelay(
         socket = null
         thread?.interrupt()
         thread = null
+        queryExecutor.shutdownNow()
         cache.clear()
     }
 
@@ -219,7 +230,6 @@ class DnsRelay(
 
     private fun evictIfNeeded() {
         if (cache.size >= MAX_CACHE_SIZE) {
-            val now = System.currentTimeMillis()
             cache.entries.removeAll { it.value.isExpired() }
             if (cache.size >= MAX_CACHE_SIZE) {
                 val oldest = cache.entries.minByOrNull { it.value.expiresAt }
