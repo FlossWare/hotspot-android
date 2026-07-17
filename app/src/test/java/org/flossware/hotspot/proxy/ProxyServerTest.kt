@@ -262,6 +262,10 @@ class ProxyServerTest {
         val reader = BufferedReader(InputStreamReader(client.getInputStream()))
         val statusLine = reader.readLine()
         assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+        while (true) {
+            val line = reader.readLine() ?: break
+            if (line.isEmpty()) break
+        }
 
         Thread.sleep(100)
         client.getOutputStream().write("GET / HTTP/1.1\r\nHost: test\r\n\r\n".toByteArray())
