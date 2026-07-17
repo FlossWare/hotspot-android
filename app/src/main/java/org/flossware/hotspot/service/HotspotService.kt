@@ -12,6 +12,7 @@ import android.net.NetworkRequest
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import javax.net.SocketFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -95,14 +96,14 @@ class HotspotService : Service() {
         proxyServer = ProxyServer(
             bindAddress = bindAddr,
             port = HotspotState.DEFAULT_PROXY_PORT,
-            networkProvider = { mobileNetwork },
+            socketFactoryProvider = { mobileNetwork?.socketFactory ?: SocketFactory.getDefault() },
         ).also { it.start() }
 
         dnsRelay = DnsRelay(
             bindAddress = bindAddr,
             listenPort = HotspotState.DEFAULT_DNS_PORT,
             upstreamDnsProvider = { upstreamDns ?: InetAddress.getByName("8.8.8.8") },
-            networkProvider = { mobileNetwork },
+            socketBinder = { sock -> mobileNetwork?.bindSocket(sock) },
         ).also { it.start() }
     }
 

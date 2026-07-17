@@ -1,48 +1,63 @@
 # FlossWare Hotspot
 
-Free, open-source Android app that shares your phone's mobile data via Wi-Fi — no carrier hotspot plan required, no root needed.
+Free Android app that shares your phone's mobile data via Wi-Fi — bypasses carrier hotspot restrictions without root.
 
-## Why?
+[![Android CI](https://github.com/FlossWare/hotspot-android/actions/workflows/android.yml/badge.svg)](https://github.com/FlossWare/hotspot-android/actions/workflows/android.yml)
 
-US carriers like Verizon, AT&T, and T-Mobile block the built-in hotspot unless you pay extra. This app bypasses that restriction using Wi-Fi Direct + an HTTP proxy, so the carrier sees normal app traffic instead of tethering.
+## The Problem
+
+Carriers like Verizon, AT&T, and T-Mobile block the built-in Android hotspot unless you pay for a tethering add-on. You already pay for the data — this app lets you use it.
 
 ## How It Works
 
-1. **Wi-Fi Direct Group** — Your phone creates a peer-to-peer Wi-Fi network (not carrier tethering). Other devices connect to it like a regular Wi-Fi network.
+```
+┌──────────────┐    Wi-Fi Direct    ┌──────────────┐
+│   Phone B    │◄──────────────────►│   Phone A    │
+│  (client)    │   P2P connection   │  (hotspot)   │
+│              │                    │              │
+│ proxy config ├───HTTP/HTTPS──────►│ ProxyServer  │──► Mobile Data ──► Internet
+│ 192.168.49.1 │    :8080           │ :8080        │
+│              │                    │              │
+│ DNS config   ├───UDP─────────────►│ DnsRelay     │──► Upstream DNS
+│ 192.168.49.1 │    :5353           │ :5353        │
+└──────────────┘                    └──────────────┘
+```
 
-2. **HTTP Proxy** — An HTTP/HTTPS proxy runs on the phone. Connected devices route their traffic through it. Since the proxy makes requests from the phone itself, the carrier sees regular app traffic — TTL-based tethering detection is inherently bypassed.
+**Wi-Fi Direct** creates a peer-to-peer Wi-Fi network — not carrier tethering. The phone becomes a Group Owner that other devices connect to like a regular Wi-Fi access point.
 
-3. **DNS Relay** — A lightweight DNS forwarder ensures connected devices can resolve hostnames.
+**HTTP Proxy** runs on the phone and forwards requests through the mobile data connection. Since the proxy process runs on the phone itself, the carrier sees normal app traffic. TTL-based tethering detection is inherently bypassed because the proxy originates its own TCP connections.
+
+**DNS Relay** forwards hostname lookups through mobile data so connected devices can resolve addresses.
 
 ## Requirements
 
-- Android 8.0 (API 26) or higher
-- Mobile data connection
+- Android 8.0+ (API 26)
+- Active mobile data connection
 - No root required
 
-## Setup
+## Quick Start
 
-### On the host phone (sharing data):
-1. Install and open FlossWare Hotspot
-2. Grant the requested permissions (location or nearby devices)
+### Host phone (sharing data)
+
+1. Install FlossWare Hotspot
+2. Grant permissions (location for Wi-Fi Direct)
 3. Tap **Start Hotspot**
-4. Note the network name, password, and proxy address
 
-### On connecting devices:
-1. Connect to the displayed Wi-Fi network (or scan the QR code)
-2. In your Wi-Fi settings, set the HTTP proxy to the displayed address (e.g., `192.168.49.1:8080`)
-3. Optionally set DNS to `192.168.49.1:5353`
-4. Browse the web normally
+### Client device (connecting)
 
-### Setting the proxy on different devices:
+1. Connect to the displayed Wi-Fi network (or scan QR code)
+2. Set HTTP proxy to `192.168.49.1:8080` in Wi-Fi settings
+3. Browse normally
 
-**Android:** Settings → Wi-Fi → long-press the network → Modify → Advanced → Proxy → Manual → enter host and port
+### Proxy setup by platform
 
-**iOS:** Settings → Wi-Fi → tap the (i) icon → Configure Proxy → Manual → enter host and port
-
-**Windows:** Settings → Network → Proxy → Manual → enter host and port
-
-**macOS:** System Settings → Network → Wi-Fi → Details → Proxies → Web Proxy (HTTP) → enter host and port
+| Platform | Path |
+|----------|------|
+| Android | Settings → Wi-Fi → long-press network → Modify → Advanced → Proxy → Manual |
+| iOS | Settings → Wi-Fi → (i) → Configure Proxy → Manual |
+| Windows | Settings → Network → Proxy → Manual |
+| macOS | System Settings → Network → Wi-Fi → Details → Proxies → Web Proxy (HTTP) |
+| Linux | Settings → Network → Wi-Fi → gear icon → IPv4 → Manual proxy |
 
 ## Building
 
@@ -52,28 +67,62 @@ cd hotspot-android
 ./gradlew assembleDebug
 ```
 
-The APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
+APK output: `app/build/outputs/apk/debug/app-debug.apk`
 
-## Technical Details
+Release build: `./gradlew assembleRelease`
 
-- **No root** — Uses standard Android APIs (Wi-Fi Direct, `Network.socketFactory`)
-- **No carrier detection** — Proxy traffic has the phone's native TTL; no DUN APN used
-- **Minimal dependencies** — Only ZXing (QR codes) beyond standard AndroidX/Compose
-- **Foreground service** — Keeps the hotspot alive with a persistent notification
+Run tests: `./gradlew test`
+
+## CI/CD
+
+| Workflow | Trigger | Action |
+|----------|---------|--------|
+| `android.yml` | Push/PR | Build, test, lint, upload APK artifacts |
+| `main.yml` | Push to main | Build + auto-increment version + tag |
+| `release.yml` | Tag `v*` | Build release APK, create GitHub Release |
+| `dependency-scan.yml` | Weekly | Gradle dependency graph submission |
+
+Versioning follows X.Y format. Every push to `main` auto-increments the minor version and creates a tag.
+
+## Architecture
+
+```
+org.flossware.hotspot/
+├── proxy/
+│   ├── ProxyServer.kt      HTTP/HTTPS proxy (CONNECT tunneling + forward proxy)
+│   └── DnsRelay.kt         UDP DNS forwarder
+├── service/
+│   ├── HotspotService.kt   Foreground service orchestrating all components
+│   └── WifiDirectManager.kt  Wi-Fi Direct P2P group management
+├── model/
+│   ├── HotspotState.kt     UI state
+│   └── ConnectedDevice.kt  Connected peer data
+├── viewmodel/
+│   └── HotspotViewModel.kt
+├── ui/
+│   ├── HotspotScreen.kt    Single-screen Compose UI
+│   └── components/          Toggle, ProxyInfo, QrCode, DeviceList, SetupInstructions
+├── MainActivity.kt
+└── HotspotApp.kt
+```
+
+**Key design decisions:**
+- Thread-per-connection proxy (bounded pool, 4-32 threads) — simple and sufficient for phone-to-phone use
+- All outbound sockets bound to cellular `Network` to ensure traffic routes through mobile data
+- No Android framework dependencies in proxy/DNS code — fully unit-testable on JVM
+- Single external dependency: ZXing for QR code generation
 
 ## Permissions
 
-| Permission | Why |
-|---|---|
+| Permission | Reason |
+|------------|--------|
 | `ACCESS_FINE_LOCATION` | Required by Android for Wi-Fi Direct (API 26-32) |
-| `NEARBY_WIFI_DEVICES` | Required for Wi-Fi Direct (API 33+) |
-| `INTERNET` | Proxy forwards traffic to the internet |
-| `ACCESS_WIFI_STATE` / `CHANGE_WIFI_STATE` | Create and manage Wi-Fi Direct group |
-| `FOREGROUND_SERVICE` | Keep hotspot running in background |
-| `POST_NOTIFICATIONS` | Show persistent notification (API 33+) |
+| `NEARBY_WIFI_DEVICES` | Wi-Fi Direct on API 33+ |
+| `INTERNET` | Forward proxy traffic |
+| `FOREGROUND_SERVICE` | Keep hotspot active in background |
 
-Your location is never tracked, stored, or transmitted.
+Location is never tracked, stored, or transmitted.
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE)
+[Apache License 2.0](LICENSE)

@@ -1,7 +1,5 @@
 package org.flossware.hotspot.proxy
 
-import android.net.Network
-import android.util.Log
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -17,11 +15,14 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.net.SocketFactory
 
 class ProxyServer(
     private val bindAddress: InetAddress,
     private val port: Int = 8080,
-    private val networkProvider: () -> Network?,
+    private val socketFactoryProvider: () -> SocketFactory?,
 ) {
     private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue())
@@ -36,7 +37,7 @@ class ProxyServer(
                 val ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                Log.i(TAG, "Proxy listening on $bindAddress:$port")
+                log.info("Proxy listening on $bindAddress:$port")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
@@ -46,7 +47,7 @@ class ProxyServer(
                     }
                 }
             } catch (e: IOException) {
-                Log.e(TAG, "Proxy server error", e)
+                log.log(Level.SEVERE, "Proxy server error", e)
             }
         }
     }
@@ -58,7 +59,9 @@ class ProxyServer(
         executor.shutdownNow()
     }
 
-    private fun handleClient(client: Socket) {
+    val isRunning: Boolean get() = running.get()
+
+    internal fun handleClient(client: Socket) {
         try {
             client.soTimeout = 60_000
             val reader = BufferedReader(InputStreamReader(client.getInputStream()))
@@ -79,22 +82,22 @@ class ProxyServer(
                 else -> handleHttp(client, method, target, headers, reader)
             }
         } catch (e: IOException) {
-            Log.d(TAG, "Client handler error: ${e.message}")
+            log.fine("Client handler error: ${e.message}")
         } finally {
             client.closeSilently()
         }
     }
 
-    private fun handleConnect(client: Socket, target: String) {
+    internal fun handleConnect(client: Socket, target: String) {
         val (host, port) = parseHostPort(target, 443)
-        val network = networkProvider() ?: run {
+        val factory = socketFactoryProvider() ?: run {
             sendError(client, 502, "No mobile network")
             return
         }
 
         val upstream: Socket
         try {
-            upstream = network.socketFactory.createSocket(host, port)
+            upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
             sendError(client, 502, "Bad Gateway")
@@ -123,14 +126,14 @@ class ProxyServer(
         }
     }
 
-    private fun handleHttp(
+    internal fun handleHttp(
         client: Socket,
         method: String,
         urlString: String,
         headers: Map<String, String>,
         reader: BufferedReader,
     ) {
-        val network = networkProvider() ?: run {
+        val factory = socketFactoryProvider() ?: run {
             sendError(client, 502, "No mobile network")
             return
         }
@@ -148,7 +151,7 @@ class ProxyServer(
 
         val upstream: Socket
         try {
-            upstream = network.socketFactory.createSocket(host, port)
+            upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
             sendError(client, 502, "Bad Gateway")
@@ -184,7 +187,7 @@ class ProxyServer(
         }
     }
 
-    private fun relay(input: InputStream, output: OutputStream) {
+    internal fun relay(input: InputStream, output: OutputStream) {
         val buffer = ByteArray(8192)
         try {
             while (true) {
@@ -195,11 +198,10 @@ class ProxyServer(
                 _bytesTransferred.addAndGet(count.toLong())
             }
         } catch (_: IOException) {
-            // connection closed
         }
     }
 
-    private fun relayBytes(input: InputStream, output: OutputStream, length: Long) {
+    internal fun relayBytes(input: InputStream, output: OutputStream, length: Long) {
         val buffer = ByteArray(8192)
         var remaining = length
         try {
@@ -215,7 +217,7 @@ class ProxyServer(
         }
     }
 
-    private fun readHeaders(reader: BufferedReader): Map<String, String> {
+    internal fun readHeaders(reader: BufferedReader): Map<String, String> {
         val headers = LinkedHashMap<String, String>()
         while (true) {
             val line = reader.readLine() ?: break
@@ -230,7 +232,7 @@ class ProxyServer(
         return headers
     }
 
-    private fun parseHostPort(target: String, defaultPort: Int): Pair<String, Int> {
+    internal fun parseHostPort(target: String, defaultPort: Int): Pair<String, Int> {
         val colonIndex = target.lastIndexOf(':')
         return if (colonIndex > 0) {
             val host = target.substring(0, colonIndex)
@@ -241,7 +243,7 @@ class ProxyServer(
         }
     }
 
-    private fun sendError(client: Socket, code: Int, message: String) {
+    internal fun sendError(client: Socket, code: Int, message: String) {
         try {
             val body = "<html><body><h1>$code $message</h1></body></html>"
             val response = "HTTP/1.1 $code $message\r\n" +
@@ -261,6 +263,6 @@ class ProxyServer(
     }
 
     companion object {
-        private const val TAG = "ProxyServer"
+        private val log = Logger.getLogger(ProxyServer::class.java.name)
     }
 }
