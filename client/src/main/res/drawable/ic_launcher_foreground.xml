@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Wifi signal icon centered in adaptive icon safe zone -->
+    <group
+        android:translateX="27"
+        android:translateY="27">
+        <!-- Signal arcs -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,16.5C19.4,16.5 12.3,19.4 7.1,24.5L0,17.4C6.9,10.6 16.5,6.5 27,6.5C37.5,6.5 47.1,10.6 54,17.4L46.9,24.5C41.7,19.4 34.6,16.5 27,16.5Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,26.5C22.1,26.5 17.5,28.5 14.1,31.9L7.1,24.9C12.2,19.8 19.3,16.5 27,16.5C34.7,16.5 41.8,19.8 46.9,24.9L39.9,31.9C36.5,28.5 31.9,26.5 27,26.5Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,36.5C24.8,36.5 22.8,37.4 21.3,38.9L27,44.5L32.7,38.9C31.2,37.4 29.2,36.5 27,36.5Z" />
+    </group>
+</vector>
