@@ -58,4 +58,57 @@ class VpnStateTest {
         assertEquals("192.168.49.1", VpnState.DEFAULT_SOCKS_HOST)
         assertEquals(1080, VpnState.DEFAULT_SOCKS_PORT)
     }
+
+    @Test
+    fun `default transport is WIFI_DIRECT`() {
+        val state = VpnState()
+        assertEquals(Transport.WIFI_DIRECT, state.transport)
+    }
+
+    @Test
+    fun `transport can be set to BLUETOOTH`() {
+        val state = VpnState(transport = Transport.BLUETOOTH)
+        assertEquals(Transport.BLUETOOTH, state.transport)
+    }
+
+    @Test
+    fun `copy preserves transport`() {
+        val state = VpnState(isConnected = true, transport = Transport.BLUETOOTH)
+        val copied = state.copy(error = "test")
+        assertEquals(Transport.BLUETOOTH, copied.transport)
+        assertTrue(copied.isConnected)
+    }
+
+    @Test
+    fun `Transport enum has exactly two values`() {
+        val values = Transport.entries
+        assertEquals(2, values.size)
+        assertEquals(Transport.WIFI_DIRECT, values[0])
+        assertEquals(Transport.BLUETOOTH, values[1])
+    }
+
+    @Test
+    fun `Transport valueOf works`() {
+        assertEquals(Transport.WIFI_DIRECT, Transport.valueOf("WIFI_DIRECT"))
+        assertEquals(Transport.BLUETOOTH, Transport.valueOf("BLUETOOTH"))
+    }
+
+    @Test
+    fun `equality includes transport`() {
+        val a = VpnState(isConnected = true, transport = Transport.WIFI_DIRECT)
+        val b = VpnState(isConnected = true, transport = Transport.BLUETOOTH)
+        assertFalse(a == b)
+    }
+
+    @Test
+    fun `bluetooth state with loopback address`() {
+        val state = VpnState(
+            isConnected = true,
+            socksHost = "127.0.0.1",
+            socksPort = 12345,
+            transport = Transport.BLUETOOTH,
+        )
+        assertEquals("127.0.0.1:12345", state.socksAddress)
+        assertEquals(Transport.BLUETOOTH, state.transport)
+    }
 }

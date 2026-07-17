@@ -10,6 +10,12 @@ data class HotspotState(
     val connectedDevices: List<ConnectedDevice> = emptyList(),
     val error: String? = null,
     val bytesTransferred: Long = 0L,
+    val bluetoothEnabled: Boolean = false,
+    val bluetoothDeviceName: String = "",
+    val bluetoothConnectedDevices: List<ConnectedDevice> = emptyList(),
+    val dnsCacheHits: Long = 0L,
+    val httpCacheHits: Long = 0L,
+    val dataSaved: Long = 0L,
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"

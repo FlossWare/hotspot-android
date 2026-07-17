@@ -26,15 +26,19 @@ import org.flossware.hotspot.MainActivity
 import org.flossware.hotspot.R
 import org.flossware.hotspot.model.HotspotState
 import org.flossware.hotspot.proxy.DnsRelay
+import org.flossware.hotspot.proxy.HttpCache
 import org.flossware.hotspot.proxy.Socks5Server
 import java.net.InetAddress
 
 class HotspotService : Service() {
 
-    private val scope = CoroutineScope(Dispatchers.Main + Job())
+    private var scope = CoroutineScope(Dispatchers.Main + Job())
     private val wifiDirectManager = WifiDirectManager()
     private var socksServer: Socks5Server? = null
+    private var localSocksServer: Socks5Server? = null
     private var dnsRelay: DnsRelay? = null
+    private var bluetoothServer: BluetoothServer? = null
+    private val httpCache = HttpCache()
     private var mobileNetwork: Network? = null
     private var upstreamDns: InetAddress? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
@@ -50,6 +54,8 @@ class HotspotService : Service() {
     }
 
     private fun startHotspot() {
+        scope.cancel()
+        scope = CoroutineScope(Dispatchers.Main + Job())
         startForeground(NOTIFICATION_ID, buildNotification(0))
         registerMobileNetwork()
 
@@ -77,8 +83,12 @@ class HotspotService : Service() {
                 val socks = socksServer ?: continue
                 val current = _state.value
                 if (current.isRunning) {
+                    val dns = dnsRelay
                     _state.value = current.copy(
                         bytesTransferred = socks.bytesTransferred,
+                        dnsCacheHits = dns?.cacheHits ?: 0L,
+                        httpCacheHits = httpCache.hits,
+                        dataSaved = httpCache.dataSaved,
                     )
                     wifiDirectManager.refreshPeers()
                 }
@@ -92,11 +102,20 @@ class HotspotService : Service() {
         if (socksServer != null) return
 
         val bindAddr = InetAddress.getByName(wifiState.groupOwnerAddress)
+        val socketProvider = { mobileNetwork?.socketFactory ?: SocketFactory.getDefault() }
 
         socksServer = Socks5Server(
             bindAddress = bindAddr,
             port = HotspotState.DEFAULT_SOCKS_PORT,
-            socketFactoryProvider = { mobileNetwork?.socketFactory ?: SocketFactory.getDefault() },
+            socketFactoryProvider = socketProvider,
+            httpCache = httpCache,
+        ).also { it.start() }
+
+        localSocksServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = HotspotState.DEFAULT_SOCKS_PORT,
+            socketFactoryProvider = socketProvider,
+            httpCache = httpCache,
         ).also { it.start() }
 
         dnsRelay = DnsRelay(
@@ -105,6 +124,23 @@ class HotspotService : Service() {
             upstreamDnsProvider = { upstreamDns ?: InetAddress.getByName("8.8.8.8") },
             socketBinder = { sock -> mobileNetwork?.bindSocket(sock) },
         ).also { it.start() }
+
+        bluetoothServer = BluetoothServer().also { it.start(this) }
+
+        scope.launch {
+            bluetoothServer?.state?.collect { btState ->
+                _state.value = _state.value.copy(
+                    bluetoothEnabled = btState is BluetoothState.Listening,
+                    bluetoothDeviceName = (btState as? BluetoothState.Listening)?.deviceName ?: "",
+                )
+            }
+        }
+
+        scope.launch {
+            bluetoothServer?.connectedDevices?.collect { devices ->
+                _state.value = _state.value.copy(bluetoothConnectedDevices = devices)
+            }
+        }
     }
 
     private fun updateState(wifiState: WifiDirectState.GroupCreated) {
@@ -120,10 +156,15 @@ class HotspotService : Service() {
     }
 
     private fun stopHotspot() {
+        bluetoothServer?.stop()
+        bluetoothServer = null
         dnsRelay?.stop()
         dnsRelay = null
+        localSocksServer?.stop()
+        localSocksServer = null
         socksServer?.stop()
         socksServer = null
+        httpCache.clear()
         wifiDirectManager.stop()
         unregisterMobileNetwork()
         _state.value = HotspotState()

@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,9 +24,12 @@ class Socks5Server(
     private val port: Int = 1080,
     private val socketFactoryProvider: () -> SocketFactory?,
     private val dnsResolver: (String) -> InetAddress = { InetAddress.getByName(it) },
+    private val httpCache: HttpCache? = null,
 ) {
     private var serverSocket: ServerSocket? = null
-    private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue())
+    private val executor = ThreadPoolExecutor(
+        4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue(), ThreadPoolExecutor.CallerRunsPolicy(),
+    )
     private val running = AtomicBoolean(false)
     private val _bytesTransferred = AtomicLong(0)
     val bytesTransferred: Long get() = _bytesTransferred.get()
@@ -171,6 +175,11 @@ class Socks5Server(
             return
         }
 
+        if (httpCache != null && port == 80) {
+            handleCachedHttpConnect(client, input, output, host, resolved, factory)
+            return
+        }
+
         val upstream: Socket
         try {
             upstream = factory.createSocket(resolved, port)
@@ -197,6 +206,74 @@ class Socks5Server(
             serverToClient.start()
             clientToServer.join()
             serverToClient.join()
+        } finally {
+            upstream.closeSilently()
+        }
+    }
+
+    private fun handleCachedHttpConnect(
+        client: Socket,
+        input: InputStream,
+        output: OutputStream,
+        host: String,
+        resolved: InetAddress,
+        factory: SocketFactory,
+    ) {
+        val cache = httpCache ?: return
+        val upstream: Socket
+        try {
+            upstream = factory.createSocket(resolved, 80)
+            upstream.soTimeout = 60_000
+        } catch (_: IOException) {
+            sendReply(output, REPLY_CONNECTION_REFUSED)
+            return
+        }
+
+        try {
+            sendReply(output, REPLY_SUCCESS, upstream.localAddress, upstream.localPort)
+
+            val bufferedInput = BufferedInputStream(input, 8192)
+            val requestLine = HttpCache.readLine(bufferedInput)
+            if (requestLine == null || !requestLine.startsWith("GET ")) {
+                upstream.getOutputStream().write((requestLine ?: "").toByteArray())
+                upstream.getOutputStream().write("\r\n".toByteArray())
+                val clientToServer = Thread {
+                    relay(bufferedInput, upstream.getOutputStream())
+                    upstream.closeSilently()
+                }
+                val serverToClient = Thread {
+                    relay(upstream.getInputStream(), client.getOutputStream())
+                    client.closeSilently()
+                }
+                clientToServer.start()
+                serverToClient.start()
+                clientToServer.join()
+                serverToClient.join()
+                return
+            }
+
+            val headers = StringBuilder()
+            while (true) {
+                val line = HttpCache.readLine(bufferedInput) ?: break
+                headers.append(line).append("\r\n")
+                if (line.isEmpty()) break
+            }
+
+            if (cache.tryServeFromCache(host, requestLine, headers.toString(), output)) {
+                upstream.closeSilently()
+                return
+            }
+
+            val upstreamOut = upstream.getOutputStream()
+            upstreamOut.write(requestLine.toByteArray())
+            upstreamOut.write("\r\n".toByteArray())
+            upstreamOut.write(headers.toString().toByteArray())
+            upstreamOut.flush()
+
+            cache.cacheResponse(
+                host, requestLine, upstream.getInputStream(), output,
+                upstreamOut, bufferedInput,
+            )
         } finally {
             upstream.closeSilently()
         }

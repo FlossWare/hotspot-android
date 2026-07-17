@@ -81,6 +81,64 @@ class HotspotStateTest {
     }
 
     @Test
+    fun `default bluetooth fields are correct`() {
+        val state = HotspotState()
+        assertFalse(state.bluetoothEnabled)
+        assertEquals("", state.bluetoothDeviceName)
+        assertTrue(state.bluetoothConnectedDevices.isEmpty())
+    }
+
+    @Test
+    fun `default cache fields are zero`() {
+        val state = HotspotState()
+        assertEquals(0L, state.dnsCacheHits)
+        assertEquals(0L, state.httpCacheHits)
+        assertEquals(0L, state.dataSaved)
+    }
+
+    @Test
+    fun `bluetooth fields can be set`() {
+        val btDevices = listOf(ConnectedDevice("11:22:33:44:55:66", "Pixel"))
+        val state = HotspotState(
+            bluetoothEnabled = true,
+            bluetoothDeviceName = "Galaxy S24",
+            bluetoothConnectedDevices = btDevices,
+        )
+        assertTrue(state.bluetoothEnabled)
+        assertEquals("Galaxy S24", state.bluetoothDeviceName)
+        assertEquals(btDevices, state.bluetoothConnectedDevices)
+    }
+
+    @Test
+    fun `cache fields can be set`() {
+        val state = HotspotState(
+            dnsCacheHits = 100,
+            httpCacheHits = 42,
+            dataSaved = 1024 * 1024,
+        )
+        assertEquals(100L, state.dnsCacheHits)
+        assertEquals(42L, state.httpCacheHits)
+        assertEquals(1024L * 1024, state.dataSaved)
+    }
+
+    @Test
+    fun `copy preserves bluetooth and cache fields`() {
+        val state = HotspotState(
+            bluetoothEnabled = true,
+            bluetoothDeviceName = "Test BT",
+            dnsCacheHits = 50,
+            httpCacheHits = 25,
+            dataSaved = 2048,
+        )
+        val copied = state.copy(isRunning = true)
+        assertTrue(copied.bluetoothEnabled)
+        assertEquals("Test BT", copied.bluetoothDeviceName)
+        assertEquals(50L, copied.dnsCacheHits)
+        assertEquals(25L, copied.httpCacheHits)
+        assertEquals(2048L, copied.dataSaved)
+    }
+
+    @Test
     fun `equality works for identical states`() {
         val a = HotspotState(isRunning = true, networkName = "Net")
         val b = HotspotState(isRunning = true, networkName = "Net")
@@ -93,5 +151,15 @@ class HotspotStateTest {
         val a = HotspotState(isRunning = true)
         val b = HotspotState(isRunning = false)
         assertFalse(a == b)
+    }
+
+    @Test
+    fun `equality includes bluetooth and cache fields`() {
+        val a = HotspotState(bluetoothEnabled = true, dnsCacheHits = 10)
+        val b = HotspotState(bluetoothEnabled = true, dnsCacheHits = 10)
+        assertEquals(a, b)
+
+        val c = HotspotState(bluetoothEnabled = false, dnsCacheHits = 10)
+        assertFalse(a == c)
     }
 }

@@ -42,4 +42,16 @@
     <string name="error_no_mobile_data">Mobile data is not available</string>
     <string name="error_group_creation_failed">Failed to create hotspot network</string>
     <string name="error_socks_failed">Failed to start SOCKS5 server</string>
+
+    <string name="bluetooth_status">Bluetooth</string>
+    <string name="bluetooth_enabled">Listening</string>
+    <string name="bluetooth_disabled">Unavailable</string>
+    <string name="bluetooth_device_name">Device Name</string>
+    <string name="bluetooth_connected_devices">Bluetooth Devices</string>
+    <string name="no_bluetooth_devices">No Bluetooth devices connected</string>
+
+    <string name="cache_stats">Cache</string>
+    <string name="dns_cache_hits">DNS Cache Hits</string>
+    <string name="http_cache_hits">HTTP Cache Hits</string>
+    <string name="data_saved">Data Saved</string>
 </resources>

@@ -1,0 +1,28 @@
+Categories:
+  - Connectivity
+  - Internet
+License: Apache-2.0
+AuthorName: FlossWare
+AuthorEmail: flossware@gmail.com
+SourceCode: https://github.com/FlossWare/hotspot-android
+IssueTracker: https://github.com/FlossWare/hotspot-android/issues
+
+AutoName: FlossWare Hotspot Client
+
+RepoType: git
+Repo: https://github.com/FlossWare/hotspot-android.git
+
+Builds:
+  - versionName: '0.5'
+    versionCode: 5
+    commit: v0.5
+    subdir: client
+    submodules: true
+    gradle:
+      - yes
+    ndk: 27.0.12077973
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '0.5'
+CurrentVersionCode: 5

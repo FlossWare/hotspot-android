@@ -1,0 +1,25 @@
+FlossWare Hotspot is a free, open-source Android app that lets you share your phone's internet connection without carrier tethering restrictions or fees.
+
+The app uses a two-device architecture: a Host app creates a Wi-Fi Direct group and runs a SOCKS5 proxy, while a Client app routes all traffic through a VPN tunnel to the host.
+
+Features:
+• Wi-Fi Direct transport — no carrier detection
+• Bluetooth RFCOMM transport — works when Wi-Fi is unavailable
+• SOCKS5 proxy with full TCP support
+• DNS relay with LRU caching — reduces repeated lookups
+• HTTP response caching — saves bandwidth on unencrypted traffic
+• QR code for easy client setup
+• Material 3 design with dark mode support
+• No ads, no tracking, no analytics
+• Fully open source (Apache 2.0)
+
+How it works:
+1. Install the Host app on the device with internet
+2. Install the Client app on the device that needs internet
+3. Start the hotspot on the Host — it creates a Wi-Fi Direct group
+4. Connect the Client via Wi-Fi Direct or Bluetooth
+5. All traffic is transparently routed through the host's connection
+
+The native tun2socks layer (hev-socks5-tunnel, MIT licensed) handles transparent traffic forwarding without root access.
+
+Requires two Android devices running Android 8.0 (API 26) or later.
