@@ -1,1 +1,1 @@
-# No special rules needed yet
+-keep class hev.htproxy.TProxyService { *; }

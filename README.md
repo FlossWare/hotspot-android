@@ -6,23 +6,22 @@ Free Android app that shares your phone's mobile data via Wi-Fi — bypasses car
 
 ## The Problem
 
-Carriers like Verizon, AT&T, and T-Mobile block the built-in Android hotspot unless you pay for a tethering add-on. You already pay for the data — this app lets you use it.
+Carriers block the built-in Android hotspot unless you pay for a tethering add-on. You already pay for the data — this app lets you use it.
 
 ## How It Works
 
 Two apps work together — a **Host** on the phone sharing data, and a **Client** on the connecting device:
 
 ```
-HOST PHONE (app/)                        CLIENT DEVICE (client/)
+HOST PHONE                               CLIENT DEVICE
 ┌──────────────────────┐                 ┌──────────────────────┐
 │  Wi-Fi Direct Group  │   P2P Wi-Fi     │                      │
 │  Owner               │◄───────────────│  Connect to SSID     │
 │                      │                 │                      │
-│  Socks5Server :1080  │◄── SOCKS5 ─────│  TunnelService       │
-│                      │    (TCP)        │  (VpnService)        │
-│                      │                 │                      │
-│  DnsRelay :5353      │◄── DNS ────────│  tun2socks           │
-│                      │    (UDP)        │  (TUN fd → SOCKS5)   │
+│  Socks5Server :1080  │◄── SOCKS5 ─────│  VpnService + TUN    │
+│                      │    (TCP+UDP)    │                      │
+│  DnsRelay :5353      │◄── DNS ────────│  hev-socks5-tunnel   │
+│                      │                 │  (native tun2socks)  │
 │                      │                 │                      │
 │  Cellular Data ──────┼──► Internet     │  All app traffic     │
 │                      │                 │  captured by VPN     │
@@ -31,9 +30,9 @@ HOST PHONE (app/)                        CLIENT DEVICE (client/)
 
 **Wi-Fi Direct** creates a peer-to-peer Wi-Fi network — not carrier tethering. The phone becomes a Group Owner that other devices connect to like a regular Wi-Fi access point.
 
-**SOCKS5 Server** runs on the host phone and forwards all TCP connections through mobile data. Since the server process runs on the phone itself, the carrier sees normal app traffic. TTL-based tethering detection is inherently bypassed.
+**SOCKS5 Server** runs on the host phone and forwards connections through mobile data. The carrier sees normal app traffic from the phone's own process — TTL-based tethering detection is inherently bypassed.
 
-**VPN Client** runs on the connecting device, captures ALL traffic via Android's VpnService, and tunnels it through the SOCKS5 server. Every app works — Facebook, Instagram, TikTok, YouTube, games, everything.
+**VPN Client** runs on the connecting device, captures ALL traffic via Android's VpnService, and tunnels it through SOCKS5 using [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel) — a native C library with a full userspace TCP/IP stack (lwIP). Every app works: browsers, social media, streaming, games, everything. TCP and UDP.
 
 **DNS Relay** forwards hostname lookups through mobile data so connected devices can resolve addresses.
 
@@ -55,101 +54,104 @@ HOST PHONE (app/)                        CLIENT DEVICE (client/)
 ### Client device (connecting)
 
 1. Install **FlossWare Hotspot Client** (client APK)
-2. Connect to the displayed Wi-Fi network (or scan QR code)
+2. Connect to the displayed Wi-Fi network
 3. Open FlossWare Hotspot Client
 4. Tap **Connect**
 
-All traffic is now routed through the host's mobile data. No per-app configuration needed.
+All traffic is now routed through the host's mobile data.
 
 ### Manual mode (no client app)
 
-If you can't install the client app, you can manually configure SOCKS5 in individual apps that support it (e.g., Firefox: Settings → Network → SOCKS5 → `192.168.49.1:1080`).
+Apps that support SOCKS5 proxies can connect directly — configure `192.168.49.1:1080` as the SOCKS5 server (e.g., Firefox: Settings → Network → SOCKS5).
 
 ## Building
 
 ```bash
-git clone https://github.com/FlossWare/hotspot-android.git
+git clone --recursive https://github.com/FlossWare/hotspot-android.git
 cd hotspot-android
 ./gradlew assembleDebug
 ```
+
+The `--recursive` flag is required — the client module includes [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel) as a git submodule with nested dependencies (lwIP, libyaml, hev-task-system).
+
+**Prerequisites:** Android SDK with NDK 27 installed. The NDK compiles the native tun2socks library for all four ABIs (arm64-v8a, armeabi-v7a, x86_64, x86).
 
 APK outputs:
 - Host: `app/build/outputs/apk/debug/app-debug.apk`
 - Client: `client/build/outputs/apk/debug/client-debug.apk`
 
-Release build: `./gradlew assembleRelease`
-
 Run tests: `./gradlew test`
-
-## CI/CD
-
-| Workflow | Trigger | Action |
-|----------|---------|--------|
-| `android.yml` | Push/PR | Build, test, lint, upload APK artifacts |
-| `main.yml` | Push to main | Build + auto-increment version + tag |
-| `release.yml` | Tag `v*` | Build release APKs, create GitHub Release with both apps |
-| `dependency-scan.yml` | Weekly | Gradle dependency graph submission |
-
-Versioning follows X.Y format. Every push to `main` auto-increments the minor version and creates a tag.
 
 ## Architecture
 
 ```
 hotspot-android/
-├── app/                            Host app (shares mobile data)
-│   └── src/main/java/org/flossware/hotspot/
+├── app/                              Host app (shares mobile data)
+│   └── src/main/java/.../hotspot/
 │       ├── proxy/
-│       │   ├── Socks5Server.kt     SOCKS5 proxy (RFC 1928, server-side DNS)
-│       │   └── DnsRelay.kt         UDP DNS forwarder
+│       │   ├── Socks5Server.kt       SOCKS5 proxy (RFC 1928, server-side DNS)
+│       │   └── DnsRelay.kt           UDP DNS forwarder
 │       ├── service/
-│       │   ├── HotspotService.kt   Foreground service orchestrating all components
+│       │   ├── HotspotService.kt     Foreground service orchestrating components
 │       │   └── WifiDirectManager.kt  Wi-Fi Direct P2P group management
 │       ├── model/
-│       │   ├── HotspotState.kt     UI state
-│       │   └── ConnectedDevice.kt  Connected peer data
+│       │   ├── HotspotState.kt
+│       │   └── ConnectedDevice.kt
 │       ├── viewmodel/
 │       │   └── HotspotViewModel.kt
-│       ├── ui/
-│       │   ├── HotspotScreen.kt    Single-screen Compose UI
-│       │   └── components/         Toggle, ConnectionInfo, QrCode, DeviceList, SetupInstructions
-│       ├── MainActivity.kt
-│       └── HotspotApp.kt
+│       └── ui/
+│           ├── HotspotScreen.kt      Single-screen Compose UI
+│           └── components/
 │
-└── client/                         Client app (installed on connecting devices)
-    └── src/main/java/org/flossware/hotspot/client/
-        ├── service/
-        │   └── TunnelService.kt    VpnService — creates TUN, routes through SOCKS5
-        ├── tunnel/
-        │   └── SocksTunnel.kt      Userspace TCP-over-SOCKS5 (tun2socks)
-        ├── model/
-        │   └── VpnState.kt         VPN connection state
-        ├── viewmodel/
-        │   └── ClientViewModel.kt
-        ├── ui/
-        │   └── ClientScreen.kt     Connect/disconnect UI
-        ├── MainActivity.kt
-        └── ClientApp.kt
+├── client/                           Client app (connecting device)
+│   ├── src/main/java/.../client/
+│   │   ├── service/
+│   │   │   └── TunnelService.kt      VpnService — creates TUN, manages tunnel
+│   │   ├── tunnel/
+│   │   │   └── SocksTunnel.kt        YAML config + native library lifecycle
+│   │   ├── model/
+│   │   │   └── VpnState.kt
+│   │   ├── viewmodel/
+│   │   │   └── ClientViewModel.kt
+│   │   └── ui/
+│   │       └── ClientScreen.kt       Connect/disconnect UI
+│   ├── src/main/java/hev/htproxy/
+│   │   └── TProxyService.kt          JNI bridge to native library
+│   └── src/main/jni/
+│       └── hev-socks5-tunnel/        Native tun2socks (C, git submodule)
+│           ├── src/                   SOCKS5 tunnel + JNI bindings
+│           └── third-part/           lwIP, libyaml, hev-task-system
+│
+├── .github/workflows/
+│   ├── android.yml                   CI: build + test + lint
+│   ├── main.yml                      CD: auto-version on push to main
+│   └── release.yml                   Release: APKs + GitHub Release
+│
+└── scripts/
+    └── bump-version.sh               Manual version bump (X.Y format)
 ```
 
-**Key design decisions:**
-- SOCKS5 protocol (RFC 1928) with server-side DNS resolution — works with all TCP apps, not just HTTP
-- Thread-per-connection proxy (bounded pool, 4-32 threads) — simple and sufficient for phone-to-phone use
-- All outbound sockets bound to cellular `Network` to ensure traffic routes through mobile data
-- VPN client captures all device traffic via TUN interface — zero per-app configuration
-- No Android framework dependencies in proxy/DNS code — fully unit-testable on JVM
+### Design Decisions
+
+- **SOCKS5 (RFC 1928)** with server-side DNS resolution — works with all TCP apps, not just HTTP
+- **Native tun2socks** via [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel) — full userspace TCP/IP stack (lwIP) handles TCP and UDP relay. ~300KB per ABI.
+- **`addDisallowedApplication`** prevents VPN routing loops without root — the client app's own SOCKS5 connections bypass the TUN and go directly to the host via Wi-Fi Direct. Same pattern as WireGuard for Android.
+- **Thread-per-connection** SOCKS5 server with bounded pool (4-32 threads) — simple and sufficient for phone-to-phone use
+- **Cellular-bound sockets** — all outbound connections route through mobile data, never the P2P interface
+- **No Android framework dependencies** in proxy/DNS code — fully unit-testable on JVM
 
 ## Permissions
 
-### Host app
+### Host
 
 | Permission | Reason |
 |------------|--------|
 | `ACCESS_FINE_LOCATION` | Required by Android for Wi-Fi Direct (API 26-32) |
 | `NEARBY_WIFI_DEVICES` | Wi-Fi Direct on API 33+ |
-| `INTERNET` | Forward proxy traffic through cellular |
+| `INTERNET` | Forward traffic through cellular |
 | `FOREGROUND_SERVICE` | Keep hotspot active in background |
 
-### Client app
+### Client
 
 | Permission | Reason |
 |------------|--------|
@@ -158,6 +160,10 @@ hotspot-android/
 | `BIND_VPN_SERVICE` | Android VPN consent (prompted once) |
 
 Location is never tracked, stored, or transmitted.
+
+## CI/CD
+
+Every push to `main` builds both APKs, runs tests, auto-increments the minor version (X.Y format), and creates a git tag. Pushing a `v*` tag triggers a release build with both APKs attached to a GitHub Release.
 
 ## License
 

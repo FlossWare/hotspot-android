@@ -45,7 +45,7 @@ class TunnelService : VpnService() {
                 .addRoute("0.0.0.0", 0)
                 .addDnsServer(socksHost)
                 .setMtu(1500)
-                .setBlocking(true)
+                .addDisallowedApplication(packageName)
                 .establish() ?: run {
                     _state.value = _state.value.copy(error = "VPN permission denied")
                     stopSelf()
@@ -58,7 +58,7 @@ class TunnelService : VpnService() {
                 tunFd = tun.fd,
                 socksHost = socksHost,
                 socksPort = socksPort,
-                protector = { fd -> protect(fd) },
+                cacheDir = cacheDir,
             ).also { it.start() }
 
             _state.value = VpnState(

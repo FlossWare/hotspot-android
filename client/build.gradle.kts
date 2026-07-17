@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "org.flossware.hotspot.client"
     compileSdk = libs.versions.compileSdk.get().toInt()
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "org.flossware.hotspot.client"
@@ -15,6 +16,15 @@ android {
         versionCode = 4
         versionName = "0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path = file("src/main/jni/hev-socks5-tunnel/Android.mk")
+        }
     }
 
     buildTypes {
