@@ -1,9 +1,8 @@
 package org.flossware.hotspot.proxy
 
-import java.io.BufferedReader
+import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -64,8 +63,8 @@ class ProxyServer(
     internal fun handleClient(client: Socket) {
         try {
             client.soTimeout = 60_000
-            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
-            val requestLine = reader.readLine() ?: return
+            val input = BufferedInputStream(client.getInputStream())
+            val requestLine = readLine(input) ?: return
             val parts = requestLine.split(" ", limit = 3)
             if (parts.size < 3) {
                 sendError(client, 400, "Bad Request")
@@ -75,11 +74,11 @@ class ProxyServer(
             val method = parts[0].uppercase()
             val target = parts[1]
 
-            val headers = readHeaders(reader)
+            val headers = readHeaders(input)
 
             when (method) {
-                "CONNECT" -> handleConnect(client, target)
-                else -> handleHttp(client, method, target, headers, reader)
+                "CONNECT" -> handleConnect(client, input, target)
+                else -> handleHttp(client, input, method, target, headers)
             }
         } catch (e: IOException) {
             log.fine("Client handler error: ${e.message}")
@@ -88,7 +87,7 @@ class ProxyServer(
         }
     }
 
-    internal fun handleConnect(client: Socket, target: String) {
+    internal fun handleConnect(client: Socket, clientInput: InputStream, target: String) {
         val (host, port) = parseHostPort(target, 443)
         val factory = socketFactoryProvider() ?: run {
             sendError(client, 502, "No mobile network")
@@ -110,7 +109,7 @@ class ProxyServer(
             client.getOutputStream().flush()
 
             val clientToServer = Thread {
-                relay(client.getInputStream(), upstream.getOutputStream())
+                relay(clientInput, upstream.getOutputStream())
                 upstream.closeSilently()
             }
             val serverToClient = Thread {
@@ -128,10 +127,10 @@ class ProxyServer(
 
     internal fun handleHttp(
         client: Socket,
+        clientInput: InputStream,
         method: String,
         urlString: String,
         headers: Map<String, String>,
-        reader: BufferedReader,
     ) {
         val factory = socketFactoryProvider() ?: run {
             sendError(client, 502, "No mobile network")
@@ -177,7 +176,7 @@ class ProxyServer(
                 .firstOrNull { it.key.equals("Content-Length", ignoreCase = true) }
                 ?.value?.toLongOrNull() ?: 0
             if (contentLength > 0) {
-                relayBytes(client.getInputStream(), out, contentLength)
+                relayBytes(clientInput, out, contentLength)
             }
             out.flush()
 
@@ -217,10 +216,20 @@ class ProxyServer(
         }
     }
 
-    internal fun readHeaders(reader: BufferedReader): Map<String, String> {
+    internal fun readLine(input: InputStream): String? {
+        val sb = StringBuilder()
+        while (true) {
+            val b = input.read()
+            if (b == -1) return if (sb.isEmpty()) null else sb.toString()
+            if (b == '\n'.code) return sb.toString().trimEnd('\r')
+            sb.append(b.toChar())
+        }
+    }
+
+    internal fun readHeaders(input: InputStream): Map<String, String> {
         val headers = LinkedHashMap<String, String>()
         while (true) {
-            val line = reader.readLine() ?: break
+            val line = readLine(input) ?: break
             if (line.isEmpty()) break
             val colonIndex = line.indexOf(':')
             if (colonIndex > 0) {

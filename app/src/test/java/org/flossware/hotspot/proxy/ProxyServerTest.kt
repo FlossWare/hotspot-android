@@ -3,6 +3,7 @@ package org.flossware.hotspot.proxy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -93,10 +94,22 @@ class ProxyServerTest {
     }
 
     @Test
+    fun `readLine parses line with CRLF`() {
+        val input = ByteArrayInputStream("Hello\r\nWorld\r\n".toByteArray())
+        assertEquals("Hello", proxy.readLine(input))
+        assertEquals("World", proxy.readLine(input))
+    }
+
+    @Test
+    fun `readLine returns null on empty stream`() {
+        val input = ByteArrayInputStream(ByteArray(0))
+        assertNull(proxy.readLine(input))
+    }
+
+    @Test
     fun `readHeaders parses standard headers`() {
-        val input = "Host: example.com\r\nContent-Type: text/html\r\nContent-Length: 42\r\n\r\n"
-        val reader = BufferedReader(InputStreamReader(ByteArrayInputStream(input.toByteArray())))
-        val headers = proxy.readHeaders(reader)
+        val input = ByteArrayInputStream("Host: example.com\r\nContent-Type: text/html\r\nContent-Length: 42\r\n\r\n".toByteArray())
+        val headers = proxy.readHeaders(input)
         assertEquals(3, headers.size)
         assertEquals("example.com", headers["Host"])
         assertEquals("text/html", headers["Content-Type"])
@@ -105,25 +118,22 @@ class ProxyServerTest {
 
     @Test
     fun `readHeaders handles empty headers`() {
-        val input = "\r\n"
-        val reader = BufferedReader(InputStreamReader(ByteArrayInputStream(input.toByteArray())))
-        val headers = proxy.readHeaders(reader)
+        val input = ByteArrayInputStream("\r\n".toByteArray())
+        val headers = proxy.readHeaders(input)
         assertTrue(headers.isEmpty())
     }
 
     @Test
     fun `readHeaders handles header with colon in value`() {
-        val input = "Location: http://example.com:8080/path\r\n\r\n"
-        val reader = BufferedReader(InputStreamReader(ByteArrayInputStream(input.toByteArray())))
-        val headers = proxy.readHeaders(reader)
+        val input = ByteArrayInputStream("Location: http://example.com:8080/path\r\n\r\n".toByteArray())
+        val headers = proxy.readHeaders(input)
         assertEquals("http://example.com:8080/path", headers["Location"])
     }
 
     @Test
     fun `readHeaders skips malformed lines without colon`() {
-        val input = "Valid: yes\r\nno-colon-here\r\nAlso-Valid: true\r\n\r\n"
-        val reader = BufferedReader(InputStreamReader(ByteArrayInputStream(input.toByteArray())))
-        val headers = proxy.readHeaders(reader)
+        val input = ByteArrayInputStream("Valid: yes\r\nno-colon-here\r\nAlso-Valid: true\r\n\r\n".toByteArray())
+        val headers = proxy.readHeaders(input)
         assertEquals(2, headers.size)
         assertEquals("yes", headers["Valid"])
         assertEquals("true", headers["Also-Valid"])
@@ -131,9 +141,8 @@ class ProxyServerTest {
 
     @Test
     fun `readHeaders trims whitespace`() {
-        val input = "  Host  :  example.com  \r\n\r\n"
-        val reader = BufferedReader(InputStreamReader(ByteArrayInputStream(input.toByteArray())))
-        val headers = proxy.readHeaders(reader)
+        val input = ByteArrayInputStream("  Host  :  example.com  \r\n\r\n".toByteArray())
+        val headers = proxy.readHeaders(input)
         assertEquals("example.com", headers["Host"])
     }
 
