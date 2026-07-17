@@ -62,7 +62,7 @@ class DnsRelayTest {
         upstreamServer = createMockDnsServer(upstreamPort)
         relay = createRelay()
         relay.start()
-        Thread.sleep(300)
+        Thread.sleep(500)
 
         val query = byteArrayOf(0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
 
@@ -92,7 +92,7 @@ class DnsRelayTest {
         upstreamServer = createMockDnsServer(upstreamPort)
         relay = createRelay()
         relay.start()
-        Thread.sleep(300)
+        Thread.sleep(500)
 
         val clients = (1..5).map { i ->
             Thread {
@@ -124,10 +124,11 @@ class DnsRelayTest {
             bindAddress = InetAddress.getLoopbackAddress(),
             listenPort = relayPort,
             upstreamDnsProvider = { InetAddress.getLoopbackAddress() },
+            upstreamPort = upstreamPort,
             socketBinder = { binderCalled = true },
         )
         relay.start()
-        Thread.sleep(300)
+        Thread.sleep(500)
 
         val client = DatagramSocket()
         val query = byteArrayOf(0x00, 0x01)
@@ -156,6 +157,7 @@ class DnsRelayTest {
             bindAddress = InetAddress.getLoopbackAddress(),
             listenPort = relayPort,
             upstreamDnsProvider = { InetAddress.getLoopbackAddress() },
+            upstreamPort = upstreamPort,
         )
     }
 

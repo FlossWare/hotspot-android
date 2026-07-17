@@ -13,6 +13,7 @@ class DnsRelay(
     private val bindAddress: InetAddress,
     private val listenPort: Int = 5353,
     private val upstreamDnsProvider: () -> InetAddress,
+    private val upstreamPort: Int = 53,
     private val socketBinder: (DatagramSocket) -> Unit = {},
 ) {
     private var socket: DatagramSocket? = null
@@ -81,7 +82,7 @@ class DnsRelay(
             socketBinder(upstream)
 
             val dnsServer = upstreamDnsProvider()
-            val queryPacket = DatagramPacket(queryData, queryData.size, dnsServer, 53)
+            val queryPacket = DatagramPacket(queryData, queryData.size, dnsServer, upstreamPort)
             upstream.send(queryPacket)
 
             val responseBuffer = ByteArray(4096)

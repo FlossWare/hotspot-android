@@ -240,9 +240,10 @@ class ProxyServerTest {
         val echoPort = echoServer.localPort
 
         proxy.start()
-        Thread.sleep(300)
+        Thread.sleep(500)
 
         val client = Socket(InetAddress.getLoopbackAddress(), proxyPort)
+        client.soTimeout = 5000
         val connectRequest = "CONNECT 127.0.0.1:$echoPort HTTP/1.1\r\n" +
             "Host: 127.0.0.1:$echoPort\r\n" +
             "\r\n"
@@ -253,6 +254,7 @@ class ProxyServerTest {
         val statusLine = reader.readLine()
         assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
 
+        Thread.sleep(100)
         client.getOutputStream().write("GET / HTTP/1.1\r\nHost: test\r\n\r\n".toByteArray())
         client.getOutputStream().flush()
 
@@ -265,15 +267,16 @@ class ProxyServerTest {
 
     @Test
     fun `proxy returns 502 when no socket factory available`() {
+        val noNetPort = findFreePort()
         val noNetProxy = ProxyServer(
             bindAddress = InetAddress.getLoopbackAddress(),
-            port = findFreePort(),
+            port = noNetPort,
             socketFactoryProvider = { null },
         )
         noNetProxy.start()
         Thread.sleep(300)
 
-        val client = Socket(InetAddress.getLoopbackAddress(), noNetProxy.port)
+        val client = Socket(InetAddress.getLoopbackAddress(), noNetPort)
         val request = "GET http://example.com/ HTTP/1.1\r\nHost: example.com\r\n\r\n"
         client.getOutputStream().write(request.toByteArray())
         client.getOutputStream().flush()
@@ -345,9 +348,6 @@ class ProxyServerTest {
         client.close()
         echoServer.close()
     }
-
-    private val ProxyServer.port: Int
-        get() = proxyPort
 
     private fun findFreePort(): Int {
         ServerSocket(0).use { return it.localPort }
