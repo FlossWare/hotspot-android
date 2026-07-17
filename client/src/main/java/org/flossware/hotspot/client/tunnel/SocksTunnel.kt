@@ -16,8 +16,8 @@ class SocksTunnel(
 
     fun start() {
         if (running.getAndSet(true)) return
-        val configFile = File(cacheDir, "tun2socks.yml")
-        configFile.writeText(buildConfig())
+        val configFile = File(cacheDir, CONFIG_FILENAME)
+        configFile.writeText(buildConfig(socksHost, socksPort))
         tproxy.TProxyStartService(configFile.absolutePath, tunFd)
         Log.i(TAG, "Native tunnel started -> $socksHost:$socksPort")
     }
@@ -36,19 +36,6 @@ class SocksTunnel(
             return TrafficStats(s[0], s[1], s[2], s[3])
         }
 
-    private fun buildConfig(): String = """
-        tunnel:
-          mtu: 1500
-        socks5:
-          port: $socksPort
-          address: $socksHost
-        misc:
-          log-level: warn
-          connect-timeout: 5000
-          read-write-timeout: 60000
-          limit-nofile: 65535
-    """.trimIndent()
-
     data class TrafficStats(
         val txPackets: Long,
         val txBytes: Long,
@@ -58,5 +45,19 @@ class SocksTunnel(
 
     companion object {
         private const val TAG = "SocksTunnel"
+        internal const val CONFIG_FILENAME = "tun2socks.yml"
+
+        internal fun buildConfig(socksHost: String, socksPort: Int): String = """
+            tunnel:
+              mtu: 1500
+            socks5:
+              port: $socksPort
+              address: $socksHost
+            misc:
+              log-level: warn
+              connect-timeout: 5000
+              read-write-timeout: 60000
+              limit-nofile: 65535
+        """.trimIndent()
     }
 }
