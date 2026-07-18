@@ -85,7 +85,7 @@ fun ProxyInfo(
                     supportingContent = {
                         Text(
                             formatUptime(state.uptimeSeconds) +
-                            if (state.isIdle) " (idle)" else "",
+                            if (state.isIdle) stringResource(R.string.idle_suffix) else "",
                         )
                     },
                 )

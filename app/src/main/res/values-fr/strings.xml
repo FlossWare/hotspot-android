@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot</string>
+
+    <string name="start_hotspot">Démarrer le point d\'accès</string>
+    <string name="stop_hotspot">Arrêter le point d\'accès</string>
+    <string name="hotspot_active">Point d\'accès actif</string>
+    <string name="hotspot_inactive">Point d\'accès inactif</string>
+
+    <string name="network_name">Nom du réseau</string>
+    <string name="password">Mot de passe</string>
+    <string name="socks_address">Adresse SOCKS5</string>
+    <string name="dns_address">Adresse DNS</string>
+    <string name="data_transferred">Données transférées</string>
+
+    <string name="connected_devices">Appareils connectés</string>
+    <string name="no_devices_connected">Aucun appareil connecté</string>
+
+    <string name="scan_to_connect">Scannez le code QR pour vous connecter au Wi-Fi</string>
+
+    <string name="setup_instructions">Instructions de configuration</string>
+    <string name="step_1_connect">1. Connectez-vous au réseau Wi-Fi : %1$s</string>
+    <string name="step_2_password">2. Entrez le mot de passe : %1$s</string>
+    <string name="step_3_client">3. Installez FlossWare Hotspot Client sur l\'appareil à connecter</string>
+    <string name="step_4_connect">4. Ouvrez l\'application cliente et appuyez sur Connecter</string>
+    <string name="step_5_manual">5. (Manuel) Ou configurez le proxy SOCKS5 vers %1$s dans les applications individuelles</string>
+
+    <string name="copied_to_clipboard">Copié dans le presse-papiers</string>
+
+    <string name="notification_channel_name">Service de point d\'accès</string>
+    <string name="notification_title">FlossWare Hotspot</string>
+    <string name="notification_text">Partage des données mobiles • %1$d appareil(s) connecté(s)</string>
+    <string name="notification_action_stop">Arrêter</string>
+
+    <string name="permission_rationale_title">Autorisations requises</string>
+    <string name="permission_rationale_location">L\'autorisation de localisation est requise pour Wi-Fi Direct sur Android 12 et versions antérieures. Votre position n\'est jamais suivie ni stockée.</string>
+    <string name="permission_rationale_nearby">L\'autorisation Appareils à proximité est requise pour créer le réseau de point d\'accès Wi-Fi.</string>
+    <string name="open_settings">Ouvrir les paramètres</string>
+    <string name="ok">OK</string>
+
+    <string name="error_no_wifi_direct">Wi-Fi Direct n\'est pas pris en charge sur cet appareil</string>
+    <string name="error_no_mobile_data">Les données mobiles ne sont pas disponibles</string>
+    <string name="error_group_creation_failed">Échec de la création du réseau de point d\'accès</string>
+    <string name="error_socks_failed">Échec du démarrage du serveur SOCKS5</string>
+    <string name="error_mobile_data_lost">Connexion aux données mobiles perdue</string>
+    <string name="error_wifi_direct_not_supported">Wi-Fi Direct non pris en charge</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct est désactivé</string>
+    <string name="error_wifi_direct_generic">Wi-Fi Direct a échoué. Certains appareils nécessitent que le Wi-Fi soit activé. Essayez d\'activer le Wi-Fi et les services de localisation, puis réessayez.</string>
+    <string name="error_wifi_direct_busy">Wi-Fi Direct est occupé. Veuillez patienter un instant et réessayer.</string>
+    <string name="error_service_discovery_failed">Échec de la découverte de services. Essayez de désactiver puis réactiver le Wi-Fi.</string>
+    <string name="error_hotspot_creation_failed">Échec de la création du point d\'accès (code d\'erreur : %1$d). Essayez de redémarrer le Wi-Fi ou de redémarrer votre appareil.</string>
+    <string name="error_bluetooth_not_supported">Bluetooth non pris en charge</string>
+    <string name="error_bluetooth_disabled">Bluetooth est désactivé</string>
+    <string name="error_bluetooth_server_failed">Échec de la création du serveur Bluetooth : %1$s</string>
+    <string name="unknown_device">Inconnu</string>
+    <string name="idle_suffix"> (inactif)</string>
+
+    <string name="bluetooth_transport">Transport Bluetooth</string>
+    <string name="bluetooth_experimental_label">Expérimental</string>
+    <string name="bluetooth_experimental_description">Le transport Bluetooth est expérimental. Il prend en charge un maximum d\'environ 7 connexions simultanées et est plus lent que Wi-Fi Direct. À utiliser uniquement lorsque Wi-Fi Direct n\'est pas disponible.</string>
+    <string name="bluetooth_status">État</string>
+    <string name="bluetooth_enabled">Écoute en cours</string>
+    <string name="bluetooth_disabled">Non actif</string>
+    <string name="bluetooth_device_name">Nom de l\'appareil</string>
+    <string name="bluetooth_connected_devices">Appareils Bluetooth</string>
+    <string name="no_bluetooth_devices">Aucun appareil Bluetooth connecté</string>
+
+    <string name="cache_stats">Cache</string>
+    <string name="dns_cache_hits">Succès du cache DNS</string>
+    <string name="http_cache_hits">Succès du cache HTTP</string>
+    <string name="data_saved">Données économisées</string>
+
+    <string name="uptime">Temps d\'activité</string>
+
+    <string name="connection_info">Connexion</string>
+    <string name="statistics">Statistiques</string>
+
+    <string name="compatibility_tips_title">Compatibilité des appareils</string>
+    <string name="compatibility_tip_wifi">Certains appareils (Samsung, Xiaomi) nécessitent que le Wi-Fi soit activé pour que Wi-Fi Direct fonctionne, même si le point d\'accès crée son propre réseau.</string>
+    <string name="compatibility_tip_location">Sur Android 12 et versions antérieures, les services de localisation doivent être activés. Certains fabricants l\'exigent même sur les versions plus récentes d\'Android.</string>
+    <string name="compatibility_tip_retry">Si le point d\'accès ne démarre pas au premier essai, l\'application réessaiera automatiquement. Vous pouvez aussi essayer de désactiver puis réactiver le Wi-Fi.</string>
+    <string name="compatibility_tip_battery">L\'application réduit automatiquement la consommation d\'énergie lorsqu\'aucune donnée n\'est transférée. L\'utilisation de la batterie augmente avec le proxy actif.</string>
+</resources>

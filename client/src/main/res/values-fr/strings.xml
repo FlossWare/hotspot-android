@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot Client</string>
+
+    <string name="connect">Connecter</string>
+    <string name="disconnect">Déconnecter</string>
+    <string name="connected">Connecté</string>
+    <string name="disconnected">Déconnecté</string>
+
+    <string name="socks_server_label">Serveur SOCKS5</string>
+    <string name="socks_server_hint">192.168.49.1:1080</string>
+
+    <string name="notification_channel_name">Tunnel VPN</string>
+    <string name="notification_title">FlossWare Tunnel</string>
+    <string name="notification_text">Routage du trafic via le point d\'accès</string>
+    <string name="notification_action_disconnect">Déconnecter</string>
+
+    <string name="vpn_consent_required">L\'autorisation VPN est requise pour router tout le trafic via le point d\'accès</string>
+
+    <string name="error_vpn_denied">L\'autorisation VPN a été refusée</string>
+    <string name="error_connection_failed">Échec de la connexion au serveur SOCKS5</string>
+    <string name="error_vpn_permission_denied">Autorisation VPN refusée</string>
+    <string name="error_generic_connection_failed">Échec de la connexion</string>
+    <string name="error_bluetooth_not_available">Bluetooth non disponible</string>
+    <string name="error_bluetooth_connection_failed">Échec de la connexion Bluetooth</string>
+    <string name="unknown_device">Inconnu</string>
+
+    <string name="transport_wifi_direct">Wi-Fi Direct</string>
+    <string name="transport_bluetooth">Bluetooth</string>
+    <string name="paired_devices">Appareils associés</string>
+    <string name="no_paired_devices">Aucun appareil associé trouvé. Associez d\'abord l\'appareil du point d\'accès dans les paramètres Bluetooth.</string>
+    <string name="refresh">Actualiser</string>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot Client</string>
+
+    <string name="connect">Conectar</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="connected">Conectado</string>
+    <string name="disconnected">Desconectado</string>
+
+    <string name="socks_server_label">Servidor SOCKS5</string>
+    <string name="socks_server_hint">192.168.49.1:1080</string>
+
+    <string name="notification_channel_name">Túnel VPN</string>
+    <string name="notification_title">FlossWare Tunnel</string>
+    <string name="notification_text">Enrutando tráfico a través del hotspot</string>
+    <string name="notification_action_disconnect">Desconectar</string>
+
+    <string name="vpn_consent_required">Se requiere permiso de VPN para enrutar todo el tráfico a través del hotspot</string>
+
+    <string name="error_vpn_denied">Se denegó el permiso de VPN</string>
+    <string name="error_connection_failed">No se pudo conectar al servidor SOCKS5</string>
+    <string name="error_vpn_permission_denied">Permiso de VPN denegado</string>
+    <string name="error_generic_connection_failed">Error de conexión</string>
+    <string name="error_bluetooth_not_available">Bluetooth no disponible</string>
+    <string name="error_bluetooth_connection_failed">Error de conexión Bluetooth</string>
+    <string name="unknown_device">Desconocido</string>
+
+    <string name="transport_wifi_direct">Wi-Fi Direct</string>
+    <string name="transport_bluetooth">Bluetooth</string>
+    <string name="paired_devices">Dispositivos emparejados</string>
+    <string name="no_paired_devices">No se encontraron dispositivos emparejados. Empareja primero con el dispositivo hotspot en la configuración de Bluetooth.</string>
+    <string name="refresh">Actualizar</string>
+</resources>

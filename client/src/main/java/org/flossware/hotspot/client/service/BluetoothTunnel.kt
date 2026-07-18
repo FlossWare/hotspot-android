@@ -31,6 +31,7 @@ sealed class BluetoothTunnelState {
 class BluetoothTunnel(
     private val remoteDevice: BluetoothDevice,
     @Volatile var debugMode: Boolean = false,
+    private val fallbackErrorMessage: String = "Bluetooth connection failed",
 ) {
     private val _state = MutableStateFlow<BluetoothTunnelState>(BluetoothTunnelState.Disconnected)
     val state: StateFlow<BluetoothTunnelState> = _state.asStateFlow()
@@ -76,7 +77,7 @@ class BluetoothTunnel(
                     }
                 }
             } catch (e: IOException) {
-                _state.value = BluetoothTunnelState.Error(e.message ?: "Bluetooth connection failed")
+                _state.value = BluetoothTunnelState.Error(e.message ?: fallbackErrorMessage)
                 Log.e(TAG, "Bluetooth tunnel error", e)
             }
         }

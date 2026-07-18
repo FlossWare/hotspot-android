@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.flossware.hotspot.R
 import org.flossware.hotspot.model.HotspotState
 import java.net.InetAddress
 
@@ -55,7 +56,7 @@ class HotspotService : Service() {
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
         networkManager.onNetworkLost = {
-            _state.value = _state.value.copy(error = "Mobile data connection lost")
+            _state.value = _state.value.copy(error = getString(R.string.error_mobile_data_lost))
         }
         networkManager.unregister()
         startForeground(NOTIFICATION_ID, notificationHelper.build(0))
