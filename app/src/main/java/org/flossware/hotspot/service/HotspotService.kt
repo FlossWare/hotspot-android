@@ -10,6 +10,8 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.IBinder
+import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import javax.net.SocketFactory
@@ -42,6 +44,10 @@ class HotspotService : Service() {
     @Volatile private var mobileNetwork: Network? = null
     @Volatile private var upstreamDns: InetAddress? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var startTimeElapsed: Long = 0L
+    private var lastBytesTransferred: Long = 0L
+    private var idlePolls: Int = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -59,6 +65,10 @@ class HotspotService : Service() {
         unregisterMobileNetwork()
         startForeground(NOTIFICATION_ID, buildNotification(0))
         registerMobileNetwork()
+        acquireWakeLock()
+        startTimeElapsed = SystemClock.elapsedRealtime()
+        lastBytesTransferred = 0L
+        idlePolls = 0
 
         scope.launch {
             wifiDirectManager.state.collect { wifiState ->
@@ -80,16 +90,39 @@ class HotspotService : Service() {
 
         scope.launch {
             while (true) {
-                delay(2000)
+                val currentBytes = socksServer?.bytesTransferred ?: 0L
+                val isIdle = currentBytes == lastBytesTransferred && currentBytes > 0L
+                if (isIdle) {
+                    idlePolls++
+                } else {
+                    idlePolls = 0
+                }
+                lastBytesTransferred = currentBytes
+
+                val pollInterval = when {
+                    idlePolls >= IDLE_THRESHOLD_POLLS -> IDLE_POLL_MS
+                    else -> ACTIVE_POLL_MS
+                }
+
+                if (idlePolls == IDLE_THRESHOLD_POLLS) {
+                    releaseWakeLock()
+                } else if (idlePolls == 0 && wakeLock?.isHeld != true) {
+                    acquireWakeLock()
+                }
+
+                delay(pollInterval)
                 val socks = socksServer ?: continue
                 val current = _state.value
                 if (current.isRunning) {
                     val dns = dnsRelay
+                    val uptimeMs = SystemClock.elapsedRealtime() - startTimeElapsed
                     _state.value = current.copy(
                         bytesTransferred = socks.bytesTransferred,
                         dnsCacheHits = dns?.cacheHits ?: 0L,
                         httpCacheHits = httpCache.hits,
                         dataSaved = httpCache.dataSaved,
+                        uptimeSeconds = uptimeMs / 1000,
+                        isIdle = idlePolls >= IDLE_THRESHOLD_POLLS,
                     )
                     wifiDirectManager.refreshPeers()
                 }
@@ -168,6 +201,7 @@ class HotspotService : Service() {
         httpCache.clear()
         wifiDirectManager.stop()
         unregisterMobileNetwork()
+        releaseWakeLock()
         _state.value = HotspotState()
         scope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -249,6 +283,28 @@ class HotspotService : Service() {
         nm.notify(NOTIFICATION_ID, buildNotification(deviceCount))
     }
 
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val pm = getSystemService(PowerManager::class.java)
+        wakeLock = pm.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "FlossWareHotspot::ProxyWakeLock",
+        ).apply {
+            acquire(WAKE_LOCK_TIMEOUT_MS)
+        }
+        Log.d(TAG, "WakeLock acquired")
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "WakeLock released (idle)")
+            }
+        }
+        wakeLock = null
+    }
+
     override fun onDestroy() {
         stopHotspot()
         super.onDestroy()
@@ -261,6 +317,10 @@ class HotspotService : Service() {
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "HotspotService"
+        internal const val ACTIVE_POLL_MS = 2000L
+        internal const val IDLE_POLL_MS = 10000L
+        internal const val IDLE_THRESHOLD_POLLS = 15 // 15 * 2s = 30s of no data before idle
+        private const val WAKE_LOCK_TIMEOUT_MS = 4 * 60 * 60 * 1000L // 4 hours max
 
         private val _state = MutableStateFlow(HotspotState())
         val state: StateFlow<HotspotState> = _state.asStateFlow()

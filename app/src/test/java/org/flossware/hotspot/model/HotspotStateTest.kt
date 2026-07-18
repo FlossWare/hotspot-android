@@ -97,6 +97,46 @@ class HotspotStateTest {
     }
 
     @Test
+    fun `default power management fields are correct`() {
+        val state = HotspotState()
+        assertEquals(0L, state.uptimeSeconds)
+        assertFalse(state.isIdle)
+    }
+
+    @Test
+    fun `uptimeSeconds can be set`() {
+        val state = HotspotState(uptimeSeconds = 3600)
+        assertEquals(3600L, state.uptimeSeconds)
+    }
+
+    @Test
+    fun `isIdle can be set`() {
+        val state = HotspotState(isIdle = true)
+        assertTrue(state.isIdle)
+    }
+
+    @Test
+    fun `copy preserves power management fields`() {
+        val state = HotspotState(
+            uptimeSeconds = 120,
+            isIdle = true,
+        )
+        val copied = state.copy(isRunning = true)
+        assertEquals(120L, copied.uptimeSeconds)
+        assertTrue(copied.isIdle)
+    }
+
+    @Test
+    fun `equality includes power management fields`() {
+        val a = HotspotState(uptimeSeconds = 60, isIdle = false)
+        val b = HotspotState(uptimeSeconds = 60, isIdle = false)
+        assertEquals(a, b)
+
+        val c = HotspotState(uptimeSeconds = 60, isIdle = true)
+        assertFalse(a == c)
+    }
+
+    @Test
     fun `bluetooth fields can be set`() {
         val btDevices = listOf(ConnectedDevice("11:22:33:44:55:66", "Pixel"))
         val state = HotspotState(

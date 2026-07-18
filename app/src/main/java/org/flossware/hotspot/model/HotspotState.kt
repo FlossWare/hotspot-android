@@ -16,6 +16,8 @@ data class HotspotState(
     val dnsCacheHits: Long = 0L,
     val httpCacheHits: Long = 0L,
     val dataSaved: Long = 0L,
+    val uptimeSeconds: Long = 0L,
+    val isIdle: Boolean = false,
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"
