@@ -252,4 +252,33 @@ class HotspotStateTest {
         assertTrue(state.bluetoothOptIn)
         assertFalse(state.bluetoothEnabled)
     }
+
+    @Test
+    fun `default usbConnected is false`() {
+        val state = HotspotState()
+        assertFalse(state.usbConnected)
+    }
+
+    @Test
+    fun `usbConnected can be set`() {
+        val state = HotspotState(usbConnected = true)
+        assertTrue(state.usbConnected)
+    }
+
+    @Test
+    fun `copy preserves usbConnected`() {
+        val state = HotspotState(usbConnected = true)
+        val copied = state.copy(isRunning = true)
+        assertTrue(copied.usbConnected)
+    }
+
+    @Test
+    fun `equality includes usbConnected`() {
+        val a = HotspotState(usbConnected = true)
+        val b = HotspotState(usbConnected = true)
+        assertEquals(a, b)
+
+        val c = HotspotState(usbConnected = false)
+        assertFalse(a == c)
+    }
 }

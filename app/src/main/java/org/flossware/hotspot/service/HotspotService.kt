@@ -28,6 +28,7 @@ class HotspotService : Service() {
     private lateinit var networkManager: NetworkManager
     private val proxyManager = ProxyManager()
     private val bluetoothManager = BluetoothManager()
+    private val usbServer = UsbServer()
     private lateinit var notificationHelper: NotificationHelper
     private var wakeLock: PowerManager.WakeLock? = null
     private var startTimeElapsed: Long = 0L
@@ -160,6 +161,16 @@ class HotspotService : Service() {
                 _state.value = _state.value.copy(bluetoothConnectedDevices = devices)
             }
         }
+
+        usbServer.start(this)
+
+        scope.launch {
+            usbServer.state.collect { usbState ->
+                _state.value = _state.value.copy(
+                    usbConnected = usbState is UsbState.Connected,
+                )
+            }
+        }
     }
 
     private fun updateState(wifiState: WifiDirectState.GroupCreated) {
@@ -175,6 +186,7 @@ class HotspotService : Service() {
             bluetoothEnabled = current.bluetoothEnabled,
             bluetoothDeviceName = current.bluetoothDeviceName,
             bluetoothConnectedDevices = current.bluetoothConnectedDevices,
+            usbConnected = current.usbConnected,
         )
         notificationHelper.update(wifiState.connectedDevices.size)
     }
@@ -225,6 +237,8 @@ class HotspotService : Service() {
     private fun stopHotspot() {
         Log.i(TAG, "Stopping hotspot service")
         releaseWakeLock()
+        usbServer.stop()
+        usbServer.unregisterReceiver(this)
         bluetoothManager.stop()
         proxyManager.stop()
         wifiDirectManager.stop()

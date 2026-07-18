@@ -3,6 +3,7 @@ package org.flossware.hotspot.client.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SegmentedButton
@@ -25,7 +26,7 @@ fun TransportSelector(
         SegmentedButton(
             selected = selectedTransport == 0,
             onClick = { onTransportSelected(0) },
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
             enabled = enabled,
             icon = {
                 Icon(
@@ -39,7 +40,7 @@ fun TransportSelector(
         SegmentedButton(
             selected = selectedTransport == 1,
             onClick = { onTransportSelected(1) },
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
             enabled = enabled,
             icon = {
                 Icon(
@@ -49,6 +50,15 @@ fun TransportSelector(
             },
         ) {
             Text(stringResource(R.string.transport_bluetooth))
+        }
+        SegmentedButton(
+            selected = selectedTransport == 2,
+            onClick = { onTransportSelected(2) },
+            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+            enabled = enabled,
+            icon = { Icon(Icons.Default.Usb, contentDescription = null) },
+        ) {
+            Text(stringResource(R.string.transport_usb))
         }
     }
 }

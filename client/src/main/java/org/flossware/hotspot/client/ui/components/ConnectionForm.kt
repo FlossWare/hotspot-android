@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import org.flossware.hotspot.client.R
 import org.flossware.hotspot.client.model.Transport
 import org.flossware.hotspot.client.viewmodel.BluetoothDeviceInfo
+import org.flossware.hotspot.client.viewmodel.UsbDeviceInfo
 
 @Composable
 fun ConnectionForm(
@@ -45,6 +46,10 @@ fun ConnectionForm(
     selectedBtDevice: BluetoothDeviceInfo?,
     onDeviceSelected: (BluetoothDeviceInfo) -> Unit,
     onRefreshDevices: () -> Unit,
+    usbDevices: List<UsbDeviceInfo>,
+    selectedUsbDevice: UsbDeviceInfo?,
+    onUsbDeviceSelected: (UsbDeviceInfo) -> Unit,
+    onRefreshUsbDevices: () -> Unit,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     connectEnabled: Boolean,
@@ -52,18 +57,24 @@ fun ConnectionForm(
 ) {
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            if (selectedTransport == 0) {
-                WifiDirectForm(
+            when (selectedTransport) {
+                0 -> WifiDirectForm(
                     socksAddress = socksAddress,
                     onAddressChange = onAddressChange,
                     enabled = !isConnected,
                 )
-            } else {
-                BluetoothDeviceList(
+                1 -> BluetoothDeviceList(
                     devices = pairedDevices,
                     selectedDevice = selectedBtDevice,
                     onDeviceSelected = onDeviceSelected,
                     onRefresh = onRefreshDevices,
+                    enabled = !isConnected,
+                )
+                2 -> UsbDeviceList(
+                    devices = usbDevices,
+                    selectedDevice = selectedUsbDevice,
+                    onDeviceSelected = onUsbDeviceSelected,
+                    onRefresh = onRefreshUsbDevices,
                     enabled = !isConnected,
                 )
             }
@@ -162,10 +173,10 @@ private fun ConnectionStatus(
     transport: Transport,
 ) {
     val statusText = if (isConnected) {
-        val transportName = if (transport == Transport.BLUETOOTH) {
-            stringResource(R.string.transport_bluetooth)
-        } else {
-            stringResource(R.string.transport_wifi_direct)
+        val transportName = when (transport) {
+            Transport.BLUETOOTH -> stringResource(R.string.transport_bluetooth)
+            Transport.USB -> stringResource(R.string.transport_usb)
+            else -> stringResource(R.string.transport_wifi_direct)
         }
         "${stringResource(R.string.connected)} ($transportName)"
     } else {
@@ -185,6 +196,55 @@ private fun ConnectionStatus(
                 liveRegion = LiveRegionMode.Polite
             },
     )
+}
+
+@Composable
+private fun UsbDeviceList(
+    devices: List<UsbDeviceInfo>,
+    selectedDevice: UsbDeviceInfo?,
+    onDeviceSelected: (UsbDeviceInfo) -> Unit,
+    onRefresh: () -> Unit,
+    enabled: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.usb_devices),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        IconButton(onClick = onRefresh, enabled = enabled) {
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
+        }
+    }
+
+    if (devices.isEmpty()) {
+        Text(
+            stringResource(R.string.no_usb_devices),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+    } else {
+        for (device in devices) {
+            ListItem(
+                headlineContent = { Text(device.name) },
+                supportingContent = { Text(device.deviceName) },
+                leadingContent = {
+                    RadioButton(
+                        selected = selectedDevice?.deviceName == device.deviceName,
+                        onClick = { onDeviceSelected(device) },
+                        enabled = enabled,
+                    )
+                },
+                modifier = Modifier.clickable(enabled = enabled) {
+                    onDeviceSelected(device)
+                },
+            )
+        }
+    }
 }
 
 @Composable

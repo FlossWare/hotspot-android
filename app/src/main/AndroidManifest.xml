@@ -26,6 +26,9 @@
 
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
+    <!-- USB (optional transport) -->
+    <uses-feature android:name="android.hardware.usb.accessory" android:required="false" />
+
     <!-- Networking -->
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -55,6 +58,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
+                android:resource="@xml/usb_accessory_filter" />
         </activity>
 
         <service

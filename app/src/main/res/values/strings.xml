@@ -65,6 +65,13 @@
     <string name="bluetooth_connected_devices">Bluetooth Devices</string>
     <string name="no_bluetooth_devices">No Bluetooth devices connected</string>
 
+    <string name="usb_transport">USB Transport</string>
+    <string name="usb_experimental_label">Experimental</string>
+    <string name="usb_status">USB</string>
+    <string name="usb_connected">Connected</string>
+    <string name="usb_not_connected">Not connected</string>
+    <string name="usb_accessory_active">USB accessory relay active</string>
+
     <string name="cache_stats">Cache</string>
     <string name="dns_cache_hits">DNS Cache Hits</string>
     <string name="http_cache_hits">HTTP Cache Hits</string>

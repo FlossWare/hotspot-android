@@ -5,6 +5,7 @@ import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.hardware.usb.UsbManager
 import android.net.VpnService
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import org.flossware.hotspot.client.model.VpnState
 import org.flossware.hotspot.client.service.TunnelService
 
 data class BluetoothDeviceInfo(val name: String, val address: String)
+data class UsbDeviceInfo(val name: String, val deviceName: String)
 
 class ClientViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -30,6 +32,10 @@ class ClientViewModel(application: Application) : AndroidViewModel(application) 
         TunnelService.connectBluetooth(getApplication(), deviceAddress)
     }
 
+    fun connectUsb(deviceName: String) {
+        TunnelService.connectUsb(getApplication(), deviceName)
+    }
+
     fun disconnect() {
         TunnelService.disconnect(getApplication())
     }
@@ -45,6 +51,17 @@ class ClientViewModel(application: Application) : AndroidViewModel(application) 
             BluetoothDeviceInfo(
                 name = device.name ?: unknownName,
                 address = device.address,
+            )
+        }
+    }
+
+    fun getUsbDevices(): List<UsbDeviceInfo> {
+        val usbManager = getApplication<Application>()
+            .getSystemService(Context.USB_SERVICE) as? UsbManager ?: return emptyList()
+        return usbManager.deviceList.values.map { device ->
+            UsbDeviceInfo(
+                name = device.productName ?: "USB Device",
+                deviceName = device.deviceName,
             )
         }
     }

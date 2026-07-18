@@ -27,8 +27,11 @@
 
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">Bluetooth</string>
+    <string name="transport_usb">USB</string>
     <string name="paired_devices">Paired Devices</string>
     <string name="no_paired_devices">No paired devices found. Pair with the hotspot device in Bluetooth settings first.</string>
+    <string name="usb_devices">USB Devices</string>
+    <string name="no_usb_devices">No USB devices found. Connect a device via USB OTG cable.</string>
     <string name="refresh">Refresh</string>
 
     <!-- Accessibility: content descriptions -->

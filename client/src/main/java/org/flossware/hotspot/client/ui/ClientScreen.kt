@@ -43,6 +43,7 @@ import org.flossware.hotspot.client.ui.components.ConnectionForm
 import org.flossware.hotspot.client.ui.components.TransportSelector
 import org.flossware.hotspot.client.viewmodel.BluetoothDeviceInfo
 import org.flossware.hotspot.client.viewmodel.ClientViewModel
+import org.flossware.hotspot.client.viewmodel.UsbDeviceInfo
 
 @Composable
 fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
@@ -51,17 +52,21 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
     var selectedTransport by remember { mutableIntStateOf(0) }
     var selectedBtDevice by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
     var pairedDevices by remember { mutableStateOf<List<BluetoothDeviceInfo>>(emptyList()) }
+    var selectedUsbDevice by remember { mutableStateOf<UsbDeviceInfo?>(null) }
+    var usbDevices by remember { mutableStateOf<List<UsbDeviceInfo>>(emptyList()) }
     val context = LocalContext.current
 
     val vpnLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            if (selectedTransport == 0) {
-                val (host, port) = parseAddress(socksAddress)
-                viewModel.connect(host, port)
-            } else {
-                selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
+            when (selectedTransport) {
+                0 -> {
+                    val (host, port) = parseAddress(socksAddress)
+                    viewModel.connect(host, port)
+                }
+                1 -> selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
+                2 -> selectedUsbDevice?.let { viewModel.connectUsb(it.deviceName) }
             }
         }
     }
@@ -99,16 +104,22 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
         }
     }
 
+    fun refreshUsbDevices() {
+        usbDevices = viewModel.getUsbDevices()
+    }
+
     fun onConnect() {
         val vpnIntent = viewModel.prepareVpn()
         if (vpnIntent != null) {
             vpnLauncher.launch(vpnIntent)
         } else {
-            if (selectedTransport == 0) {
-                val (host, port) = parseAddress(socksAddress)
-                viewModel.connect(host, port)
-            } else {
-                selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
+            when (selectedTransport) {
+                0 -> {
+                    val (host, port) = parseAddress(socksAddress)
+                    viewModel.connect(host, port)
+                }
+                1 -> selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
+                2 -> selectedUsbDevice?.let { viewModel.connectUsb(it.deviceName) }
             }
         }
     }
@@ -136,8 +147,9 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
                 selectedTransport = selectedTransport,
                 onTransportSelected = { transport ->
                     selectedTransport = transport
-                    if (transport == 1) {
-                        refreshPairedDevices()
+                    when (transport) {
+                        1 -> refreshPairedDevices()
+                        2 -> refreshUsbDevices()
                     }
                 },
                 enabled = !state.isConnected,
@@ -153,9 +165,16 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
                 selectedBtDevice = selectedBtDevice,
                 onDeviceSelected = { selectedBtDevice = it },
                 onRefreshDevices = { refreshPairedDevices() },
+                usbDevices = usbDevices,
+                selectedUsbDevice = selectedUsbDevice,
+                onUsbDeviceSelected = { selectedUsbDevice = it },
+                onRefreshUsbDevices = { refreshUsbDevices() },
                 onConnect = { onConnect() },
                 onDisconnect = { viewModel.disconnect() },
-                connectEnabled = state.isConnected || selectedTransport == 0 || selectedBtDevice != null,
+                connectEnabled = state.isConnected ||
+                    selectedTransport == 0 ||
+                    (selectedTransport == 1 && selectedBtDevice != null) ||
+                    (selectedTransport == 2 && selectedUsbDevice != null),
             )
 
             state.error?.let { error ->
