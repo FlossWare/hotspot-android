@@ -1,0 +1,389 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ComplexCondition:DnsRelay.kt$DnsRelay$responseData.size &lt; 2 || queryData.size &lt; 2 || responseData[0] != queryData[0] || responseData[1] != queryData[1]</ID>
+    <ID>CyclomaticComplexMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
+    <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
+    <ID>CyclomaticComplexMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>CyclomaticComplexMethod:ProxyServerTest.kt$ProxyServerTest$private fun createPostEchoServer(): ServerSocket</ID>
+    <ID>CyclomaticComplexMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
+    <ID>CyclomaticComplexMethod:Socks5ServerTest.kt$Socks5ServerTest$private fun createCacheFriendlyPostEchoServer(): ServerSocket</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `all fields are set correctly`()</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `copy works correctly`()</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `default ipAddress is null`()</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `equality for identical devices`()</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `inequality for different mac addresses`()</ID>
+    <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `toString contains all fields`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `ByteArrayKey equality and hashCode`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse equality and hashCode`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns false for future time`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns true for past time`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache constants are correct`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache handles many unique domains without failure`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache hits are zero initially`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cached entry serves subsequent identical query as cache hit`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `double start is idempotent`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl clamps above MAX_TTL`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl clamps below MIN_TTL`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl parses TTL from answer record`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl returns default for short data`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl returns default for zero answer count`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl returns minimum of multiple answer records`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with AAAA record type`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with TTL exactly at MAX_TTL`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with TTL exactly at MIN_TTL`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with truncated answer section returns default`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with zero TTL returns default`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey handles deeply nested domain`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey handles single-label domain`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey ignores transaction ID`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey returns different keys for different domains`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey returns key for valid query`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey returns null for exactly 12 bytes with zero qdcount`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey returns null for short queries`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey returns null for zero question count`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `forwardQuery handles upstream timeout gracefully`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `forwards DNS query to upstream and returns response`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `handles multiple concurrent queries`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `patchTransactionId verified through cache hit with different txn ID`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `second identical query is served from cache`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `socketBinder is called for upstream socket`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `start sets running to true`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop clears cache`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop closes socket and thread`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `hours minutes seconds`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `hours with minutes and seconds`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `large uptime`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `minutes and seconds`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `seconds only`()</ID>
+    <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `zero seconds`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `bluetooth fields can be set`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `bluetoothOptIn can be toggled independently of bluetoothEnabled`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `bluetoothOptIn defaults to false`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `cache fields can be set`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth false when bluetooth unavailable`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth false when running`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth false when wifi direct available`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth when wifi direct unavailable and bluetooth available`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `companion constants are correct`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves bluetooth and cache fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves feature availability fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves fields correctly`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves power management fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves usbConnected`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy with error preserves other fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default bluetooth fields are correct`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default cache fields are zero`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default feature availability fields are true`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default power management fields are correct`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default state has correct values`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default usbConnected is false`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `destructuring works`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress formats correctly`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress with custom host and port`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes bluetooth and cache fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes feature availability fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes power management fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes usbConnected`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality works for identical states`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `feature availability fields can be set`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `inequality for different states`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `isIdle can be set`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `multiple connected devices`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `socksAddress formats correctly`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `socksAddress with custom host and port`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `toString contains key fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `uptimeSeconds can be set`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `usbConnected can be set`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `Cache-Control max-age=0 still allows caching with immediate expiry`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `Cache-Control with multiple directives parses max-age`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `CacheEntry equality and hashCode`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `CacheEntry isExpired returns false for future time`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `CacheEntry isExpired returns true for past time`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `authorization in request prevents caching response`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `authorization in request prevents serving from cache`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache key includes host and path`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache miss returns false`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache replaces existing entry for same key`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache stores and serves GET 200 response`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache-control no-cache prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cache-control with no-store among multiple directives prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `cacheable content types are accepted`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `clear removes all entries`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `companion constants are correct`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `concurrent cache reads do not throw`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `concurrent cache writes do not throw`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `concurrent reads and writes do not throw`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `containsHeader is case-insensitive`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `data saved tracks cached bytes`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `empty response body is not cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `entry too large is not cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `eviction order is by expiry time`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `eviction removes expired entries to make room for new ones`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `evicts oldest when total size exceeded`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `expired entry is evicted on access`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `gzip content-encoding response is cached and served as-is`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `headerContains checks value case-insensitively`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `max-age with spaces around equals is parsed`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `max-age zero prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `multiple cache-control directives parsed correctly`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `no-store prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `non-200 responses are not cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `non-GET requests are never cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `non-cacheable content types are rejected`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `pragma no-cache in request prevents serving from cache`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `pragma no-cache in response prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `private prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine empty line`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine handles bare CR without LF`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine handles content at EOF without newline`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine parses CRLF lines`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine parses LF-only lines`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine returns null on empty stream`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine throws IOException on max length exceeded`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine with custom maxLength exceeded`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `readLine with custom maxLength`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response is forwarded to client even when not cacheable`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response is forwarded to client even when not cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response with Content-Length exceeding maxEntryBytes is not cached but forwarded`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response without Content-Length exceeding maxEntryBytes during read is not cached`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response without content-length is cached when small enough`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `set-cookie prevents caching`()</ID>
+    <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `vary header prevents caching`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `clear removes all entries`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `concurrent access does not crash`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `error with throwable includes exception message`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `format produces expected output`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `getEntries returns a snapshot copy`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `log entries are stored in order`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `log levels are captured correctly`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `ring buffer drops oldest entries when full`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `size tracks entry count`()</ID>
+    <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `tags are captured correctly`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize handles multiple sensitive values in one line`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize is case insensitive`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize leaves non-sensitive data unchanged`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize leaves normal log messages unchanged`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips WiFi QR password field`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips api key values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips auth failed messages`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips auth succeeded messages`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips credential values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips passphrase values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips password values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips password with colon separator`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips psk values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips secret values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips token values`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username in quotes`()</ID>
+    <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username with equals`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when no socket factory for CONNECT`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when upstream connection fails`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT tunnel establishes connection`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `HTTP proxy forwards GET request`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `HTTP proxy forwards POST request with body`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `bytesTransferred starts at zero`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `double start is idempotent`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `parseHostPort with invalid port uses default`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `parseHostPort with port 8080`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `parseHostPort with port`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `parseHostPort without port uses default`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `proxy adds Host header when missing`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `proxy returns 400 for invalid URL`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `proxy returns 502 when no socket factory available`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `proxy strips Proxy-Connection header`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readHeaders handles empty headers`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readHeaders handles header with colon in value`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readHeaders parses standard headers`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readHeaders skips malformed lines without colon`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readHeaders trims whitespace`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readLine parses line with CRLF`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readLine returns null on empty stream`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readLine returns partial data at EOF without newline`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `readLine with LF only (no CR)`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relay copies data and counts bytes`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relay handles empty input`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relay handles large data`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relayBytes copies exact number of bytes`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relayBytes handles input shorter than length`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `relayBytes handles zero length`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `sendError writes proper HTTP response`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `start sets running to true`()</ID>
+    <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks loopback destination with SSRF protection`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns CONNECTION_REFUSED for closed port`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns failure when no socket factory`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to echo server via SOCKS5`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with non-GET request forwards without caching`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT with auth to echo server via SOCKS5`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT with domain name uses dnsResolver`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT with wrong auth is rejected end-to-end`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `activeConnections starts at zero`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `auth rejects wrong password`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `auth rejects wrong username`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `authenticateUsernamePassword rejects wrong auth version`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `authenticateUsernamePassword succeeds with correct credentials`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `bytesTransferred starts at zero`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `companion constants have correct values`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals handles empty strings`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals returns false for different lengths`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals returns false for different strings`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals returns true for equal strings`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals with single character difference`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals with unicode characters`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `double start is idempotent`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `handleClient closes connection on wrong version in request phase`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks loopback and link-local`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate accepts NO_AUTH among multiple methods`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate accepts NO_AUTH method`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate rejects empty stream`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate rejects when NO_AUTH not offered`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate rejects wrong version`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate rejects zero methods count`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate requires auth when credentials configured`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate returns false on EOF during methods read`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate selects username password auth when configured`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses IPv4`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses IPv6`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses domain name`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses full IPv6 address`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses high port numbers correctly`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses port zero`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on invalid domain length zero`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on truncated IPv4 data`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on truncated port`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on unsupported address type`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `relay copies data and counts bytes`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `relay counts bytes across multiple calls`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `relay handles empty input`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `relay handles large data`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply port encoding is correct for port 1`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply with IPv6 encodes full 16-byte address and correct port`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes ADDR_NOT_SUPPORTED`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes CMD_NOT_SUPPORTED`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes CONNECTION_REFUSED`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes HOST_UNREACHABLE`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes IPv6 address correctly`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes IPv6 response`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes correct success response`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `sendReply writes failure with zero address`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `server rejects connections over per-client limit`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `server rejects connections over total limit`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `start sets running to true`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `unsupported command returns CMD_NOT_SUPPORTED`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test(expected = java.io.IOException::class) fun `readAddress throws on empty stream`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MAX_RETRIES is reasonable`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Error equality`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Error holds error message`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated equality`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated holds connected devices`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated holds network info`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Idle is a singleton object`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `initial state is Idle`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason includes error code for all unknown values`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns different messages for each standard reason code`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns generic message for unknown reason`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns user-friendly message for BUSY`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns user-friendly message for ERROR`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns user-friendly message for NO_SERVICE_REQUESTS`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns user-friendly message for P2P_UNSUPPORTED`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `state flow is accessible before start`()</ID>
+    <ID>LargeClass:DnsRelayTest.kt$DnsRelayTest</ID>
+    <ID>LargeClass:HttpCacheTest.kt$HttpCacheTest</ID>
+    <ID>LargeClass:Socks5ServerTest.kt$Socks5ServerTest</ID>
+    <ID>LongMethod:BluetoothInfo.kt$@Composable fun BluetoothInfo( state: HotspotState, onBluetoothOptInChanged: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
+    <ID>LongMethod:ConnectionInfo.kt$@Composable fun ConnectionInfo( state: HotspotState, qrBitmap: Bitmap?, modifier: Modifier = Modifier, initiallyExpanded: Boolean = true, )</ID>
+    <ID>LongMethod:DnsRelay.kt$DnsRelay$internal fun forwardQuery( listenSocket: DatagramSocket, queryData: ByteArray, clientAddr: InetAddress, clientPort: Int, )</ID>
+    <ID>LongMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
+    <ID>LongMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
+    <ID>LongMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
+    <ID>LongMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
+    <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleConnect( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
+    <ID>LongMethod:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
+    <ID>LongParameterList:CollapsibleSection.kt$( title: String, modifier: Modifier = Modifier, subtitle: String? = null, badge: String? = null, initiallyExpanded: Boolean = true, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
+    <ID>LongParameterList:HttpCache.kt$HttpCache$( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>LongParameterList:Socks5Server.kt$Socks5Server$( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
+    <ID>LongParameterList:Socks5Server.kt$Socks5Server$( client: Socket, input: InputStream, output: OutputStream, host: String, resolved: InetAddress, factory: SocketFactory, )</ID>
+    <ID>LongParameterList:Socks5Server.kt$Socks5Server$( private val bindAddress: InetAddress, private val port: Int = 1080, private val socketFactoryProvider: () -&gt; SocketFactory?, private val dnsResolver: (String) -&gt; InetAddress = { InetAddress.getByName(it) }, private val httpCache: HttpCache? = null, private val username: String? = null, private val password: String? = null, private val maxConnectionsPerClient: Int = 10, private val maxTotalConnections: Int = 100, private val ssrfProtection: Boolean = true, @Volatile var debugMode: Boolean = false, )</ID>
+    <ID>LoopWithTooManyJumpStatements:BluetoothServer.kt$BluetoothServer$while</ID>
+    <ID>LoopWithTooManyJumpStatements:DnsRelay.kt$DnsRelay$for</ID>
+    <ID>LoopWithTooManyJumpStatements:DnsRelayTest.kt$DnsRelayTest$while</ID>
+    <ID>LoopWithTooManyJumpStatements:HttpCache.kt$HttpCache$while</ID>
+    <ID>LoopWithTooManyJumpStatements:ProxyServer.kt$ProxyServer$while</ID>
+    <ID>LoopWithTooManyJumpStatements:ProxyServerTest.kt$ProxyServerTest$while</ID>
+    <ID>LoopWithTooManyJumpStatements:Socks5Server.kt$Socks5Server$while</ID>
+    <ID>LoopWithTooManyJumpStatements:Socks5ServerTest.kt$Socks5ServerTest$while</ID>
+    <ID>MagicNumber:BluetoothServer.kt$BluetoothServer$60_000</ID>
+    <ID>MagicNumber:DnsRelay.kt$DnsRelay$0xC0</ID>
+    <ID>MagicNumber:DnsRelay.kt$DnsRelay$12</ID>
+    <ID>MagicNumber:DnsRelay.kt$DnsRelay$5000</ID>
+    <ID>MagicNumber:LogExporter.kt$LogExporter$5</ID>
+    <ID>MagicNumber:ProxyServer.kt$ProxyServer$400</ID>
+    <ID>MagicNumber:ProxyServer.kt$ProxyServer$443</ID>
+    <ID>MagicNumber:ProxyServer.kt$ProxyServer$50</ID>
+    <ID>MagicNumber:ProxyServer.kt$ProxyServer$502</ID>
+    <ID>MagicNumber:ProxyServer.kt$ProxyServer$60_000</ID>
+    <ID>MagicNumber:Socks5Server.kt$Socks5Server$0xFF</ID>
+    <ID>MagicNumber:Socks5Server.kt$Socks5Server$50</ID>
+    <ID>MagicNumber:Socks5Server.kt$Socks5Server$65535</ID>
+    <ID>MagicNumber:Socks5Server.kt$Socks5Server$80</ID>
+    <ID>MagicNumber:UsbServer.kt$UsbServer$60_000</ID>
+    <ID>MaxLineLength:BluetoothServer.kt$BluetoothServer$_state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_server_failed, e.message ?: ""))</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$assertFalse("Expired entry should not be served", smallCache.tryServeFromCache("expire-me.com", "GET / HTTP/1.1", "", out3))</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$assertTrue("New entry should be cached", smallCache.tryServeFromCache("new-entry.com", "GET / HTTP/1.1", "", out2))</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$assertTrue("Should be cached initially", smallCache.tryServeFromCache("expire-me.com", "GET / HTTP/1.1", "", out1))</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val headerPart = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\nContent-Length: ${gzipBody.size}\r\n\r\n"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: max-age = 600\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: max-age=0\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: no-store\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nhello world"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: no-store\r\nContent-Type: text/html\r\nContent-Length: 5\r\n\r\nhello"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: public, max-age=300, must-revalidate\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nCache-Control: public, no-store, max-age=300\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=0\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: public, max-age=3600, must-revalidate\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response = "HTTP/1.1 200 OK\r\nVary: Accept-Encoding\r\nContent-Type: text/html\r\nContent-Length: 4\r\n\r\ntest"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response1 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=1\r\nContent-Length: ${body1.length}\r\n\r\n$body1"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response1 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=99999\r\nContent-Length: ${body1.length}\r\n\r\n$body1"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response2 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=1\r\nContent-Length: ${body2.length}\r\n\r\n$body2"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response2 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=3600\r\nContent-Length: ${body2.length}\r\n\r\n$body2"</ID>
+    <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$val response3 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=50000\r\nContent-Length: ${body3.length}\r\n\r\n$body3"</ID>
+    <ID>MaxLineLength:LogExporter.kt$LogExporter$appendLine("App: ${context.applicationInfo.loadLabel(context.packageManager)} v$versionName (build $versionCode)")</ID>
+    <ID>MaxLineLength:ProxyServer.kt$ProxyServer$private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(64), ThreadPoolExecutor.CallerRunsPolicy())</ID>
+    <ID>MaxLineLength:ProxyServerTest.kt$ProxyServerTest$val input = ByteArrayInputStream("Host: example.com\r\nContent-Type: text/html\r\nContent-Length: 42\r\n\r\n".toByteArray())</ID>
+    <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")</ID>
+    <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")</ID>
+    <ID>NestedBlockDepth:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>ReturnCount:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>ReturnCount:HttpCache.kt$HttpCache$fun tryServeFromCache( host: String, requestLine: String, requestHeaders: String, clientOutput: OutputStream, ): Boolean</ID>
+    <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun authenticateUsernamePassword(input: InputStream, output: OutputStream): Boolean</ID>
+    <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
+    <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun handleConnect( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
+    <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun negotiate(input: InputStream, output: OutputStream): Boolean</ID>
+    <ID>SwallowedException:ProxyServer.kt$ProxyServer$e: Exception</ID>
+    <ID>ThrowsCount:Socks5Server.kt$Socks5Server$internal fun readAddress(input: InputStream): Pair&lt;String, Int&gt;</ID>
+    <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
+    <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
+    <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
+    <ID>TooManyFunctions:HotspotStateTest.kt$HotspotStateTest</ID>
+    <ID>TooManyFunctions:HttpCacheTest.kt$HttpCacheTest</ID>
+    <ID>TooManyFunctions:LogCollectorTest.kt$LogCollectorTest</ID>
+    <ID>TooManyFunctions:LogExporterTest.kt$LogExporterTest</ID>
+    <ID>TooManyFunctions:ProxyServer.kt$ProxyServer</ID>
+    <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
+    <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
+    <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
+    <ID>TooManyFunctions:WifiDirectManagerTest.kt$WifiDirectManagerTest</ID>
+    <ID>UnusedParameter:HttpCache.kt$HttpCache$clientInput: InputStream</ID>
+    <ID>UnusedParameter:HttpCache.kt$HttpCache$upstreamOutput: OutputStream</ID>
+    <ID>UnusedPrivateProperty:BluetoothInfo.kt$val switchLabel = stringResource( R.string.cd_bluetooth_opt_in, if (state.bluetoothOptIn) stringResource(R.string.bluetooth_enabled) else stringResource(R.string.bluetooth_disabled), )</ID>
+    <ID>UnusedPrivateProperty:Socks5ServerTest.kt$Socks5ServerTest$i</ID>
+  </CurrentIssues>
+</SmellBaseline>

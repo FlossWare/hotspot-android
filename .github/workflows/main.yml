@@ -45,6 +45,14 @@ jobs:
       - name: Run unit tests
         run: ./gradlew test
 
+      - name: Run detekt
+        run: ./gradlew detekt
+        continue-on-error: true
+
+      - name: Run kover reports
+        run: ./gradlew koverHtmlReport koverXmlReport
+        continue-on-error: true
+
       - name: Upload host debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -72,6 +80,26 @@ jobs:
           name: client-release-unsigned
           path: client/build/outputs/apk/release/client-release-unsigned.apk
           retention-days: 90
+
+      - name: Upload detekt results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-results
+          path: |
+            app/build/reports/detekt/
+            client/build/reports/detekt/
+          retention-days: 30
+
+      - name: Upload kover results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kover-results
+          path: |
+            app/build/reports/kover/
+            client/build/reports/kover/
+          retention-days: 30
 
       - name: Configure git for version bump
         run: |

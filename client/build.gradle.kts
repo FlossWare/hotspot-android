@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -74,4 +76,29 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(rootProject.files("config/detekt/detekt.yml"))
+    baseline = file("detekt-baseline.xml")
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R$*",
+                    "*Activity",
+                    "*Application",
+                    "*.databinding.*",
+                    "*.ui.theme.*",
+                )
+                packages("*.generated.*")
+            }
+        }
+    }
 }
