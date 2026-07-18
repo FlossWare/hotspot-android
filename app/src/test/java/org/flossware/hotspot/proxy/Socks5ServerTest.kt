@@ -1151,6 +1151,7 @@ class Socks5ServerTest {
             socketFactoryProvider = { createRedirectingSocketFactory(echoPort) },
             dnsResolver = { InetAddress.getLoopbackAddress() },
             httpCache = httpCache,
+            ssrfProtection = false,
         )
         cacheServer.start()
         Thread.sleep(500)
@@ -1238,6 +1239,7 @@ class Socks5ServerTest {
             socketFactoryProvider = { createRedirectingSocketFactory(echoPort) },
             dnsResolver = { InetAddress.getLoopbackAddress() },
             httpCache = httpCache,
+            ssrfProtection = false,
         )
         cacheServer.start()
         Thread.sleep(500)
