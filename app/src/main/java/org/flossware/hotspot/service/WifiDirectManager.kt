@@ -43,6 +43,13 @@ class WifiDirectManager {
     fun start(ctx: Context) {
         context = ctx
         retryHandler = android.os.Handler(Looper.getMainLooper())
+
+        // Check hardware support before attempting to initialize
+        if (!ctx.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_WIFI_DIRECT)) {
+            _state.value = WifiDirectState.Error(ctx.getString(R.string.error_no_wifi_direct))
+            return
+        }
+
         manager = ctx.getSystemService(Context.WIFI_P2P_SERVICE) as? WifiP2pManager
         if (manager == null) {
             _state.value = WifiDirectState.Error(ctx.getString(R.string.error_wifi_direct_not_supported))

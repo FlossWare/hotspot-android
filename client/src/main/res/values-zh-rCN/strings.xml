@@ -17,18 +17,29 @@
 
     <string name="vpn_consent_required">需要 VPN 权限才能将所有流量通过热点路由</string>
 
-    <string name="error_vpn_denied">VPN 权限被拒绝</string>
+    <string name="error_vpn_denied">VPN 权限被拒绝。VPN 用于将所有互联网流量通过热点路由。请在提示时授予 VPN 权限。</string>
     <string name="error_connection_failed">无法连接到 SOCKS5 服务器</string>
-    <string name="error_vpn_permission_denied">VPN 权限被拒绝</string>
+    <string name="error_vpn_permission_denied">需要 VPN 权限才能将流量通过热点隧道传输。没有此权限，客户端将无法工作。请再次点击"连接"并允许 VPN 请求。</string>
     <string name="error_generic_connection_failed">连接失败</string>
     <string name="error_bluetooth_not_available">蓝牙不可用</string>
     <string name="error_bluetooth_connection_failed">蓝牙连接失败</string>
     <string name="unknown_device">未知</string>
 
+    <!-- Graceful degradation: connection error types -->
+    <string name="error_host_not_found">找不到热点主机。请确保已连接到热点 Wi-Fi 网络且主机应用正在运行。</string>
+    <string name="error_auth_failed">认证失败。请检查 SOCKS5 服务器地址是否正确。</string>
+    <string name="error_connection_timeout">连接超时。热点可能超出范围或未在运行。请靠近并重试。</string>
+    <string name="error_no_transports">没有可用的连接方式。此设备不支持 Wi-Fi、蓝牙或 USB 连接。请检查设备设置。</string>
+    <string name="error_usb_not_available">USB 不可用</string>
+    <string name="error_usb_device_not_found">USB 设备已断开。请重新连接 USB 线缆并重试。</string>
+
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">蓝牙</string>
+    <string name="transport_usb">USB</string>
     <string name="paired_devices">已配对设备</string>
     <string name="no_paired_devices">未找到已配对设备。请先在蓝牙设置中与热点设备配对。</string>
+    <string name="usb_devices">USB 设备</string>
+    <string name="no_usb_devices">未找到 USB 设备。请通过 USB OTG 线缆连接设备。</string>
     <string name="refresh">刷新</string>
 
     <string name="share_logs">分享日志</string>

@@ -38,13 +38,13 @@
     <string name="open_settings">Open Settings</string>
     <string name="ok">OK</string>
 
-    <string name="error_no_wifi_direct">Wi-Fi Direct is not supported on this device</string>
-    <string name="error_no_mobile_data">Mobile data is not available</string>
+    <string name="error_no_wifi_direct">Wi-Fi Direct is not supported on this device. You can still share your connection using Bluetooth or USB transport.</string>
+    <string name="error_no_mobile_data">Mobile data is not available. Enable mobile data to share your connection.</string>
     <string name="error_group_creation_failed">Failed to create hotspot network</string>
     <string name="error_socks_failed">Failed to start SOCKS5 server</string>
-    <string name="error_mobile_data_lost">Mobile data connection lost</string>
+    <string name="error_mobile_data_lost">Mobile data connection lost. Re-enable mobile data and restart the hotspot.</string>
     <string name="error_wifi_direct_not_supported">Wi-Fi Direct not supported</string>
-    <string name="error_wifi_direct_disabled">Wi-Fi Direct is disabled</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct is disabled. Enable Wi-Fi to use Wi-Fi Direct, or try Bluetooth/USB transport instead.</string>
     <string name="error_wifi_direct_generic">Wi-Fi Direct failed. Some devices require Wi-Fi to be ON. Try enabling Wi-Fi and Location services, then retry.</string>
     <string name="error_wifi_direct_busy">Wi-Fi Direct is busy. Please wait a moment and try again.</string>
     <string name="error_service_discovery_failed">Service discovery failed. Try toggling Wi-Fi off and on.</string>
@@ -54,6 +54,18 @@
     <string name="error_bluetooth_server_failed">Failed to create Bluetooth server: %1$s</string>
     <string name="unknown_device">Unknown</string>
     <string name="idle_suffix"> (idle)</string>
+
+    <!-- Graceful degradation strings -->
+    <string name="error_wifi_direct_unavailable_suggestion">Wi-Fi Direct is not available. Try using Bluetooth or USB transport instead.</string>
+    <string name="error_mobile_data_guidance">Enable mobile data to share your connection. Go to Settings > Network > Mobile data.</string>
+    <string name="error_permissions_denied">Some permissions were denied. Without them, the following features will not work:</string>
+    <string name="error_permission_wifi_direct">Wi-Fi Direct hotspot (requires %1$s)</string>
+    <string name="error_permission_bluetooth">Bluetooth transport (requires Bluetooth permissions)</string>
+    <string name="continue_bluetooth_only">Continue with Bluetooth Only</string>
+    <string name="bluetooth_only_mode_active">Running in Bluetooth-only mode. Wi-Fi Direct is unavailable.</string>
+    <string name="feature_unavailable_wifi_direct">Wi-Fi Direct is not supported on this device</string>
+    <string name="feature_unavailable_bluetooth">Bluetooth is not available on this device</string>
+    <string name="feature_unavailable_usb">USB Accessory mode is not supported on this device</string>
 
     <string name="bluetooth_transport">Bluetooth Transport</string>
     <string name="bluetooth_experimental_label">Experimental</string>

@@ -5,7 +5,10 @@ import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.usb.UsbManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +22,10 @@ data class UsbDeviceInfo(val name: String, val deviceName: String)
 class ClientViewModel(application: Application) : AndroidViewModel(application) {
 
     val vpnState: StateFlow<VpnState> = TunnelService.state
+
+    init {
+        detectTransportAvailability()
+    }
 
     fun prepareVpn(): Intent? {
         return VpnService.prepare(getApplication())
@@ -64,5 +71,28 @@ class ClientViewModel(application: Application) : AndroidViewModel(application) 
                 deviceName = device.deviceName,
             )
         }
+    }
+
+    /**
+     * Detects which transports are available and updates the shared VPN state
+     * so the UI can show appropriate guidance.
+     */
+    private fun detectTransportAvailability() {
+        val app = getApplication<Application>()
+        val pm = app.packageManager
+
+        val wifiAvailable = pm.hasSystemFeature(PackageManager.FEATURE_WIFI)
+
+        val btManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        val bluetoothAvailable = btManager?.adapter != null
+
+        val usbManager = app.getSystemService(Context.USB_SERVICE) as? UsbManager
+        val usbAvailable = usbManager != null
+
+        TunnelService.updateTransportAvailability(
+            wifiAvailable = wifiAvailable,
+            bluetoothAvailable = bluetoothAvailable,
+            usbAvailable = usbAvailable,
+        )
     }
 }

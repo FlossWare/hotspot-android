@@ -182,4 +182,85 @@ class VpnStateTest {
         assertFalse(wifi == usb)
         assertFalse(bt == usb)
     }
+
+    @Test
+    fun `default errorType is NONE`() {
+        val state = VpnState()
+        assertEquals(ConnectionErrorType.NONE, state.errorType)
+    }
+
+    @Test
+    fun `errorType can be set`() {
+        val state = VpnState(errorType = ConnectionErrorType.HOST_NOT_FOUND)
+        assertEquals(ConnectionErrorType.HOST_NOT_FOUND, state.errorType)
+    }
+
+    @Test
+    fun `copy preserves errorType`() {
+        val state = VpnState(errorType = ConnectionErrorType.TIMEOUT)
+        val copied = state.copy(error = "test")
+        assertEquals(ConnectionErrorType.TIMEOUT, copied.errorType)
+    }
+
+    @Test
+    fun `ConnectionErrorType enum has all expected values`() {
+        val values = ConnectionErrorType.entries
+        assertEquals(7, values.size)
+        assertTrue(values.contains(ConnectionErrorType.NONE))
+        assertTrue(values.contains(ConnectionErrorType.HOST_NOT_FOUND))
+        assertTrue(values.contains(ConnectionErrorType.AUTH_FAILED))
+        assertTrue(values.contains(ConnectionErrorType.TIMEOUT))
+        assertTrue(values.contains(ConnectionErrorType.VPN_DENIED))
+        assertTrue(values.contains(ConnectionErrorType.NO_TRANSPORTS))
+        assertTrue(values.contains(ConnectionErrorType.GENERIC))
+    }
+
+    @Test
+    fun `default transport availability is all true`() {
+        val state = VpnState()
+        assertTrue(state.wifiAvailable)
+        assertTrue(state.bluetoothAvailable)
+        assertTrue(state.usbAvailable)
+    }
+
+    @Test
+    fun `noTransportsAvailable when all unavailable`() {
+        val state = VpnState(
+            wifiAvailable = false,
+            bluetoothAvailable = false,
+            usbAvailable = false,
+        )
+        assertTrue(state.noTransportsAvailable)
+    }
+
+    @Test
+    fun `noTransportsAvailable false when any available`() {
+        val wifiOnly = VpnState(wifiAvailable = true, bluetoothAvailable = false, usbAvailable = false)
+        assertFalse(wifiOnly.noTransportsAvailable)
+
+        val btOnly = VpnState(wifiAvailable = false, bluetoothAvailable = true, usbAvailable = false)
+        assertFalse(btOnly.noTransportsAvailable)
+
+        val usbOnly = VpnState(wifiAvailable = false, bluetoothAvailable = false, usbAvailable = true)
+        assertFalse(usbOnly.noTransportsAvailable)
+    }
+
+    @Test
+    fun `copy preserves transport availability`() {
+        val state = VpnState(wifiAvailable = false, bluetoothAvailable = true, usbAvailable = false)
+        val copied = state.copy(isConnected = true)
+        assertFalse(copied.wifiAvailable)
+        assertTrue(copied.bluetoothAvailable)
+        assertFalse(copied.usbAvailable)
+    }
+
+    @Test
+    fun `equality includes transport availability`() {
+        val a = VpnState(wifiAvailable = false)
+        val b = VpnState(wifiAvailable = false)
+        assertEquals(a, b)
+
+        val c = VpnState(wifiAvailable = true)
+        assertFalse(a == c)
+    }
 }

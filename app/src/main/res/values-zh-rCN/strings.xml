@@ -38,13 +38,13 @@
     <string name="open_settings">打开设置</string>
     <string name="ok">确定</string>
 
-    <string name="error_no_wifi_direct">此设备不支持 Wi-Fi Direct</string>
-    <string name="error_no_mobile_data">移动数据不可用</string>
+    <string name="error_no_wifi_direct">此设备不支持 Wi-Fi Direct。您仍然可以使用蓝牙或 USB 传输共享连接。</string>
+    <string name="error_no_mobile_data">移动数据不可用。请启用移动数据以共享连接。</string>
     <string name="error_group_creation_failed">创建热点网络失败</string>
     <string name="error_socks_failed">启动 SOCKS5 服务器失败</string>
-    <string name="error_mobile_data_lost">移动数据连接已断开</string>
+    <string name="error_mobile_data_lost">移动数据连接已断开。请重新启用移动数据并重启热点。</string>
     <string name="error_wifi_direct_not_supported">不支持 Wi-Fi Direct</string>
-    <string name="error_wifi_direct_disabled">Wi-Fi Direct 已禁用</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct 已禁用。请启用 Wi-Fi 以使用 Wi-Fi Direct，或尝试蓝牙/USB传输。</string>
     <string name="error_wifi_direct_generic">Wi-Fi Direct 失败。某些设备需要开启 Wi-Fi。请尝试开启 Wi-Fi 和位置服务，然后重试。</string>
     <string name="error_wifi_direct_busy">Wi-Fi Direct 正忙。请稍等片刻再试。</string>
     <string name="error_service_discovery_failed">服务发现失败。请尝试关闭并重新开启 Wi-Fi。</string>
@@ -83,4 +83,16 @@
 
     <string name="share_logs">分享日志</string>
     <string name="cd_share_logs">分享调试日志</string>
+
+    <!-- Graceful degradation strings -->
+    <string name="error_wifi_direct_unavailable_suggestion">Wi-Fi Direct 不可用。请尝试使用蓝牙或 USB 传输。</string>
+    <string name="error_mobile_data_guidance">请启用移动数据以共享连接。前往设置 > 网络 > 移动数据。</string>
+    <string name="error_permissions_denied">某些权限被拒绝。没有这些权限，以下功能将无法使用：</string>
+    <string name="error_permission_wifi_direct">Wi-Fi Direct 热点（需要%1$s权限）</string>
+    <string name="error_permission_bluetooth">蓝牙传输（需要蓝牙权限）</string>
+    <string name="continue_bluetooth_only">仅使用蓝牙继续</string>
+    <string name="bluetooth_only_mode_active">正在仅蓝牙模式下运行。Wi-Fi Direct 不可用。</string>
+    <string name="feature_unavailable_wifi_direct">此设备不支持 Wi-Fi Direct</string>
+    <string name="feature_unavailable_bluetooth">此设备没有蓝牙功能</string>
+    <string name="feature_unavailable_usb">此设备不支持 USB 附件模式</string>
 </resources>

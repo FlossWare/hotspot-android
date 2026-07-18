@@ -17,13 +17,21 @@
 
     <string name="vpn_consent_required">VPN permission is required to route all traffic through the hotspot</string>
 
-    <string name="error_vpn_denied">VPN permission was denied</string>
+    <string name="error_vpn_denied">VPN permission was denied. The VPN is needed to route all your internet traffic through the hotspot. Please grant VPN permission when prompted.</string>
     <string name="error_connection_failed">Failed to connect to SOCKS5 server</string>
-    <string name="error_vpn_permission_denied">VPN permission denied</string>
+    <string name="error_vpn_permission_denied">VPN permission is required to tunnel your traffic through the hotspot. Without it, the client cannot function. Tap Connect again and allow the VPN request.</string>
     <string name="error_generic_connection_failed">Connection failed</string>
     <string name="error_bluetooth_not_available">Bluetooth not available</string>
     <string name="error_bluetooth_connection_failed">Bluetooth connection failed</string>
     <string name="unknown_device">Unknown</string>
+
+    <!-- Graceful degradation: connection error types -->
+    <string name="error_host_not_found">Hotspot host not found. Make sure you are connected to the hotspot Wi-Fi network and the host app is running.</string>
+    <string name="error_auth_failed">Authentication failed. Check that the SOCKS5 server address is correct.</string>
+    <string name="error_connection_timeout">Connection timed out. The hotspot may be out of range or not running. Move closer and try again.</string>
+    <string name="error_no_transports">No connection methods available. This device does not support Wi-Fi, Bluetooth, or USB connections. Please check your device settings.</string>
+    <string name="error_usb_not_available">USB not available</string>
+    <string name="error_usb_device_not_found">USB device disconnected. Reconnect the USB cable and try again.</string>
 
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">Bluetooth</string>
