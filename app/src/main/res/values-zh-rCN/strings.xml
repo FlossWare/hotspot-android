@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot</string>
+
+    <string name="start_hotspot">启动热点</string>
+    <string name="stop_hotspot">停止热点</string>
+    <string name="hotspot_active">热点已启动</string>
+    <string name="hotspot_inactive">热点未启动</string>
+
+    <string name="network_name">网络名称</string>
+    <string name="password">密码</string>
+    <string name="socks_address">SOCKS5 地址</string>
+    <string name="dns_address">DNS 地址</string>
+    <string name="data_transferred">已传输数据</string>
+
+    <string name="connected_devices">已连接设备</string>
+    <string name="no_devices_connected">没有设备连接</string>
+
+    <string name="scan_to_connect">扫描二维码连接 Wi-Fi</string>
+
+    <string name="setup_instructions">设置说明</string>
+    <string name="step_1_connect">1. 连接到 Wi-Fi 网络：%1$s</string>
+    <string name="step_2_password">2. 输入密码：%1$s</string>
+    <string name="step_3_client">3. 在要连接的设备上安装 FlossWare Hotspot Client</string>
+    <string name="step_4_connect">4. 打开客户端应用并点击“连接”</string>
+    <string name="step_5_manual">5. （手动）或在各个应用中将 SOCKS5 代理配置为 %1$s</string>
+
+    <string name="copied_to_clipboard">已复制到剪贴板</string>
+
+    <string name="notification_channel_name">热点服务</string>
+    <string name="notification_title">FlossWare Hotspot</string>
+    <string name="notification_text">正在共享移动数据 • %1$d 台设备已连接</string>
+    <string name="notification_action_stop">停止</string>
+
+    <string name="permission_rationale_title">需要权限</string>
+    <string name="permission_rationale_location">在 Android 12 及更早版本上，Wi-Fi Direct 需要位置权限。您的位置信息不会被跟踪或存储。</string>
+    <string name="permission_rationale_nearby">创建 Wi-Fi 热点网络需要“附近设备”权限。</string>
+    <string name="open_settings">打开设置</string>
+    <string name="ok">确定</string>
+
+    <string name="error_no_wifi_direct">此设备不支持 Wi-Fi Direct</string>
+    <string name="error_no_mobile_data">移动数据不可用</string>
+    <string name="error_group_creation_failed">创建热点网络失败</string>
+    <string name="error_socks_failed">启动 SOCKS5 服务器失败</string>
+    <string name="error_mobile_data_lost">移动数据连接已断开</string>
+    <string name="error_wifi_direct_not_supported">不支持 Wi-Fi Direct</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct 已禁用</string>
+    <string name="error_wifi_direct_generic">Wi-Fi Direct 失败。某些设备需要开启 Wi-Fi。请尝试开启 Wi-Fi 和位置服务，然后重试。</string>
+    <string name="error_wifi_direct_busy">Wi-Fi Direct 正忙。请稍等片刻再试。</string>
+    <string name="error_service_discovery_failed">服务发现失败。请尝试关闭并重新开启 Wi-Fi。</string>
+    <string name="error_hotspot_creation_failed">创建热点失败（错误代码：%1$d）。请尝试重启 Wi-Fi 或重启设备。</string>
+    <string name="error_bluetooth_not_supported">不支持蓝牙</string>
+    <string name="error_bluetooth_disabled">蓝牙已禁用</string>
+    <string name="error_bluetooth_server_failed">创建蓝牙服务器失败：%1$s</string>
+    <string name="unknown_device">未知</string>
+    <string name="idle_suffix">（空闲）</string>
+
+    <string name="bluetooth_transport">蓝牙传输</string>
+    <string name="bluetooth_experimental_label">实验性</string>
+    <string name="bluetooth_experimental_description">蓝牙传输为实验性功能。最多支持约7个并发连接，且比 Wi-Fi Direct 慢。仅在 Wi-Fi Direct 不可用时使用。</string>
+    <string name="bluetooth_status">状态</string>
+    <string name="bluetooth_enabled">正在监听</string>
+    <string name="bluetooth_disabled">未激活</string>
+    <string name="bluetooth_device_name">设备名称</string>
+    <string name="bluetooth_connected_devices">蓝牙设备</string>
+    <string name="no_bluetooth_devices">没有蓝牙设备连接</string>
+
+    <string name="cache_stats">缓存</string>
+    <string name="dns_cache_hits">DNS 缓存命中</string>
+    <string name="http_cache_hits">HTTP 缓存命中</string>
+    <string name="data_saved">已节省数据</string>
+
+    <string name="uptime">运行时间</string>
+
+    <string name="connection_info">连接</string>
+    <string name="statistics">统计</string>
+
+    <string name="compatibility_tips_title">设备兼容性</string>
+    <string name="compatibility_tip_wifi">某些设备（三星、小米）需要开启 Wi-Fi 才能使 Wi-Fi Direct 正常工作，即使热点会创建自己的网络。</string>
+    <string name="compatibility_tip_location">在 Android 12 及更早版本上，必须开启位置服务。某些制造商即使在更新的 Android 版本上也需要此设置。</string>
+    <string name="compatibility_tip_retry">如果热点首次启动失败，应用会自动重试。您也可以尝试关闭并重新开启 Wi-Fi。</string>
+    <string name="compatibility_tip_battery">当没有数据传输时，应用会自动降低耗电。代理活动时电池使用量会增加。</string>
+</resources>

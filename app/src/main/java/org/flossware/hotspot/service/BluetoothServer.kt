@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.flossware.hotspot.R
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.flossware.hotspot.model.ConnectedDevice
@@ -32,6 +33,8 @@ sealed class BluetoothState {
 class BluetoothServer(
     @Volatile var debugMode: Boolean = false,
 ) {
+    private var unknownDeviceName: String = "Unknown"
+
     private val _state = MutableStateFlow<BluetoothState>(BluetoothState.Idle)
     val state: StateFlow<BluetoothState> = _state.asStateFlow()
 
@@ -54,13 +57,13 @@ class BluetoothServer(
         val adapter = btManager?.adapter
         if (adapter == null) {
             Log.w(TAG, "Bluetooth not supported on this device")
-            _state.value = BluetoothState.Error("Bluetooth not supported")
+            _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_not_supported))
             running.set(false)
             return
         }
         if (!adapter.isEnabled) {
             Log.w(TAG, "Bluetooth is disabled")
-            _state.value = BluetoothState.Error("Bluetooth is disabled")
+            _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_disabled))
             running.set(false)
             return
         }
@@ -69,12 +72,13 @@ class BluetoothServer(
             serverSocket = adapter.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SERVICE_UUID)
         } catch (e: IOException) {
             Log.e(TAG, "Failed to create Bluetooth server", e)
-            _state.value = BluetoothState.Error("Failed to create Bluetooth server: ${e.message}")
+            _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_server_failed, e.message ?: ""))
             running.set(false)
             return
         }
 
-        _state.value = BluetoothState.Listening(adapter.name ?: "Unknown")
+        unknownDeviceName = context.getString(R.string.unknown_device)
+        _state.value = BluetoothState.Listening(adapter.name ?: unknownDeviceName)
         Log.i(TAG, "Bluetooth RFCOMM listening as '${adapter.name}'")
 
         executor.execute {
@@ -118,13 +122,13 @@ class BluetoothServer(
     private fun handleClient(btSocket: BluetoothSocket, socksPort: Int) {
         val device = ConnectedDevice(
             macAddress = btSocket.remoteDevice.address,
-            deviceName = btSocket.remoteDevice.name ?: "Unknown",
+            deviceName = btSocket.remoteDevice.name ?: unknownDeviceName,
         )
         activeConnections.add(btSocket)
         _connectedDevices.value = activeConnections.map { sock ->
             ConnectedDevice(
                 macAddress = sock.remoteDevice.address,
-                deviceName = sock.remoteDevice.name ?: "Unknown",
+                deviceName = sock.remoteDevice.name ?: unknownDeviceName,
             )
         }
 
@@ -163,7 +167,7 @@ class BluetoothServer(
                 @SuppressLint("MissingPermission")
                 ConnectedDevice(
                     macAddress = sock.remoteDevice.address,
-                    deviceName = sock.remoteDevice.name ?: "Unknown",
+                    deviceName = sock.remoteDevice.name ?: unknownDeviceName,
                 )
             }
             Log.i(TAG, "Bluetooth client disconnected: ${device.deviceName}")

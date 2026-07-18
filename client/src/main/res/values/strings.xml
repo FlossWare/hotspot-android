@@ -19,6 +19,11 @@
 
     <string name="error_vpn_denied">VPN permission was denied</string>
     <string name="error_connection_failed">Failed to connect to SOCKS5 server</string>
+    <string name="error_vpn_permission_denied">VPN permission denied</string>
+    <string name="error_generic_connection_failed">Connection failed</string>
+    <string name="error_bluetooth_not_available">Bluetooth not available</string>
+    <string name="error_bluetooth_connection_failed">Bluetooth connection failed</string>
+    <string name="unknown_device">Unknown</string>
 
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">Bluetooth</string>

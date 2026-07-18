@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.VpnService
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.StateFlow
+import org.flossware.hotspot.client.R
 import org.flossware.hotspot.client.model.VpnState
 import org.flossware.hotspot.client.service.TunnelService
 
@@ -39,9 +40,10 @@ class ClientViewModel(application: Application) : AndroidViewModel(application) 
             .getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = btManager?.adapter ?: return emptyList()
         if (!adapter.isEnabled) return emptyList()
+        val unknownName = getApplication<Application>().getString(R.string.unknown_device)
         return adapter.bondedDevices.map { device ->
             BluetoothDeviceInfo(
-                name = device.name ?: "Unknown",
+                name = device.name ?: unknownName,
                 address = device.address,
             )
         }

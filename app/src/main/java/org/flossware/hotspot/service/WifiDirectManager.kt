@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Looper
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.flossware.hotspot.R
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.flossware.hotspot.model.ConnectedDevice
@@ -44,7 +45,7 @@ class WifiDirectManager {
         retryHandler = android.os.Handler(Looper.getMainLooper())
         manager = ctx.getSystemService(Context.WIFI_P2P_SERVICE) as? WifiP2pManager
         if (manager == null) {
-            _state.value = WifiDirectState.Error("Wi-Fi Direct not supported")
+            _state.value = WifiDirectState.Error(ctx.getString(R.string.error_wifi_direct_not_supported))
             return
         }
 
@@ -59,7 +60,7 @@ class WifiDirectManager {
                             WifiP2pManager.WIFI_P2P_STATE_DISABLED,
                         )
                         if (wifiState != WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-                            _state.value = WifiDirectState.Error("Wi-Fi Direct is disabled")
+                            _state.value = WifiDirectState.Error(context.getString(R.string.error_wifi_direct_disabled))
                         }
                     }
                     WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
@@ -155,7 +156,16 @@ class WifiDirectManager {
         })
     }
 
-    private fun mapFailureReason(reason: Int): String = Companion.mapFailureReason(reason)
+    private fun mapFailureReason(reason: Int): String {
+        val ctx = context ?: return Companion.mapFailureReason(reason)
+        return when (reason) {
+            WifiP2pManager.ERROR -> ctx.getString(R.string.error_wifi_direct_generic)
+            WifiP2pManager.P2P_UNSUPPORTED -> ctx.getString(R.string.error_no_wifi_direct)
+            WifiP2pManager.BUSY -> ctx.getString(R.string.error_wifi_direct_busy)
+            WifiP2pManager.NO_SERVICE_REQUESTS -> ctx.getString(R.string.error_service_discovery_failed)
+            else -> ctx.getString(R.string.error_hotspot_creation_failed, reason)
+        }
+    }
 
     @SuppressLint("MissingPermission")
     private fun removeGroup() {
@@ -171,10 +181,11 @@ class WifiDirectManager {
 
         mgr.requestGroupInfo(ch) { group: WifiP2pGroup? ->
             if (group != null && group.isGroupOwner) {
+                val unknownName = context?.getString(R.string.unknown_device) ?: "Unknown"
                 val devices = group.clientList.map { device ->
                     ConnectedDevice(
                         macAddress = device.deviceAddress,
-                        deviceName = device.deviceName.ifEmpty { "Unknown" },
+                        deviceName = device.deviceName.ifEmpty { unknownName },
                     )
                 }
                 _state.value = WifiDirectState.GroupCreated(

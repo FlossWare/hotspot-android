@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot Client</string>
+
+    <string name="connect">连接</string>
+    <string name="disconnect">断开</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">未连接</string>
+
+    <string name="socks_server_label">SOCKS5 服务器</string>
+    <string name="socks_server_hint">192.168.49.1:1080</string>
+
+    <string name="notification_channel_name">VPN 隧道</string>
+    <string name="notification_title">FlossWare Tunnel</string>
+    <string name="notification_text">正在通过热点路由流量</string>
+    <string name="notification_action_disconnect">断开</string>
+
+    <string name="vpn_consent_required">需要 VPN 权限才能将所有流量通过热点路由</string>
+
+    <string name="error_vpn_denied">VPN 权限被拒绝</string>
+    <string name="error_connection_failed">无法连接到 SOCKS5 服务器</string>
+    <string name="error_vpn_permission_denied">VPN 权限被拒绝</string>
+    <string name="error_generic_connection_failed">连接失败</string>
+    <string name="error_bluetooth_not_available">蓝牙不可用</string>
+    <string name="error_bluetooth_connection_failed">蓝牙连接失败</string>
+    <string name="unknown_device">未知</string>
+
+    <string name="transport_wifi_direct">Wi-Fi Direct</string>
+    <string name="transport_bluetooth">蓝牙</string>
+    <string name="paired_devices">已配对设备</string>
+    <string name="no_paired_devices">未找到已配对设备。请先在蓝牙设置中与热点设备配对。</string>
+    <string name="refresh">刷新</string>
+</resources>

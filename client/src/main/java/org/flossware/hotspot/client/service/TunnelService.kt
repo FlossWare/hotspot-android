@@ -67,7 +67,7 @@ class TunnelService : VpnService() {
                 .addDnsServer(DNS_ADDRESS)
 
             val tun = builder.establish() ?: run {
-                _state.value = _state.value.copy(error = "VPN permission denied")
+                _state.value = _state.value.copy(error = getString(R.string.error_vpn_permission_denied))
                 stopSelf()
                 return
             }
@@ -92,7 +92,7 @@ class TunnelService : VpnService() {
             Log.e(TAG, "Failed to establish tunnel", e)
             _state.value = _state.value.copy(
                 isConnected = false,
-                error = e.message ?: "Connection failed",
+                error = e.message ?: getString(R.string.error_generic_connection_failed),
             )
             disconnect()
         }
@@ -107,13 +107,16 @@ class TunnelService : VpnService() {
         val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = btManager?.adapter
         if (adapter == null) {
-            _state.value = _state.value.copy(error = "Bluetooth not available")
+            _state.value = _state.value.copy(error = getString(R.string.error_bluetooth_not_available))
             stopSelf()
             return
         }
 
         val device = adapter.getRemoteDevice(deviceAddress)
-        val btTunnel = BluetoothTunnel(device)
+        val btTunnel = BluetoothTunnel(
+            remoteDevice = device,
+            fallbackErrorMessage = getString(R.string.error_bluetooth_connection_failed),
+        )
         bluetoothTunnel = btTunnel
         btTunnel.start()
 

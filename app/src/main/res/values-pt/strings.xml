@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlossWare Hotspot</string>
+
+    <string name="start_hotspot">Iniciar Hotspot</string>
+    <string name="stop_hotspot">Parar Hotspot</string>
+    <string name="hotspot_active">Hotspot ativo</string>
+    <string name="hotspot_inactive">Hotspot inativo</string>
+
+    <string name="network_name">Nome da rede</string>
+    <string name="password">Senha</string>
+    <string name="socks_address">Endereço SOCKS5</string>
+    <string name="dns_address">Endereço DNS</string>
+    <string name="data_transferred">Dados transferidos</string>
+
+    <string name="connected_devices">Dispositivos conectados</string>
+    <string name="no_devices_connected">Nenhum dispositivo conectado</string>
+
+    <string name="scan_to_connect">Escaneie o código QR para conectar ao Wi-Fi</string>
+
+    <string name="setup_instructions">Instruções de configuração</string>
+    <string name="step_1_connect">1. Conecte-se à rede Wi-Fi: %1$s</string>
+    <string name="step_2_password">2. Digite a senha: %1$s</string>
+    <string name="step_3_client">3. Instale o FlossWare Hotspot Client no dispositivo que irá se conectar</string>
+    <string name="step_4_connect">4. Abra o aplicativo cliente e toque em Conectar</string>
+    <string name="step_5_manual">5. (Manual) Ou configure o proxy SOCKS5 para %1$s nos aplicativos individuais</string>
+
+    <string name="copied_to_clipboard">Copiado para a área de transferência</string>
+
+    <string name="notification_channel_name">Serviço de Hotspot</string>
+    <string name="notification_title">FlossWare Hotspot</string>
+    <string name="notification_text">Compartilhando dados móveis • %1$d dispositivo(s) conectado(s)</string>
+    <string name="notification_action_stop">Parar</string>
+
+    <string name="permission_rationale_title">Permissões necessárias</string>
+    <string name="permission_rationale_location">A permissão de localização é necessária para o Wi-Fi Direct no Android 12 e anteriores. Sua localização nunca é rastreada ou armazenada.</string>
+    <string name="permission_rationale_nearby">A permissão de Dispositivos próximos é necessária para criar a rede de hotspot Wi-Fi.</string>
+    <string name="open_settings">Abrir Configurações</string>
+    <string name="ok">OK</string>
+
+    <string name="error_no_wifi_direct">Wi-Fi Direct não é suportado neste dispositivo</string>
+    <string name="error_no_mobile_data">Dados móveis não estão disponíveis</string>
+    <string name="error_group_creation_failed">Falha ao criar a rede de hotspot</string>
+    <string name="error_socks_failed">Falha ao iniciar o servidor SOCKS5</string>
+    <string name="error_mobile_data_lost">Conexão de dados móveis perdida</string>
+    <string name="error_wifi_direct_not_supported">Wi-Fi Direct não suportado</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct está desativado</string>
+    <string name="error_wifi_direct_generic">Wi-Fi Direct falhou. Alguns dispositivos exigem que o Wi-Fi esteja ativado. Tente ativar o Wi-Fi e os serviços de localização e tente novamente.</string>
+    <string name="error_wifi_direct_busy">Wi-Fi Direct está ocupado. Aguarde um momento e tente novamente.</string>
+    <string name="error_service_discovery_failed">Falha na descoberta de serviços. Tente desativar e ativar o Wi-Fi.</string>
+    <string name="error_hotspot_creation_failed">Falha ao criar o hotspot (código de erro: %1$d). Tente reiniciar o Wi-Fi ou reiniciar o dispositivo.</string>
+    <string name="error_bluetooth_not_supported">Bluetooth não suportado</string>
+    <string name="error_bluetooth_disabled">Bluetooth está desativado</string>
+    <string name="error_bluetooth_server_failed">Falha ao criar o servidor Bluetooth: %1$s</string>
+    <string name="unknown_device">Desconhecido</string>
+    <string name="idle_suffix"> (inativo)</string>
+
+    <string name="bluetooth_transport">Transporte Bluetooth</string>
+    <string name="bluetooth_experimental_label">Experimental</string>
+    <string name="bluetooth_experimental_description">O transporte Bluetooth é experimental. Ele suporta no máximo ~7 conexões simultâneas e é mais lento que o Wi-Fi Direct. Use apenas quando o Wi-Fi Direct não estiver disponível.</string>
+    <string name="bluetooth_status">Status</string>
+    <string name="bluetooth_enabled">Escutando</string>
+    <string name="bluetooth_disabled">Não ativo</string>
+    <string name="bluetooth_device_name">Nome do dispositivo</string>
+    <string name="bluetooth_connected_devices">Dispositivos Bluetooth</string>
+    <string name="no_bluetooth_devices">Nenhum dispositivo Bluetooth conectado</string>
+
+    <string name="cache_stats">Cache</string>
+    <string name="dns_cache_hits">Acertos de cache DNS</string>
+    <string name="http_cache_hits">Acertos de cache HTTP</string>
+    <string name="data_saved">Dados economizados</string>
+
+    <string name="uptime">Tempo ativo</string>
+
+    <string name="connection_info">Conexão</string>
+    <string name="statistics">Estatísticas</string>
+
+    <string name="compatibility_tips_title">Compatibilidade de dispositivos</string>
+    <string name="compatibility_tip_wifi">Alguns dispositivos (Samsung, Xiaomi) exigem que o Wi-Fi esteja ativado para que o Wi-Fi Direct funcione, mesmo que o hotspot crie sua própria rede.</string>
+    <string name="compatibility_tip_location">No Android 12 e anteriores, os serviços de localização devem estar ativados. Alguns fabricantes exigem isso mesmo em versões mais recentes do Android.</string>
+    <string name="compatibility_tip_retry">Se o hotspot não iniciar na primeira tentativa, o aplicativo tentará novamente automaticamente. Você também pode tentar desativar e ativar o Wi-Fi.</string>
+    <string name="compatibility_tip_battery">O aplicativo reduz o consumo de energia automaticamente quando não há transferência de dados. O uso de bateria aumenta com o proxy ativo.</string>
+</resources>
