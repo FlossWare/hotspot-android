@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import android.util.Log
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -14,14 +15,13 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.net.SocketFactory
 
 class ProxyServer(
     private val bindAddress: InetAddress,
     private val port: Int = 8080,
     private val socketFactoryProvider: () -> SocketFactory?,
+    @Volatile var debugMode: Boolean = false,
 ) {
     private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue())
@@ -36,17 +36,20 @@ class ProxyServer(
                 val ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                log.info("Proxy listening on $bindAddress:$port")
+                Log.i(TAG, "Proxy listening on $bindAddress:$port")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
+                        if (debugMode) {
+                            Log.d(TAG, "New connection from ${client.inetAddress.hostAddress}:${client.port}")
+                        }
                         executor.execute { handleClient(client) }
                     } catch (_: SocketException) {
                         break
                     }
                 }
             } catch (e: IOException) {
-                log.log(Level.SEVERE, "Proxy server error", e)
+                Log.e(TAG, "Proxy server error", e)
             }
         }
     }
@@ -56,23 +59,28 @@ class ProxyServer(
         serverSocket?.close()
         serverSocket = null
         executor.shutdownNow()
+        Log.i(TAG, "Proxy server stopped")
     }
 
     val isRunning: Boolean get() = running.get()
 
     internal fun handleClient(client: Socket) {
+        val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
         try {
             client.soTimeout = 60_000
             val input = BufferedInputStream(client.getInputStream())
             val requestLine = readLine(input) ?: return
             val parts = requestLine.split(" ", limit = 3)
             if (parts.size < 3) {
+                Log.w(TAG, "Malformed request from $clientAddr: $requestLine")
                 sendError(client, 400, "Bad Request")
                 return
             }
 
             val method = parts[0].uppercase()
             val target = parts[1]
+
+            if (debugMode) Log.d(TAG, "$method $target from $clientAddr")
 
             val headers = readHeaders(input)
 
@@ -81,7 +89,7 @@ class ProxyServer(
                 else -> handleHttp(client, input, method, target, headers)
             }
         } catch (e: IOException) {
-            log.fine("Client handler error: ${e.message}")
+            Log.d(TAG, "Client handler error for $clientAddr: ${e.message}")
         } finally {
             client.closeSilently()
         }
@@ -90,6 +98,7 @@ class ProxyServer(
     internal fun handleConnect(client: Socket, clientInput: InputStream, target: String) {
         val (host, port) = parseHostPort(target, 443)
         val factory = socketFactoryProvider() ?: run {
+            Log.w(TAG, "No socket factory available for CONNECT to $target")
             sendError(client, 502, "No mobile network")
             return
         }
@@ -99,6 +108,7 @@ class ProxyServer(
             upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
+            Log.w(TAG, "Connection failed to $target: ${e.message}")
             sendError(client, 502, "Bad Gateway")
             return
         }
@@ -133,13 +143,15 @@ class ProxyServer(
         headers: Map<String, String>,
     ) {
         val factory = socketFactoryProvider() ?: run {
+            Log.w(TAG, "No socket factory available for $method $urlString")
             sendError(client, 502, "No mobile network")
             return
         }
 
         val url = try {
             URL(urlString)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "Invalid URL from client: $urlString")
             sendError(client, 400, "Invalid URL")
             return
         }
@@ -153,6 +165,7 @@ class ProxyServer(
             upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
+            Log.w(TAG, "Connection failed to $host:$port: ${e.message}")
             sendError(client, 502, "Bad Gateway")
             return
         }
@@ -196,7 +209,8 @@ class ProxyServer(
                 output.flush()
                 _bytesTransferred.addAndGet(count.toLong())
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Relay stream closed: ${e.message}")
         }
     }
 
@@ -212,7 +226,8 @@ class ProxyServer(
                 remaining -= count
                 _bytesTransferred.addAndGet(count.toLong())
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Relay bytes stream closed: ${e.message}")
         }
     }
 
@@ -263,15 +278,20 @@ class ProxyServer(
                 body
             client.getOutputStream().write(response.toByteArray())
             client.getOutputStream().flush()
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Failed to send error response: ${e.message}")
         }
     }
 
     private fun Socket.closeSilently() {
-        try { close() } catch (_: IOException) { }
+        try {
+            close()
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Socket close: ${e.message}")
+        }
     }
 
     companion object {
-        private val log = Logger.getLogger(ProxyServer::class.java.name)
+        private const val TAG = "ProxyServer"
     }
 }

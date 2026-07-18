@@ -3,6 +3,7 @@ package org.flossware.hotspot.client.service
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.logging.Logger
 
 sealed class BluetoothTunnelState {
     data object Disconnected : BluetoothTunnelState()
@@ -28,7 +28,10 @@ sealed class BluetoothTunnelState {
     data class Error(val message: String) : BluetoothTunnelState()
 }
 
-class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
+class BluetoothTunnel(
+    private val remoteDevice: BluetoothDevice,
+    @Volatile var debugMode: Boolean = false,
+) {
     private val _state = MutableStateFlow<BluetoothTunnelState>(BluetoothTunnelState.Disconnected)
     val state: StateFlow<BluetoothTunnelState> = _state.asStateFlow()
 
@@ -52,16 +55,20 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
                 val port = server.localPort
 
                 // Verify we can connect to the host before advertising the port
+                Log.i(TAG, "Testing Bluetooth connection to ${remoteDevice.address}")
                 val testSocket = remoteDevice.createRfcommSocketToServiceRecord(SERVICE_UUID)
                 testSocket.connect()
                 testSocket.close()
 
                 _state.value = BluetoothTunnelState.Connected(port)
-                log.info("Bluetooth tunnel local server on 127.0.0.1:$port")
+                Log.i(TAG, "Bluetooth tunnel local server on 127.0.0.1:$port")
 
                 while (running.get()) {
                     try {
                         val localSocket = server.accept()
+                        if (debugMode) {
+                            Log.d(TAG, "New local connection on port $port")
+                        }
                         activeConnections.add(localSocket)
                         executor.execute { handleConnection(localSocket) }
                     } catch (_: SocketException) {
@@ -70,7 +77,7 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
                 }
             } catch (e: IOException) {
                 _state.value = BluetoothTunnelState.Error(e.message ?: "Bluetooth connection failed")
-                log.info("Bluetooth tunnel error: ${e.message}")
+                Log.e(TAG, "Bluetooth tunnel error", e)
             }
         }
     }
@@ -85,7 +92,7 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
         activeConnections.clear()
         executor.shutdownNow()
         _state.value = BluetoothTunnelState.Disconnected
-        log.info("Bluetooth tunnel stopped")
+        Log.i(TAG, "Bluetooth tunnel stopped")
     }
 
     @SuppressLint("MissingPermission")
@@ -94,6 +101,7 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
         try {
             btSocket = remoteDevice.createRfcommSocketToServiceRecord(SERVICE_UUID)
             btSocket.connect()
+            if (debugMode) Log.d(TAG, "Bluetooth RFCOMM connected to ${remoteDevice.address}")
 
             val localToBt = Thread {
                 try {
@@ -114,18 +122,19 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
             localToBt.join()
             btToLocal.join()
         } catch (e: IOException) {
-            log.fine("Bluetooth relay error: ${e.message}")
+            Log.w(TAG, "Bluetooth relay error: ${e.message}")
         } finally {
             btSocket?.closeSilently()
             localSocket.closeSilently()
             activeConnections.remove(localSocket)
+            if (debugMode) Log.d(TAG, "Bluetooth relay connection closed")
         }
     }
 
     companion object {
+        private const val TAG = "BluetoothTunnel"
         val SERVICE_UUID: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         private const val RELAY_BUFFER_SIZE = 8192
-        private val log = Logger.getLogger(BluetoothTunnel::class.java.name)
 
         internal fun relay(input: InputStream, output: OutputStream) {
             val buffer = ByteArray(RELAY_BUFFER_SIZE)
@@ -137,19 +146,32 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
                     output.flush()
                 }
             } catch (_: IOException) {
+                // Expected during connection teardown
             }
         }
 
         private fun Socket.closeSilently() {
-            try { close() } catch (_: IOException) { }
+            try {
+                close()
+            } catch (_: IOException) {
+                // Socket already closed
+            }
         }
 
         private fun ServerSocket.closeSilently() {
-            try { close() } catch (_: IOException) { }
+            try {
+                close()
+            } catch (_: IOException) {
+                // Socket already closed
+            }
         }
 
         private fun BluetoothSocket.closeSilently() {
-            try { close() } catch (_: IOException) { }
+            try {
+                close()
+            } catch (_: IOException) {
+                // Socket already closed
+            }
         }
     }
 }

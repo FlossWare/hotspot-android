@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import android.util.Log
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -18,8 +19,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.net.SocketFactory
 
 class Socks5Server(
@@ -32,6 +31,7 @@ class Socks5Server(
     private val password: String? = null,
     private val maxConnectionsPerClient: Int = 10,
     private val maxTotalConnections: Int = 100,
+    @Volatile var debugMode: Boolean = false,
 ) {
     @Volatile private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(
@@ -43,7 +43,6 @@ class Socks5Server(
 
     private val requireAuth: Boolean get() = username != null && password != null
 
-    // Connection tracking (#16)
     private val connectionsPerClient = ConcurrentHashMap<InetAddress, AtomicInteger>()
     private val totalActiveConnections = AtomicInteger(0)
     val activeConnections: Int get() = totalActiveConnections.get()
@@ -56,33 +55,33 @@ class Socks5Server(
                 ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                log.info("SOCKS5 listening on $bindAddress:$port" +
+                Log.i(TAG, "SOCKS5 listening on $bindAddress:$port" +
                     if (requireAuth) " (auth required)" else " (no auth)")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
                         val clientAddr = client.inetAddress
 
-                        // Check total connection limit
                         if (totalActiveConnections.get() >= maxTotalConnections) {
-                            log.warning("Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")
+                            Log.w(TAG, "Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")
                             client.closeSilently()
                             continue
                         }
 
-                        // Check per-client connection limit
                         val clientCount = connectionsPerClient
                             .computeIfAbsent(clientAddr) { AtomicInteger(0) }
                         if (clientCount.get() >= maxConnectionsPerClient) {
-                            log.warning("Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")
+                            Log.w(TAG, "Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")
                             client.closeSilently()
                             continue
                         }
 
                         clientCount.incrementAndGet()
                         totalActiveConnections.incrementAndGet()
-                        log.fine("Connection accepted from ${clientAddr.hostAddress}" +
-                            " (client: ${clientCount.get()}, total: ${totalActiveConnections.get()})")
+                        if (debugMode) {
+                            Log.d(TAG, "Connection accepted from ${clientAddr.hostAddress}" +
+                                " (client: ${clientCount.get()}, total: ${totalActiveConnections.get()})")
+                        }
 
                         executor.execute {
                             try {
@@ -96,7 +95,7 @@ class Socks5Server(
                     }
                 }
             } catch (e: IOException) {
-                log.log(Level.SEVERE, "SOCKS5 server error", e)
+                Log.e(TAG, "SOCKS5 server error", e)
             } finally {
                 ss?.close()
             }
@@ -110,6 +109,7 @@ class Socks5Server(
         executor.shutdownNow()
         connectionsPerClient.clear()
         totalActiveConnections.set(0)
+        Log.i(TAG, "SOCKS5 server stopped")
     }
 
     val isRunning: Boolean get() = running.get()
@@ -123,61 +123,67 @@ class Socks5Server(
     }
 
     internal fun handleClient(client: Socket) {
+        val startTime = System.currentTimeMillis()
         val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
+        val connectionBytes = AtomicLong(0)
         try {
             client.soTimeout = SOCKET_TIMEOUT_MS
             val input = client.getInputStream()
             val output = client.getOutputStream()
 
             if (!negotiate(input, output)) {
-                log.fine("Negotiation failed for $clientAddr")
+                if (debugMode) Log.d(TAG, "Negotiation failed for $clientAddr")
                 return
             }
 
             val version = input.read()
             if (version == -1) {
-                log.fine("Connection closed during request from $clientAddr")
+                if (debugMode) Log.d(TAG, "Connection closed during request from $clientAddr")
                 return
             }
             if (version != VERSION.toInt() and 0xFF) {
-                log.fine("Invalid request version 0x${version.toString(16)} from $clientAddr")
+                Log.w(TAG, "Invalid SOCKS version from $clientAddr: $version")
                 return
             }
 
             val cmd = input.read()
             if (cmd == -1) {
-                log.fine("Connection closed reading command from $clientAddr")
+                if (debugMode) Log.d(TAG, "Connection closed reading command from $clientAddr")
                 return
             }
-            val reserved = input.read() // reserved
+            val reserved = input.read()
             if (reserved == -1) {
-                log.fine("Connection closed reading reserved byte from $clientAddr")
+                if (debugMode) Log.d(TAG, "Connection closed reading reserved byte from $clientAddr")
                 return
             }
 
             val (host, port) = try {
                 readAddress(input)
             } catch (e: IOException) {
-                log.fine("Failed to read address from $clientAddr: ${e.message}")
+                if (debugMode) Log.d(TAG, "Failed to read address from $clientAddr: ${e.message}")
                 sendReply(output, REPLY_ADDR_NOT_SUPPORTED)
                 return
             }
 
             when (cmd) {
                 CMD_CONNECT.toInt() and 0xFF -> {
-                    log.info("CONNECT from $clientAddr to $host:$port")
-                    handleConnect(client, input, output, host, port)
+                    if (debugMode) Log.d(TAG, "CONNECT $host:$port from $clientAddr")
+                    handleConnect(client, input, output, host, port, connectionBytes)
                 }
                 else -> {
-                    log.fine("Unsupported command 0x${cmd.toString(16)} from $clientAddr")
+                    Log.w(TAG, "Unsupported SOCKS command $cmd from $clientAddr")
                     sendReply(output, REPLY_CMD_NOT_SUPPORTED)
                 }
             }
         } catch (e: SocketTimeoutException) {
-            log.fine("Timeout handling client $clientAddr: ${e.message}")
+            if (debugMode) Log.d(TAG, "Timeout handling client $clientAddr: ${e.message}")
         } catch (e: IOException) {
-            log.fine("Client handler error for $clientAddr: ${e.message}")
+            Log.d(TAG, "Client handler error for $clientAddr: ${e.message}")
         } finally {
+            val duration = System.currentTimeMillis() - startTime
+            if (debugMode) {
+                Log.d(TAG, "Connection closed for $clientAddr: ${connectionBytes.get()}B transferred in ${duration}ms")
+            }
             client.closeSilently()
         }
     }
@@ -207,7 +213,6 @@ class Socks5Server(
         }
 
         if (requireAuth) {
-            // Require username/password auth (RFC 1929)
             val hasUserPassAuth = methods.any { it == AUTH_USERNAME_PASSWORD }
             if (!hasUserPassAuth) {
                 output.write(byteArrayOf(VERSION, AUTH_NO_ACCEPTABLE))
@@ -219,7 +224,6 @@ class Socks5Server(
             return authenticateUsernamePassword(input, output)
         }
 
-        // No auth required — accept NO_AUTH
         val hasNoAuth = methods.any { it == AUTH_NONE }
         if (!hasNoAuth) {
             output.write(byteArrayOf(VERSION, AUTH_NO_ACCEPTABLE))
@@ -232,12 +236,6 @@ class Socks5Server(
         return true
     }
 
-    /**
-     * RFC 1929 username/password subnegotiation.
-     *
-     * Client sends: VER(1) ULEN(1) UNAME(1..255) PLEN(1) PASSWD(1..255)
-     * Server replies: VER(1) STATUS(1) where STATUS 0x00 = success
-     */
     internal fun authenticateUsernamePassword(input: InputStream, output: OutputStream): Boolean {
         val authVersion = input.read()
         if (authVersion == -1) return false
@@ -268,17 +266,16 @@ class Socks5Server(
         val clientUser = String(uname, Charsets.UTF_8)
         val clientPass = String(passwd, Charsets.UTF_8)
 
-        // Constant-time comparison to prevent timing attacks
         val userMatch = constantTimeEquals(clientUser, username ?: "")
         val passMatch = constantTimeEquals(clientPass, password ?: "")
 
         return if (userMatch && passMatch) {
-            log.fine("Authentication succeeded for user '$clientUser'")
+            if (debugMode) Log.d(TAG, "Authentication succeeded for user '$clientUser'")
             output.write(byteArrayOf(AUTH_VERSION, AUTH_SUCCESS))
             output.flush()
             true
         } else {
-            log.warning("Authentication failed for user '$clientUser'")
+            Log.w(TAG, "Authentication failed for user '$clientUser'")
             output.write(byteArrayOf(AUTH_VERSION, AUTH_FAILURE))
             output.flush()
             false
@@ -326,10 +323,11 @@ class Socks5Server(
         output: OutputStream,
         host: String,
         port: Int,
+        connectionBytes: AtomicLong = AtomicLong(0),
     ) {
         val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
         val factory = socketFactoryProvider() ?: run {
-            log.fine("No socket factory available for $clientAddr -> $host:$port")
+            Log.w(TAG, "No socket factory available for CONNECT to $host:$port")
             sendReply(output, REPLY_GENERAL_FAILURE)
             return
         }
@@ -337,7 +335,7 @@ class Socks5Server(
         val resolved = try {
             dnsResolver(host)
         } catch (e: Exception) {
-            log.fine("DNS resolution failed for $host: ${e.message}")
+            Log.w(TAG, "DNS resolution failed for $host: ${e.message}")
             sendReply(output, REPLY_HOST_UNREACHABLE)
             return
         }
@@ -352,7 +350,7 @@ class Socks5Server(
             upstream = factory.createSocket(resolved, port)
             upstream.soTimeout = SOCKET_TIMEOUT_MS
         } catch (e: IOException) {
-            log.fine("Connection refused to $host:$port ($resolved): ${e.message}")
+            Log.w(TAG, "Connection refused to $host:$port ($resolved): ${e.message}")
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -364,14 +362,14 @@ class Socks5Server(
 
             val clientToServer = Thread {
                 try {
-                    relay(input, upstream.getOutputStream())
+                    relay(input, upstream.getOutputStream(), connectionBytes)
                 } finally {
                     upstream.closeSilently()
                 }
             }
             val serverToClient = Thread {
                 try {
-                    relay(upstream.getInputStream(), client.getOutputStream())
+                    relay(upstream.getInputStream(), client.getOutputStream(), connectionBytes)
                 } finally {
                     client.closeSilently()
                 }
@@ -380,8 +378,10 @@ class Socks5Server(
             serverToClient.start()
             clientToServer.join()
             serverToClient.join()
-            log.fine("Connection closed: $clientAddr -> $host:$port" +
-                " (${_bytesTransferred.get()} total bytes)")
+            if (debugMode) {
+                Log.d(TAG, "Connection closed: $clientAddr -> $host:$port" +
+                    " (${connectionBytes.get()} bytes)")
+            }
         } finally {
             upstream.closeSilently()
             client.closeSilently()
@@ -402,7 +402,7 @@ class Socks5Server(
             upstream = factory.createSocket(resolved, 80)
             upstream.soTimeout = SOCKET_TIMEOUT_MS
         } catch (e: IOException) {
-            log.fine("Cached HTTP connection refused to $host:80: ${e.message}")
+            Log.w(TAG, "Connection refused to $host:80 ($resolved): ${e.message}")
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -438,6 +438,7 @@ class Socks5Server(
             }
 
             if (cache.tryServeFromCache(host, requestLine, headers.toString(), output)) {
+                if (debugMode) Log.d(TAG, "Served from cache: $host $requestLine")
                 upstream.closeSilently()
                 return
             }
@@ -484,7 +485,11 @@ class Socks5Server(
         output.flush()
     }
 
-    internal fun relay(input: InputStream, output: OutputStream) {
+    internal fun relay(
+        input: InputStream,
+        output: OutputStream,
+        connectionBytes: AtomicLong? = null,
+    ) {
         val buffer = ByteArray(8192)
         try {
             while (true) {
@@ -493,8 +498,10 @@ class Socks5Server(
                 output.write(buffer, 0, count)
                 output.flush()
                 _bytesTransferred.addAndGet(count.toLong())
+                connectionBytes?.addAndGet(count.toLong())
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Relay stream closed: ${e.message}")
         }
     }
 
@@ -508,10 +515,15 @@ class Socks5Server(
     }
 
     private fun Socket.closeSilently() {
-        try { close() } catch (_: IOException) { }
+        try {
+            close()
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Socket close: ${e.message}")
+        }
     }
 
     companion object {
+        private const val TAG = "Socks5Server"
         const val VERSION: Byte = 0x05
         const val AUTH_NONE: Byte = 0x00
         const val AUTH_USERNAME_PASSWORD: Byte = 0x02
@@ -532,11 +544,7 @@ class Socks5Server(
         const val REPLY_CMD_NOT_SUPPORTED: Byte = 0x07
         const val REPLY_ADDR_NOT_SUPPORTED: Byte = 0x08
         const val SOCKET_TIMEOUT_MS = 60_000
-        private val log = Logger.getLogger(Socks5Server::class.java.name)
 
-        /**
-         * Constant-time string comparison to prevent timing attacks on credentials.
-         */
         internal fun constantTimeEquals(a: String, b: String): Boolean {
             val aBytes = a.toByteArray(Charsets.UTF_8)
             val bBytes = b.toByteArray(Charsets.UTF_8)
