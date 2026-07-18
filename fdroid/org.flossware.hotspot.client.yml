@@ -8,14 +8,36 @@ SourceCode: https://github.com/FlossWare/hotspot-android
 IssueTracker: https://github.com/FlossWare/hotspot-android/issues
 
 AutoName: FlossWare Hotspot Client
+Description: |
+  Connect your Android device to a FlossWare Hotspot host to share mobile
+  data -- no carrier hotspot plan required.
+
+  This is the companion app to FlossWare Hotspot. Install the Host app on
+  the phone sharing data and this Client app on the device that needs
+  internet.
+
+  The client creates a VPN tunnel that captures all traffic and routes it
+  through the host's SOCKS5 proxy. The native tun2socks engine
+  (hev-socks5-tunnel) provides a full userspace TCP/IP stack. Every app
+  works transparently.
+
+  Features:
+  * Wi-Fi Direct transport -- connects without carrier detection
+  * Bluetooth RFCOMM transport -- alternative connectivity
+  * VPN-based traffic capture -- all apps work, not just browsers
+  * Native tun2socks with full TCP and UDP support
+  * One-tap connect/disconnect
+  * Material 3 design with dark mode
+
+  Requires Android 8.0 or later and a FlossWare Hotspot host to connect to.
 
 RepoType: git
 Repo: https://github.com/FlossWare/hotspot-android.git
 
 Builds:
-  - versionName: '0.5'
-    versionCode: 5
-    commit: v0.5
+  - versionName: '0.10'
+    versionCode: 10
+    commit: v0.10
     subdir: client
     submodules: true
     gradle:
@@ -24,5 +46,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: '0.5'
-CurrentVersionCode: 5
+CurrentVersion: '0.10'
+CurrentVersionCode: 10

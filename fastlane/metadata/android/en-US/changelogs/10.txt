@@ -1,0 +1,11 @@
+Version 0.10:
+- Added Bluetooth RFCOMM transport as alternative to Wi-Fi Direct
+- Added DNS response caching with LRU eviction and TTL support
+- Added HTTP response caching for port-80 traffic
+- Added transport selector UI in client (Wi-Fi Direct / Bluetooth)
+- Added cache statistics display (DNS hits, HTTP hits, data saved)
+- Added Bluetooth permission handling for Android 12+
+- Added QR code for easy client setup
+- Added FlossWare logo to both apps
+- Material 3 design with dark mode support
+- 136 unit tests passing

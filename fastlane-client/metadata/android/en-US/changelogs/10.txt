@@ -1,0 +1,8 @@
+Version 0.10:
+- Added Bluetooth RFCOMM transport as alternative to Wi-Fi Direct
+- Added transport selector UI (Wi-Fi Direct / Bluetooth)
+- Added Bluetooth permission handling for Android 12+
+- Added FlossWare logo
+- Material 3 design with dark mode support
+- Improved VPN tunnel stability
+- 136 unit tests passing across both apps

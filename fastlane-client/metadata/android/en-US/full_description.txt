@@ -1,0 +1,25 @@
+FlossWare Hotspot Client connects your Android device to a FlossWare Hotspot host, giving you internet access through the host phone's mobile data -- no carrier hotspot plan required.
+
+This is the companion app to FlossWare Hotspot. Install the Host app on the phone sharing data and this Client app on the device that needs internet.
+
+How it works:
+1. The host phone creates a Wi-Fi Direct group and runs a SOCKS5 proxy
+2. This client connects to the host via Wi-Fi Direct or Bluetooth
+3. A VPN tunnel captures all your traffic and routes it through the host
+4. Every app works transparently -- browsers, social media, streaming, games
+
+Features:
+- Wi-Fi Direct transport -- connects without carrier detection
+- Bluetooth RFCOMM transport -- works when Wi-Fi is unavailable
+- VPN-based traffic capture -- all apps work, not just browsers
+- Native tun2socks engine (hev-socks5-tunnel) with full TCP/IP stack
+- DNS relay through the host's connection
+- One-tap connect/disconnect
+- Material 3 design with dark mode support
+- No ads, no tracking, no analytics
+- Fully open source (Apache 2.0)
+
+Technical details:
+The client runs Android's VpnService to create a TUN interface that captures all network traffic. The native hev-socks5-tunnel library (MIT licensed) provides a userspace TCP/IP stack (lwIP) that tunnels traffic through SOCKS5 to the host. Both TCP and UDP are supported. DNS queries are mapped through a virtual DNS address (198.18.0.2) and resolved by the host's DNS relay.
+
+Requires Android 8.0 (API 26) or later and a FlossWare Hotspot host to connect to.
