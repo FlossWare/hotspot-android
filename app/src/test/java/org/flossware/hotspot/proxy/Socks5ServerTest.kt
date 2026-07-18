@@ -65,6 +65,13 @@ class Socks5ServerTest {
     }
 
     @Test
+    fun `activeConnections starts at zero`() {
+        assertEquals(0, server.activeConnections)
+    }
+
+    // --- Negotiation tests (no-auth mode) ---
+
+    @Test
     fun `negotiate accepts NO_AUTH method`() {
         val input = ByteArrayInputStream(byteArrayOf(0x05, 0x01, 0x00))
         val output = ByteArrayOutputStream()
@@ -101,6 +108,158 @@ class Socks5ServerTest {
         assertTrue(server.negotiate(input, output))
         assertEquals(0x00.toByte(), output.toByteArray()[1])
     }
+
+    @Test
+    fun `negotiate rejects empty stream`() {
+        val input = ByteArrayInputStream(ByteArray(0))
+        val output = ByteArrayOutputStream()
+        assertFalse(server.negotiate(input, output))
+    }
+
+    // --- Auth tests (RFC 1929) ---
+
+    @Test
+    fun `negotiate requires auth when credentials configured`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "user",
+            password = "pass",
+        )
+
+        // Offer only NO_AUTH — should be rejected
+        val input = ByteArrayInputStream(byteArrayOf(0x05, 0x01, 0x00))
+        val output = ByteArrayOutputStream()
+        assertFalse(authServer.negotiate(input, output))
+        assertEquals(0xFF.toByte(), output.toByteArray()[1])
+    }
+
+    @Test
+    fun `negotiate selects username password auth when configured`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "user",
+            password = "pass",
+        )
+
+        // Offer AUTH_USERNAME_PASSWORD (0x02) + valid subnegotiation
+        val user = "user".toByteArray(Charsets.UTF_8)
+        val pass = "pass".toByteArray(Charsets.UTF_8)
+        val authData = byteArrayOf(
+            0x05, 0x02, 0x00, 0x02, // negotiation: version, 2 methods, NO_AUTH + USERNAME_PASSWORD
+            0x01, // auth version
+            user.size.toByte(), *user,
+            pass.size.toByte(), *pass,
+        )
+        val input = ByteArrayInputStream(authData)
+        val output = ByteArrayOutputStream()
+        assertTrue(authServer.negotiate(input, output))
+
+        val response = output.toByteArray()
+        // Should select method 0x02
+        assertEquals(0x05.toByte(), response[0])
+        assertEquals(0x02.toByte(), response[1])
+        // Auth subnegotiation: version 0x01, status 0x00 (success)
+        assertEquals(0x01.toByte(), response[2])
+        assertEquals(0x00.toByte(), response[3])
+    }
+
+    @Test
+    fun `auth rejects wrong password`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "user",
+            password = "correct",
+        )
+
+        val user = "user".toByteArray(Charsets.UTF_8)
+        val pass = "wrong".toByteArray(Charsets.UTF_8)
+        val authData = byteArrayOf(
+            0x05, 0x01, 0x02, // offer only USERNAME_PASSWORD
+            0x01,
+            user.size.toByte(), *user,
+            pass.size.toByte(), *pass,
+        )
+        val input = ByteArrayInputStream(authData)
+        val output = ByteArrayOutputStream()
+        assertFalse(authServer.negotiate(input, output))
+
+        val response = output.toByteArray()
+        assertEquals(0x02.toByte(), response[1]) // selected method
+        assertEquals(0x01.toByte(), response[2]) // auth version
+        assertEquals(0x01.toByte(), response[3]) // failure status
+    }
+
+    @Test
+    fun `auth rejects wrong username`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "admin",
+            password = "pass",
+        )
+
+        val user = "user".toByteArray(Charsets.UTF_8)
+        val pass = "pass".toByteArray(Charsets.UTF_8)
+        val authData = byteArrayOf(
+            0x05, 0x01, 0x02,
+            0x01,
+            user.size.toByte(), *user,
+            pass.size.toByte(), *pass,
+        )
+        val input = ByteArrayInputStream(authData)
+        val output = ByteArrayOutputStream()
+        assertFalse(authServer.negotiate(input, output))
+    }
+
+    @Test
+    fun `authenticateUsernamePassword succeeds with correct credentials`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "testuser",
+            password = "testpass",
+        )
+
+        val user = "testuser".toByteArray(Charsets.UTF_8)
+        val pass = "testpass".toByteArray(Charsets.UTF_8)
+        val data = byteArrayOf(
+            0x01, // auth version
+            user.size.toByte(), *user,
+            pass.size.toByte(), *pass,
+        )
+        val input = ByteArrayInputStream(data)
+        val output = ByteArrayOutputStream()
+        assertTrue(authServer.authenticateUsernamePassword(input, output))
+        val response = output.toByteArray()
+        assertEquals(0x01.toByte(), response[0]) // version
+        assertEquals(0x00.toByte(), response[1]) // success
+    }
+
+    @Test
+    fun `authenticateUsernamePassword rejects wrong auth version`() {
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = findFreePort(),
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "user",
+            password = "pass",
+        )
+
+        val data = byteArrayOf(0x02, 0x04, *"user".toByteArray(), 0x04, *"pass".toByteArray())
+        val input = ByteArrayInputStream(data)
+        val output = ByteArrayOutputStream()
+        assertFalse(authServer.authenticateUsernamePassword(input, output))
+    }
+
+    // --- Address parsing tests ---
 
     @Test
     fun `readAddress parses IPv4`() {
@@ -142,6 +301,19 @@ class Socks5ServerTest {
         assertEquals(443, port)
     }
 
+    @Test(expected = java.io.IOException::class)
+    fun `readAddress throws on unsupported address type`() {
+        val data = byteArrayOf(0x07, 0x00, 0x00) // type 0x07 is invalid
+        server.readAddress(ByteArrayInputStream(data))
+    }
+
+    @Test(expected = java.io.IOException::class)
+    fun `readAddress throws on empty stream`() {
+        server.readAddress(ByteArrayInputStream(ByteArray(0)))
+    }
+
+    // --- Reply tests ---
+
     @Test
     fun `sendReply writes correct success response`() {
         val output = ByteArrayOutputStream()
@@ -176,6 +348,18 @@ class Socks5ServerTest {
     }
 
     @Test
+    fun `sendReply writes IPv6 address correctly`() {
+        val output = ByteArrayOutputStream()
+        val addr = InetAddress.getByName("::1")
+        server.sendReply(output, Socks5Server.REPLY_SUCCESS, addr, 443)
+        val reply = output.toByteArray()
+        assertEquals(22, reply.size) // 4 header + 16 IPv6 + 2 port
+        assertEquals(0x04.toByte(), reply[3]) // IPv6
+    }
+
+    // --- Relay tests ---
+
+    @Test
     fun `relay copies data and counts bytes`() {
         val data = "Hello, World!".toByteArray()
         val input = ByteArrayInputStream(data)
@@ -204,6 +388,150 @@ class Socks5ServerTest {
         assertEquals(data.size.toLong(), server.bytesTransferred)
         assertTrue(data.contentEquals(output.toByteArray()))
     }
+
+    // --- Constant-time comparison ---
+
+    @Test
+    fun `constantTimeEquals returns true for equal strings`() {
+        assertTrue(Socks5Server.constantTimeEquals("hello", "hello"))
+    }
+
+    @Test
+    fun `constantTimeEquals returns false for different strings`() {
+        assertFalse(Socks5Server.constantTimeEquals("hello", "world"))
+    }
+
+    @Test
+    fun `constantTimeEquals returns false for different lengths`() {
+        assertFalse(Socks5Server.constantTimeEquals("short", "longer"))
+    }
+
+    @Test
+    fun `constantTimeEquals handles empty strings`() {
+        assertTrue(Socks5Server.constantTimeEquals("", ""))
+    }
+
+    // --- Connection limiting tests ---
+
+    @Test
+    fun `server rejects connections over per-client limit`() {
+        val limitPort = findFreePort()
+        val limitServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = limitPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            maxConnectionsPerClient = 2,
+            maxTotalConnections = 100,
+        )
+        limitServer.start()
+        Thread.sleep(300)
+
+        val echoServer = createEchoHttpServer()
+        val echoPort = echoServer.localPort
+        val sockets = mutableListOf<Socket>()
+
+        try {
+            // Open 2 connections that stay alive (held open as long tunnels)
+            for (i in 0 until 2) {
+                val client = Socket(InetAddress.getLoopbackAddress(), limitPort)
+                client.soTimeout = 2000
+                sockets.add(client)
+
+                // Negotiate
+                client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+                client.getOutputStream().flush()
+                readFully(client.getInputStream(), ByteArray(2))
+
+                // CONNECT to echo server
+                val loopback = InetAddress.getLoopbackAddress().address
+                val req = ByteArray(4 + loopback.size + 2)
+                req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x01
+                System.arraycopy(loopback, 0, req, 4, loopback.size)
+                req[req.size - 2] = ((echoPort shr 8) and 0xFF).toByte()
+                req[req.size - 1] = (echoPort and 0xFF).toByte()
+                client.getOutputStream().write(req)
+                client.getOutputStream().flush()
+                readFully(client.getInputStream(), ByteArray(10))
+            }
+
+            // Third connection should be immediately closed by server
+            Thread.sleep(100)
+            val blocked = Socket(InetAddress.getLoopbackAddress(), limitPort)
+            blocked.soTimeout = 1000
+
+            // The server closes the socket immediately on limit exceeded,
+            // so reading should get -1 or an exception
+            val result = try {
+                blocked.getInputStream().read()
+            } catch (_: Exception) {
+                -1
+            }
+            assertEquals("Third connection should be rejected", -1, result)
+            blocked.close()
+        } finally {
+            sockets.forEach { it.close() }
+            echoServer.close()
+            limitServer.stop()
+        }
+    }
+
+    @Test
+    fun `server rejects connections over total limit`() {
+        val limitPort = findFreePort()
+        val limitServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = limitPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            maxConnectionsPerClient = 100,
+            maxTotalConnections = 2,
+        )
+        limitServer.start()
+        Thread.sleep(300)
+
+        val echoServer = createEchoHttpServer()
+        val echoPort = echoServer.localPort
+        val sockets = mutableListOf<Socket>()
+
+        try {
+            for (i in 0 until 2) {
+                val client = Socket(InetAddress.getLoopbackAddress(), limitPort)
+                client.soTimeout = 2000
+                sockets.add(client)
+
+                client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+                client.getOutputStream().flush()
+                readFully(client.getInputStream(), ByteArray(2))
+
+                val loopback = InetAddress.getLoopbackAddress().address
+                val req = ByteArray(4 + loopback.size + 2)
+                req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x01
+                System.arraycopy(loopback, 0, req, 4, loopback.size)
+                req[req.size - 2] = ((echoPort shr 8) and 0xFF).toByte()
+                req[req.size - 1] = (echoPort and 0xFF).toByte()
+                client.getOutputStream().write(req)
+                client.getOutputStream().flush()
+                readFully(client.getInputStream(), ByteArray(10))
+            }
+
+            Thread.sleep(100)
+            val blocked = Socket(InetAddress.getLoopbackAddress(), limitPort)
+            blocked.soTimeout = 1000
+
+            val result = try {
+                blocked.getInputStream().read()
+            } catch (_: Exception) {
+                -1
+            }
+            assertEquals("Connection over total limit should be rejected", -1, result)
+            blocked.close()
+        } finally {
+            sockets.forEach { it.close() }
+            echoServer.close()
+            limitServer.stop()
+        }
+    }
+
+    // --- Integration tests ---
 
     @Test
     fun `CONNECT to echo server via SOCKS5`() {
@@ -254,6 +582,119 @@ class Socks5ServerTest {
 
         client.close()
         echoServer.close()
+    }
+
+    @Test
+    fun `CONNECT with auth to echo server via SOCKS5`() {
+        val echoServer = createEchoHttpServer()
+        val echoPort = echoServer.localPort
+
+        val authPort = findFreePort()
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = authPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "myuser",
+            password = "mypass",
+        )
+        authServer.start()
+        Thread.sleep(500)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), authPort)
+        client.soTimeout = 5000
+
+        // Negotiate with USERNAME_PASSWORD
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x02))
+        client.getOutputStream().flush()
+
+        val negotiateReply = ByteArray(2)
+        readFully(client.getInputStream(), negotiateReply)
+        assertEquals(0x05.toByte(), negotiateReply[0])
+        assertEquals(0x02.toByte(), negotiateReply[1])
+
+        // Send auth subnegotiation
+        val user = "myuser".toByteArray(Charsets.UTF_8)
+        val pass = "mypass".toByteArray(Charsets.UTF_8)
+        val authReq = byteArrayOf(0x01, user.size.toByte(), *user, pass.size.toByte(), *pass)
+        client.getOutputStream().write(authReq)
+        client.getOutputStream().flush()
+
+        val authReply = ByteArray(2)
+        readFully(client.getInputStream(), authReply)
+        assertEquals("Auth version", 0x01.toByte(), authReply[0])
+        assertEquals("Auth success", 0x00.toByte(), authReply[1])
+
+        // CONNECT
+        val loopback = InetAddress.getLoopbackAddress().address
+        val connectRequest = ByteArray(4 + loopback.size + 2)
+        connectRequest[0] = 0x05
+        connectRequest[1] = 0x01
+        connectRequest[2] = 0x00
+        connectRequest[3] = 0x01
+        System.arraycopy(loopback, 0, connectRequest, 4, loopback.size)
+        connectRequest[connectRequest.size - 2] = ((echoPort shr 8) and 0xFF).toByte()
+        connectRequest[connectRequest.size - 1] = (echoPort and 0xFF).toByte()
+        client.getOutputStream().write(connectRequest)
+        client.getOutputStream().flush()
+
+        val connectReply = ByteArray(10)
+        readFully(client.getInputStream(), connectReply)
+        assertEquals("Expected success", 0x00.toByte(), connectReply[1])
+
+        // Send data through tunnel
+        val httpRequest = "GET / HTTP/1.1\r\nHost: test\r\n\r\n"
+        client.getOutputStream().write(httpRequest.toByteArray())
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+
+        client.close()
+        echoServer.close()
+        authServer.stop()
+    }
+
+    @Test
+    fun `CONNECT with wrong auth is rejected end-to-end`() {
+        val authPort = findFreePort()
+        val authServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = authPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            username = "admin",
+            password = "secret",
+        )
+        authServer.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), authPort)
+        client.soTimeout = 5000
+
+        // Negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x02))
+        client.getOutputStream().flush()
+        val negotiateReply = ByteArray(2)
+        readFully(client.getInputStream(), negotiateReply)
+        assertEquals(0x02.toByte(), negotiateReply[1])
+
+        // Send wrong credentials
+        val user = "admin".toByteArray(Charsets.UTF_8)
+        val pass = "wrong".toByteArray(Charsets.UTF_8)
+        val authReq = byteArrayOf(0x01, user.size.toByte(), *user, pass.size.toByte(), *pass)
+        client.getOutputStream().write(authReq)
+        client.getOutputStream().flush()
+
+        val authReply = ByteArray(2)
+        readFully(client.getInputStream(), authReply)
+        assertEquals("Auth should fail", 0x01.toByte(), authReply[1])
+
+        // Connection should be closed after failed auth
+        val result = try { client.getInputStream().read() } catch (_: Exception) { -1 }
+        assertEquals(-1, result)
+
+        client.close()
+        authServer.stop()
     }
 
     @Test
@@ -409,6 +850,8 @@ class Socks5ServerTest {
         client.close()
         failResolver.stop()
     }
+
+    // --- Helpers ---
 
     private fun findFreePort(): Int {
         ServerSocket(0).use { return it.localPort }
