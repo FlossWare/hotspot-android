@@ -25,6 +25,7 @@ import org.flossware.hotspot.client.R
 import org.flossware.hotspot.client.model.Transport
 import org.flossware.hotspot.client.model.VpnState
 import org.flossware.hotspot.client.tunnel.SocksTunnel
+import org.flossware.hotspot.client.tunnel.SocksTunnel.Companion.DNS_ADDRESS
 
 class TunnelService : VpnService() {
 
@@ -55,20 +56,15 @@ class TunnelService : VpnService() {
         startForeground(NOTIFICATION_ID, buildNotification())
 
         try {
-            val isLoopback = socksHost == "127.0.0.1" || socksHost == "localhost"
             val builder = Builder()
                 .setSession("FlossWare Tunnel")
                 .addAddress("10.0.0.2", 32)
                 .addRoute("0.0.0.0", 0)
+                .addAddress("fd00::2", 128)
+                .addRoute("::", 0)
                 .setMtu(1500)
                 .addDisallowedApplication(packageName)
-
-            if (isLoopback) {
-                builder.addDnsServer("8.8.8.8")
-                builder.addDnsServer("1.1.1.1")
-            } else {
-                builder.addDnsServer(socksHost)
-            }
+                .addDnsServer(DNS_ADDRESS)
 
             val tun = builder.establish() ?: run {
                 _state.value = _state.value.copy(error = "VPN permission denied")

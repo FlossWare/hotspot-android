@@ -47,12 +47,20 @@ class SocksTunnel(
         private const val TAG = "SocksTunnel"
         internal const val CONFIG_FILENAME = "tun2socks.yml"
 
+        internal const val DNS_ADDRESS = "198.18.0.2"
+
         internal fun buildConfig(socksHost: String, socksPort: Int): String = """
             tunnel:
               mtu: 1500
             socks5:
               port: $socksPort
               address: $socksHost
+            mapdns:
+              address: $DNS_ADDRESS
+              port: 53
+              network: 100.64.0.0
+              netmask: 255.192.0.0
+              cache-size: 10000
             misc:
               log-level: warn
               connect-timeout: 5000
