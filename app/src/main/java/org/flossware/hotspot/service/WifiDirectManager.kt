@@ -171,7 +171,14 @@ class WifiDirectManager {
     private fun removeGroup() {
         val ch = channel ?: return
         val mgr = manager ?: return
-        mgr.removeGroup(ch, null)
+        mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                Log.i(TAG, "Wi-Fi Direct group removed")
+            }
+            override fun onFailure(reason: Int) {
+                Log.w(TAG, "Failed to remove Wi-Fi Direct group (reason=$reason)")
+            }
+        })
     }
 
     @SuppressLint("MissingPermission")

@@ -92,6 +92,13 @@ class BluetoothTunnel(
         }
         activeConnections.clear()
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         _state.value = BluetoothTunnelState.Disconnected
         Log.i(TAG, "Bluetooth tunnel stopped")
     }
@@ -134,6 +141,7 @@ class BluetoothTunnel(
 
     companion object {
         private const val TAG = "BluetoothTunnel"
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
         val SERVICE_UUID: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         private const val RELAY_BUFFER_SIZE = 8192
 

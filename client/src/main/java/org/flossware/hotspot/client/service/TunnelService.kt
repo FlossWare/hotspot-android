@@ -187,16 +187,34 @@ class TunnelService : VpnService() {
     }
 
     private fun disconnect() {
+        if (tunInterface == null && socksTunnel == null && bluetoothTunnel == null && usbTunnel == null) {
+            // Already disconnected -- avoid double-cleanup
+            return
+        }
+        Log.i(TAG, "Disconnecting VPN tunnel")
+
+        // 1. Cancel coroutines to stop accepting new work
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
+
+        // 2. Stop the native tun2socks tunnel
         socksTunnel?.stop()
         socksTunnel = null
+
+        // 3. Stop transport tunnels
         bluetoothTunnel?.stop()
         bluetoothTunnel = null
         usbTunnel?.stop()
         usbTunnel = null
-        tunInterface?.close()
+
+        // 4. Close VPN interface
+        try {
+            tunInterface?.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error closing VPN interface: ${e.message}")
+        }
         tunInterface = null
+
         _state.value = VpnState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

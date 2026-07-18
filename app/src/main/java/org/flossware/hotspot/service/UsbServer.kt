@@ -105,6 +105,13 @@ class UsbServer(
         running.set(false)
         closeAccessory()
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         _state.value = UsbState.Idle
         Log.i(TAG, "USB server stopped")
     }
@@ -184,6 +191,7 @@ class UsbServer(
     companion object {
         private const val TAG = "UsbServer"
         private const val RELAY_BUFFER_SIZE = 8192
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
 
         internal fun relay(input: InputStream, output: OutputStream) {
             val buffer = ByteArray(RELAY_BUFFER_SIZE)

@@ -127,6 +127,13 @@ class UsbTunnel(
         usbConnection?.close()
         usbConnection = null
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         _state.value = UsbTunnelState.Disconnected
         Log.i(TAG, "USB tunnel stopped")
     }
@@ -191,6 +198,7 @@ class UsbTunnel(
         private const val TAG = "UsbTunnel"
         private const val RELAY_BUFFER_SIZE = 8192
         private const val TRANSFER_TIMEOUT_MS = 5000
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
 
         private fun Socket.closeSilently() {
             try {

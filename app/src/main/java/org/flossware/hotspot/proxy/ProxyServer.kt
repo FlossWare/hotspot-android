@@ -10,6 +10,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.net.URL
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -28,12 +29,14 @@ class ProxyServer(
     private val running = AtomicBoolean(false)
     private val _bytesTransferred = AtomicLong(0)
     val bytesTransferred: Long get() = _bytesTransferred.get()
+    private val activeSockets = CopyOnWriteArrayList<Socket>()
 
     fun start() {
         if (running.getAndSet(true)) return
         executor.execute {
+            var ss: ServerSocket? = null
             try {
-                val ss = ServerSocket(port, 50, bindAddress)
+                ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
                 Log.i(TAG, "Proxy listening on $bindAddress:$port")
@@ -43,13 +46,22 @@ class ProxyServer(
                         if (debugMode) {
                             Log.d(TAG, "New connection from ${client.inetAddress.hostAddress}:${client.port}")
                         }
-                        executor.execute { handleClient(client) }
+                        activeSockets.add(client)
+                        executor.execute {
+                            try {
+                                handleClient(client)
+                            } finally {
+                                activeSockets.remove(client)
+                            }
+                        }
                     } catch (_: SocketException) {
                         break
                     }
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Proxy server error", e)
+            } finally {
+                ss?.close()
             }
         }
     }
@@ -58,7 +70,18 @@ class ProxyServer(
         running.set(false)
         serverSocket?.close()
         serverSocket = null
+        for (sock in activeSockets) {
+            sock.closeSilently()
+        }
+        activeSockets.clear()
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         Log.i(TAG, "Proxy server stopped")
     }
 
@@ -293,5 +316,6 @@ class ProxyServer(
 
     companion object {
         private const val TAG = "ProxyServer"
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
     }
 }

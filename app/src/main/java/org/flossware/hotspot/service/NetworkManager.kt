@@ -80,6 +80,8 @@ class NetworkManager(private val context: Context) {
             }
         }
         networkCallback = null
+        network = null
+        upstreamDns = null
     }
 
     companion object {

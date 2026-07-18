@@ -87,9 +87,26 @@ class DnsRelay(
         running.set(false)
         socket?.close()
         socket = null
-        thread?.interrupt()
+        thread?.let { t ->
+            t.interrupt()
+            try {
+                t.join(SHUTDOWN_TIMEOUT_MS)
+                if (t.isAlive) {
+                    Log.w(TAG, "DNS relay thread did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+        }
         thread = null
         queryExecutor.shutdownNow()
+        try {
+            if (!queryExecutor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Query executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         cache.clear()
         Log.i(TAG, "DNS relay stopped (cache: ${_cacheHits.get()} hits, ${_cacheMisses.get()} misses)")
     }
@@ -286,5 +303,6 @@ class DnsRelay(
         internal const val DEFAULT_TTL = 60
         internal const val MIN_TTL = 10
         internal const val MAX_TTL = 3600
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
     }
 }

@@ -13,6 +13,7 @@ import java.net.Socket
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -47,6 +48,7 @@ class Socks5Server(
     private val connectionsPerClient = ConcurrentHashMap<InetAddress, AtomicInteger>()
     private val totalActiveConnections = AtomicInteger(0)
     val activeConnections: Int get() = totalActiveConnections.get()
+    private val activeSockets = CopyOnWriteArrayList<Socket>()
 
     fun start() {
         if (running.getAndSet(true)) return
@@ -79,6 +81,7 @@ class Socks5Server(
 
                         clientCount.incrementAndGet()
                         totalActiveConnections.incrementAndGet()
+                        activeSockets.add(client)
                         if (debugMode) {
                             Log.d(TAG, "Connection accepted from ${clientAddr.hostAddress}" +
                                 " (client: ${clientCount.get()}, total: ${totalActiveConnections.get()})")
@@ -88,6 +91,7 @@ class Socks5Server(
                             try {
                                 handleClient(client)
                             } finally {
+                                activeSockets.remove(client)
                                 releaseConnection(clientAddr)
                             }
                         }
@@ -107,7 +111,18 @@ class Socks5Server(
         running.set(false)
         serverSocket?.close()
         serverSocket = null
+        for (sock in activeSockets) {
+            sock.closeSilently()
+        }
+        activeSockets.clear()
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         connectionsPerClient.clear()
         totalActiveConnections.set(0)
         Log.i(TAG, "SOCKS5 server stopped")
@@ -551,6 +566,7 @@ class Socks5Server(
         const val REPLY_CMD_NOT_SUPPORTED: Byte = 0x07
         const val REPLY_ADDR_NOT_SUPPORTED: Byte = 0x08
         const val SOCKET_TIMEOUT_MS = 60_000
+        const val SHUTDOWN_TIMEOUT_MS = 3000L
 
         /**
          * Returns true if the given address is a loopback or link-local address

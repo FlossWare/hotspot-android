@@ -235,16 +235,31 @@ class HotspotService : Service() {
     }
 
     private fun stopHotspot() {
+        if (!_state.value.isRunning && !proxyManager.isRunning) {
+            // Already stopped or never started -- avoid double-cleanup
+            return
+        }
         Log.i(TAG, "Stopping hotspot service")
-        releaseWakeLock()
+
+        // 1. Cancel coroutines to stop accepting new work
+        scope.cancel()
+
+        // 2. Stop transport servers (stop accepting new connections)
         usbServer.stop()
         usbServer.unregisterReceiver(this)
         bluetoothManager.stop()
+
+        // 3. Stop proxy (closes active connections and executors)
         proxyManager.stop()
+
+        // 4. Remove Wi-Fi Direct group
         wifiDirectManager.stop()
+
+        // 5. Release system resources
         networkManager.unregister()
+        releaseWakeLock()
+
         _state.value = HotspotState()
-        scope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

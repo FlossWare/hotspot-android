@@ -115,6 +115,13 @@ class BluetoothServer(
         activeConnections.clear()
         _connectedDevices.value = emptyList()
         executor.shutdownNow()
+        try {
+            if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
         _state.value = BluetoothState.Idle
         Log.i(TAG, "Bluetooth server stopped")
     }
@@ -184,6 +191,7 @@ class BluetoothServer(
 
     companion object {
         private const val TAG = "BluetoothServer"
+        private const val SHUTDOWN_TIMEOUT_MS = 3000L
         val SERVICE_UUID: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         const val SERVICE_NAME = "FlossHotspotSOCKS"
         private const val RELAY_BUFFER_SIZE = 8192
