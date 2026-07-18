@@ -21,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.flossware.hotspot.R
 
@@ -37,16 +39,25 @@ fun CompatibilityTips(
                     Text(
                         stringResource(R.string.compatibility_tips_title),
                         style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() },
                     )
                 },
                 leadingContent = {
-                    Icon(Icons.Default.Info, contentDescription = null)
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = stringResource(R.string.cd_info_icon),
+                    )
                 },
                 trailingContent = {
+                    val title = stringResource(R.string.compatibility_tips_title)
                     Icon(
                         imageVector = if (expanded) Icons.Default.ExpandLess
                         else Icons.Default.ExpandMore,
-                        contentDescription = null,
+                        contentDescription = if (expanded) {
+                            stringResource(R.string.cd_collapse_section, title)
+                        } else {
+                            stringResource(R.string.cd_expand_section, title)
+                        },
                     )
                 },
                 modifier = Modifier.clickable { expanded = !expanded },

@@ -36,6 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -119,7 +122,7 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
         ) {
             Image(
                 painter = painterResource(R.drawable.flossware_logo),
-                contentDescription = stringResource(R.string.app_name),
+                contentDescription = stringResource(R.string.cd_flossware_logo),
                 modifier = Modifier
                     .width(200.dp)
                     .height(56.dp)
@@ -131,7 +134,9 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 4.dp),
+                    modifier = Modifier
+                        .padding(bottom = 4.dp)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
 

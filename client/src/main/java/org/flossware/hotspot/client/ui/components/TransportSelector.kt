@@ -27,7 +27,12 @@ fun TransportSelector(
             onClick = { onTransportSelected(0) },
             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
             enabled = enabled,
-            icon = { Icon(Icons.Default.Wifi, contentDescription = null) },
+            icon = {
+                Icon(
+                    Icons.Default.Wifi,
+                    contentDescription = stringResource(R.string.cd_wifi_transport_icon),
+                )
+            },
         ) {
             Text(stringResource(R.string.transport_wifi_direct))
         }
@@ -36,7 +41,12 @@ fun TransportSelector(
             onClick = { onTransportSelected(1) },
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
             enabled = enabled,
-            icon = { Icon(Icons.Default.Bluetooth, contentDescription = null) },
+            icon = {
+                Icon(
+                    Icons.Default.Bluetooth,
+                    contentDescription = stringResource(R.string.cd_bluetooth_transport_icon),
+                )
+            },
         ) {
             Text(stringResource(R.string.transport_bluetooth))
         }

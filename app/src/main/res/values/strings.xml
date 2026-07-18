@@ -68,4 +68,20 @@
     <string name="compatibility_tip_location">On Android 12 and below, Location Services must be enabled. Some manufacturers require this even on newer Android versions.</string>
     <string name="compatibility_tip_retry">If the hotspot fails to start on the first attempt, the app will automatically retry. You can also try toggling Wi-Fi off and on.</string>
     <string name="compatibility_tip_battery">The app reduces power usage automatically when no data is being transferred. Battery usage increases with active proxying.</string>
+
+    <!-- Accessibility: content descriptions -->
+    <string name="cd_flossware_logo">FlossWare logo</string>
+    <string name="cd_expand_section">Expand %1$s</string>
+    <string name="cd_collapse_section">Collapse %1$s</string>
+    <string name="cd_show_password">Show password</string>
+    <string name="cd_hide_password">Hide password</string>
+    <string name="cd_copy_value">Copy %1$s</string>
+    <string name="cd_start_hotspot_icon">Start hotspot</string>
+    <string name="cd_stop_hotspot_icon">Stop hotspot</string>
+    <string name="cd_bluetooth_icon">Bluetooth</string>
+    <string name="cd_bluetooth_device_icon">Bluetooth device</string>
+    <string name="cd_device_icon">Connected device</string>
+    <string name="cd_info_icon">Information</string>
+    <string name="cd_cache_icon">Cache statistics</string>
+    <string name="cd_bluetooth_opt_in">Bluetooth transport, %1$s</string>
 </resources>

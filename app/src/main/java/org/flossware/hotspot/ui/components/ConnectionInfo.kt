@@ -65,7 +65,11 @@ fun ConnectionInfo(
                     Icon(
                         imageVector = if (showPassword) Icons.Default.VisibilityOff
                         else Icons.Default.Visibility,
-                        contentDescription = null,
+                        contentDescription = if (showPassword) {
+                            stringResource(R.string.cd_hide_password)
+                        } else {
+                            stringResource(R.string.cd_show_password)
+                        },
                     )
                 }
             },
@@ -113,7 +117,10 @@ private fun CopyableInfoRow(label: String, value: String) {
         },
         trailingContent = {
             IconButton(onClick = { copyToClipboard(context, label, value) }) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null)
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.cd_copy_value, label),
+                )
             }
         },
     )

@@ -29,7 +29,10 @@ fun CacheInfo(
             ListItem(
                 headlineContent = { Text(stringResource(R.string.cache_stats)) },
                 leadingContent = {
-                    Icon(Icons.Default.Cached, contentDescription = null)
+                    Icon(
+                        Icons.Default.Cached,
+                        contentDescription = stringResource(R.string.cd_cache_icon),
+                    )
                 },
             )
 
