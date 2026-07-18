@@ -206,6 +206,18 @@ hotspot-android/
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full rationale and trade-off analysis.
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute: build setup, code style, PR process |
+| [docs/BUILD.md](docs/BUILD.md) | Detailed build instructions, NDK setup, signing, testing |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture decision records, data flow, component details |
+| [docs/TRANSPORT_GUIDE.md](docs/TRANSPORT_GUIDE.md) | Wi-Fi Direct vs Bluetooth vs USB comparison |
+| [docs/SECURITY.md](docs/SECURITY.md) | Threat model, attack surface, security recommendations |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | FAQ, OEM quirks, common issues and fixes |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Contributor Covenant Code of Conduct |
+
 ## Known limitations
 
 - **TCP-only SOCKS5** -- the SOCKS5 server handles TCP CONNECT only; UDP ASSOCIATE is not implemented. UDP traffic (VoIP, some games) will not work through the proxy path. DNS is handled separately via the DNS relay and mapdns.
@@ -244,6 +256,24 @@ For a detailed threat model, attack surface analysis, and security recommendatio
 Every push to `main` builds both APKs, runs tests, auto-increments the minor version (X.Y format), and creates a git tag. Pushing a `v*` tag triggers a release build with both APKs attached to a GitHub Release.
 
 Dependencies are scanned weekly via GitHub's dependency submission API.
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for solutions to common issues including:
+
+- Hotspot won't start (Wi-Fi, location, permission fixes)
+- No internet on client device
+- Bluetooth connection problems
+- OEM-specific quirks (Samsung, Xiaomi, Huawei, OnePlus)
+- Battery optimization killing background services
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Build setup and prerequisites
+- Code style guidelines
+- PR process and review expectations
 
 ## License
 
