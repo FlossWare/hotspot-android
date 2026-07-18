@@ -34,7 +34,10 @@
     <string name="no_usb_devices">No USB devices found. Connect a device via USB OTG cable.</string>
     <string name="refresh">Refresh</string>
 
+    <string name="share_logs">Share Logs</string>
+
     <!-- Accessibility: content descriptions -->
+    <string name="cd_share_logs">Share debug logs</string>
     <string name="cd_flossware_logo">FlossWare logo</string>
     <string name="cd_wifi_transport_icon">Wi-Fi Direct transport</string>
     <string name="cd_bluetooth_transport_icon">Bluetooth transport</string>

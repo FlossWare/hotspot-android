@@ -80,4 +80,7 @@
     <string name="compatibility_tip_location">No Android 12 e anteriores, os serviços de localização devem estar ativados. Alguns fabricantes exigem isso mesmo em versões mais recentes do Android.</string>
     <string name="compatibility_tip_retry">Se o hotspot não iniciar na primeira tentativa, o aplicativo tentará novamente automaticamente. Você também pode tentar desativar e ativar o Wi-Fi.</string>
     <string name="compatibility_tip_battery">O aplicativo reduz o consumo de energia automaticamente quando não há transferência de dados. O uso de bateria aumenta com o proxy ativo.</string>
+
+    <string name="share_logs">Compartilhar registros</string>
+    <string name="cd_share_logs">Compartilhar registros de depuração</string>
 </resources>

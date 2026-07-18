@@ -30,4 +30,7 @@
     <string name="paired_devices">Dispositivos pareados</string>
     <string name="no_paired_devices">Nenhum dispositivo pareado encontrado. Pareie primeiro com o dispositivo hotspot nas configurações de Bluetooth.</string>
     <string name="refresh">Atualizar</string>
+
+    <string name="share_logs">Compartilhar registros</string>
+    <string name="cd_share_logs">Compartilhar registros de depuração</string>
 </resources>

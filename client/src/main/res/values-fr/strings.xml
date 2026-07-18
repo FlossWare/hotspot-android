@@ -30,4 +30,7 @@
     <string name="paired_devices">Appareils associés</string>
     <string name="no_paired_devices">Aucun appareil associé trouvé. Associez d\'abord l\'appareil du point d\'accès dans les paramètres Bluetooth.</string>
     <string name="refresh">Actualiser</string>
+
+    <string name="share_logs">Partager les journaux</string>
+    <string name="cd_share_logs">Partager les journaux de débogage</string>
 </resources>

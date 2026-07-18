@@ -15,8 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -43,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.flossware.hotspot.R
+import org.flossware.hotspot.log.LogExporter
 import org.flossware.hotspot.ui.components.BluetoothInfo
 import org.flossware.hotspot.ui.components.CacheInfo
 import org.flossware.hotspot.ui.components.CompatibilityTips
@@ -109,6 +114,29 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
+                actions = {
+                    IconButton(onClick = {
+                        val info = buildString {
+                            appendLine("Status: ${if (state.isRunning) "Running" else "Stopped"}")
+                            if (state.isRunning) {
+                                appendLine("Transport: Wi-Fi Direct")
+                                appendLine("SOCKS Address: ${state.socksAddress}")
+                                appendLine("DNS Address: ${state.dnsAddress}")
+                                appendLine("Connected Devices: ${state.connectedDevices.size}")
+                                appendLine("Bluetooth: ${if (state.bluetoothEnabled) "Enabled" else "Disabled"}")
+                                appendLine("USB: ${if (state.usbConnected) "Connected" else "Not connected"}")
+                                appendLine("Bytes Transferred: ${state.bytesTransferred}")
+                                appendLine("Uptime: ${state.uptimeSeconds}s")
+                            }
+                        }
+                        LogExporter.shareLogs(context, info)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.BugReport,
+                            contentDescription = stringResource(R.string.cd_share_logs),
+                        )
+                    }
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

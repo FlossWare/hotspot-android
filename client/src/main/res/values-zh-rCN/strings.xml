@@ -30,4 +30,7 @@
     <string name="paired_devices">已配对设备</string>
     <string name="no_paired_devices">未找到已配对设备。请先在蓝牙设置中与热点设备配对。</string>
     <string name="refresh">刷新</string>
+
+    <string name="share_logs">分享日志</string>
+    <string name="cd_share_logs">分享调试日志</string>
 </resources>
