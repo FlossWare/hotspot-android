@@ -281,4 +281,102 @@ class HotspotStateTest {
         val c = HotspotState(usbConnected = false)
         assertFalse(a == c)
     }
+
+    @Test
+    fun `default feature availability fields are true`() {
+        val state = HotspotState()
+        assertTrue(state.wifiDirectAvailable)
+        assertTrue(state.bluetoothAvailable)
+        assertTrue(state.usbAvailable)
+        assertTrue(state.mobileDataAvailable)
+        assertFalse(state.permissionsDenied)
+        assertFalse(state.bluetoothOnlyMode)
+    }
+
+    @Test
+    fun `canFallbackToBluetooth when wifi direct unavailable and bluetooth available`() {
+        val state = HotspotState(
+            wifiDirectAvailable = false,
+            bluetoothAvailable = true,
+            isRunning = false,
+        )
+        assertTrue(state.canFallbackToBluetooth)
+    }
+
+    @Test
+    fun `canFallbackToBluetooth false when wifi direct available`() {
+        val state = HotspotState(
+            wifiDirectAvailable = true,
+            bluetoothAvailable = true,
+            isRunning = false,
+        )
+        assertFalse(state.canFallbackToBluetooth)
+    }
+
+    @Test
+    fun `canFallbackToBluetooth false when bluetooth unavailable`() {
+        val state = HotspotState(
+            wifiDirectAvailable = false,
+            bluetoothAvailable = false,
+            isRunning = false,
+        )
+        assertFalse(state.canFallbackToBluetooth)
+    }
+
+    @Test
+    fun `canFallbackToBluetooth false when running`() {
+        val state = HotspotState(
+            wifiDirectAvailable = false,
+            bluetoothAvailable = true,
+            isRunning = true,
+        )
+        assertFalse(state.canFallbackToBluetooth)
+    }
+
+    @Test
+    fun `feature availability fields can be set`() {
+        val state = HotspotState(
+            wifiDirectAvailable = false,
+            bluetoothAvailable = false,
+            usbAvailable = false,
+            mobileDataAvailable = false,
+            permissionsDenied = true,
+            bluetoothOnlyMode = true,
+        )
+        assertFalse(state.wifiDirectAvailable)
+        assertFalse(state.bluetoothAvailable)
+        assertFalse(state.usbAvailable)
+        assertFalse(state.mobileDataAvailable)
+        assertTrue(state.permissionsDenied)
+        assertTrue(state.bluetoothOnlyMode)
+    }
+
+    @Test
+    fun `copy preserves feature availability fields`() {
+        val state = HotspotState(
+            wifiDirectAvailable = false,
+            bluetoothAvailable = true,
+            usbAvailable = false,
+            mobileDataAvailable = true,
+            permissionsDenied = true,
+            bluetoothOnlyMode = true,
+        )
+        val copied = state.copy(isRunning = true)
+        assertFalse(copied.wifiDirectAvailable)
+        assertTrue(copied.bluetoothAvailable)
+        assertFalse(copied.usbAvailable)
+        assertTrue(copied.mobileDataAvailable)
+        assertTrue(copied.permissionsDenied)
+        assertTrue(copied.bluetoothOnlyMode)
+    }
+
+    @Test
+    fun `equality includes feature availability fields`() {
+        val a = HotspotState(wifiDirectAvailable = false, permissionsDenied = true)
+        val b = HotspotState(wifiDirectAvailable = false, permissionsDenied = true)
+        assertEquals(a, b)
+
+        val c = HotspotState(wifiDirectAvailable = true, permissionsDenied = true)
+        assertFalse(a == c)
+    }
 }

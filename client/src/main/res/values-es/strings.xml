@@ -17,18 +17,29 @@
 
     <string name="vpn_consent_required">Se requiere permiso de VPN para enrutar todo el tráfico a través del hotspot</string>
 
-    <string name="error_vpn_denied">Se denegó el permiso de VPN</string>
+    <string name="error_vpn_denied">Se denegó el permiso de VPN. La VPN es necesaria para enrutar todo el tráfico de internet a través del hotspot. Por favor, otorga el permiso cuando se te solicite.</string>
     <string name="error_connection_failed">No se pudo conectar al servidor SOCKS5</string>
-    <string name="error_vpn_permission_denied">Permiso de VPN denegado</string>
+    <string name="error_vpn_permission_denied">Se requiere el permiso de VPN para tunelizar tu tráfico a través del hotspot. Sin él, el cliente no puede funcionar. Toca Conectar nuevamente y permite la solicitud de VPN.</string>
     <string name="error_generic_connection_failed">Error de conexión</string>
     <string name="error_bluetooth_not_available">Bluetooth no disponible</string>
     <string name="error_bluetooth_connection_failed">Error de conexión Bluetooth</string>
     <string name="unknown_device">Desconocido</string>
 
+    <!-- Graceful degradation: connection error types -->
+    <string name="error_host_not_found">No se encontró el host del hotspot. Asegúrate de estar conectado a la red Wi-Fi del hotspot y de que la aplicación host esté en ejecución.</string>
+    <string name="error_auth_failed">Error de autenticación. Verifica que la dirección del servidor SOCKS5 sea correcta.</string>
+    <string name="error_connection_timeout">La conexión expiró. El hotspot puede estar fuera de alcance o no estar en ejecución. Acércate e inténtalo de nuevo.</string>
+    <string name="error_no_transports">No hay métodos de conexión disponibles. Este dispositivo no admite conexiones Wi-Fi, Bluetooth o USB. Verifica la configuración de tu dispositivo.</string>
+    <string name="error_usb_not_available">USB no disponible</string>
+    <string name="error_usb_device_not_found">Dispositivo USB desconectado. Reconecta el cable USB e inténtalo de nuevo.</string>
+
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">Bluetooth</string>
+    <string name="transport_usb">USB</string>
     <string name="paired_devices">Dispositivos emparejados</string>
     <string name="no_paired_devices">No se encontraron dispositivos emparejados. Empareja primero con el dispositivo hotspot en la configuración de Bluetooth.</string>
+    <string name="usb_devices">Dispositivos USB</string>
+    <string name="no_usb_devices">No se encontraron dispositivos USB. Conecta un dispositivo mediante cable USB OTG.</string>
     <string name="refresh">Actualizar</string>
 
     <string name="share_logs">Compartir registros</string>

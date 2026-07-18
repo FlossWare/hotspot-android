@@ -38,13 +38,13 @@
     <string name="open_settings">Ouvrir les paramètres</string>
     <string name="ok">OK</string>
 
-    <string name="error_no_wifi_direct">Wi-Fi Direct n\'est pas pris en charge sur cet appareil</string>
-    <string name="error_no_mobile_data">Les données mobiles ne sont pas disponibles</string>
+    <string name="error_no_wifi_direct">Wi-Fi Direct n\'est pas pris en charge sur cet appareil. Vous pouvez toujours partager votre connexion via Bluetooth ou USB.</string>
+    <string name="error_no_mobile_data">Les données mobiles ne sont pas disponibles. Activez les données mobiles pour partager votre connexion.</string>
     <string name="error_group_creation_failed">Échec de la création du réseau de point d\'accès</string>
     <string name="error_socks_failed">Échec du démarrage du serveur SOCKS5</string>
-    <string name="error_mobile_data_lost">Connexion aux données mobiles perdue</string>
+    <string name="error_mobile_data_lost">Connexion aux données mobiles perdue. Réactivez les données mobiles et redémarrez le point d\'accès.</string>
     <string name="error_wifi_direct_not_supported">Wi-Fi Direct non pris en charge</string>
-    <string name="error_wifi_direct_disabled">Wi-Fi Direct est désactivé</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct est désactivé. Activez le Wi-Fi pour utiliser Wi-Fi Direct, ou essayez Bluetooth/USB à la place.</string>
     <string name="error_wifi_direct_generic">Wi-Fi Direct a échoué. Certains appareils nécessitent que le Wi-Fi soit activé. Essayez d\'activer le Wi-Fi et les services de localisation, puis réessayez.</string>
     <string name="error_wifi_direct_busy">Wi-Fi Direct est occupé. Veuillez patienter un instant et réessayer.</string>
     <string name="error_service_discovery_failed">Échec de la découverte de services. Essayez de désactiver puis réactiver le Wi-Fi.</string>
@@ -83,4 +83,16 @@
 
     <string name="share_logs">Partager les journaux</string>
     <string name="cd_share_logs">Partager les journaux de débogage</string>
+
+    <!-- Graceful degradation strings -->
+    <string name="error_wifi_direct_unavailable_suggestion">Wi-Fi Direct n\'est pas disponible. Essayez d\'utiliser Bluetooth ou le transport USB à la place.</string>
+    <string name="error_mobile_data_guidance">Activez les données mobiles pour partager votre connexion. Allez dans Paramètres > Réseau > Données mobiles.</string>
+    <string name="error_permissions_denied">Certaines autorisations ont été refusées. Sans elles, les fonctionnalités suivantes ne fonctionneront pas :</string>
+    <string name="error_permission_wifi_direct">Point d\'accès Wi-Fi Direct (nécessite %1$s)</string>
+    <string name="error_permission_bluetooth">Transport Bluetooth (nécessite les autorisations Bluetooth)</string>
+    <string name="continue_bluetooth_only">Continuer avec Bluetooth uniquement</string>
+    <string name="bluetooth_only_mode_active">Fonctionnement en mode Bluetooth uniquement. Wi-Fi Direct n\'est pas disponible.</string>
+    <string name="feature_unavailable_wifi_direct">Wi-Fi Direct n\'est pas pris en charge sur cet appareil</string>
+    <string name="feature_unavailable_bluetooth">Bluetooth n\'est pas disponible sur cet appareil</string>
+    <string name="feature_unavailable_usb">Le mode USB Accessory n\'est pas pris en charge sur cet appareil</string>
 </resources>

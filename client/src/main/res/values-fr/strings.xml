@@ -17,18 +17,29 @@
 
     <string name="vpn_consent_required">L\'autorisation VPN est requise pour router tout le trafic via le point d\'accès</string>
 
-    <string name="error_vpn_denied">L\'autorisation VPN a été refusée</string>
+    <string name="error_vpn_denied">L\'autorisation VPN a été refusée. Le VPN est nécessaire pour acheminer tout votre trafic internet via le point d\'accès. Veuillez accorder l\'autorisation lorsque vous y êtes invité.</string>
     <string name="error_connection_failed">Échec de la connexion au serveur SOCKS5</string>
-    <string name="error_vpn_permission_denied">Autorisation VPN refusée</string>
+    <string name="error_vpn_permission_denied">L\'autorisation VPN est requise pour tunneliser votre trafic via le point d\'accès. Sans elle, le client ne peut pas fonctionner. Appuyez sur Connecter à nouveau et autorisez la demande VPN.</string>
     <string name="error_generic_connection_failed">Échec de la connexion</string>
     <string name="error_bluetooth_not_available">Bluetooth non disponible</string>
     <string name="error_bluetooth_connection_failed">Échec de la connexion Bluetooth</string>
     <string name="unknown_device">Inconnu</string>
 
+    <!-- Graceful degradation: connection error types -->
+    <string name="error_host_not_found">Hôte du point d\'accès introuvable. Assurez-vous d\'être connecté au réseau Wi-Fi du point d\'accès et que l\'application hôte est en cours d\'exécution.</string>
+    <string name="error_auth_failed">Échec de l\'authentification. Vérifiez que l\'adresse du serveur SOCKS5 est correcte.</string>
+    <string name="error_connection_timeout">La connexion a expiré. Le point d\'accès est peut-être hors de portée ou n\'est pas en cours d\'exécution. Rapprochez-vous et réessayez.</string>
+    <string name="error_no_transports">Aucune méthode de connexion disponible. Cet appareil ne prend pas en charge les connexions Wi-Fi, Bluetooth ou USB. Vérifiez les paramètres de votre appareil.</string>
+    <string name="error_usb_not_available">USB non disponible</string>
+    <string name="error_usb_device_not_found">Appareil USB déconnecté. Reconnectez le câble USB et réessayez.</string>
+
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
     <string name="transport_bluetooth">Bluetooth</string>
+    <string name="transport_usb">USB</string>
     <string name="paired_devices">Appareils associés</string>
     <string name="no_paired_devices">Aucun appareil associé trouvé. Associez d\'abord l\'appareil du point d\'accès dans les paramètres Bluetooth.</string>
+    <string name="usb_devices">Appareils USB</string>
+    <string name="no_usb_devices">Aucun appareil USB trouvé. Connectez un appareil via un câble USB OTG.</string>
     <string name="refresh">Actualiser</string>
 
     <string name="share_logs">Partager les journaux</string>

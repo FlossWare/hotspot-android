@@ -25,10 +25,15 @@ import kotlinx.coroutines.launch
 import org.flossware.hotspot.client.ClientApp
 import org.flossware.hotspot.client.MainActivity
 import org.flossware.hotspot.client.R
+import org.flossware.hotspot.client.model.ConnectionErrorType
 import org.flossware.hotspot.client.model.Transport
 import org.flossware.hotspot.client.model.VpnState
 import org.flossware.hotspot.client.tunnel.SocksTunnel
 import org.flossware.hotspot.client.tunnel.SocksTunnel.Companion.DNS_ADDRESS
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class TunnelService : VpnService() {
 
@@ -75,7 +80,10 @@ class TunnelService : VpnService() {
                 .addDnsServer(DNS_ADDRESS)
 
             val tun = builder.establish() ?: run {
-                _state.value = _state.value.copy(error = getString(R.string.error_vpn_permission_denied))
+                _state.value = _state.value.copy(
+                    error = getString(R.string.error_vpn_permission_denied),
+                    errorType = ConnectionErrorType.VPN_DENIED,
+                )
                 stopSelf()
                 return
             }
@@ -98,9 +106,11 @@ class TunnelService : VpnService() {
             Log.i(TAG, "VPN tunnel established to $socksHost:$socksPort via $transport")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to establish tunnel", e)
+            val (errorType, errorMsg) = classifyConnectionError(e)
             _state.value = _state.value.copy(
                 isConnected = false,
-                error = e.message ?: getString(R.string.error_generic_connection_failed),
+                error = errorMsg,
+                errorType = errorType,
             )
             disconnect()
         }
@@ -152,14 +162,20 @@ class TunnelService : VpnService() {
 
         val usbManager = getSystemService(Context.USB_SERVICE) as? UsbManager
         if (usbManager == null) {
-            _state.value = _state.value.copy(error = "USB not available")
+            _state.value = _state.value.copy(
+                error = getString(R.string.error_usb_not_available),
+                errorType = ConnectionErrorType.GENERIC,
+            )
             stopSelf()
             return
         }
 
         val device = usbManager.deviceList.values.firstOrNull { it.deviceName == deviceName }
         if (device == null) {
-            _state.value = _state.value.copy(error = "USB device not found")
+            _state.value = _state.value.copy(
+                error = getString(R.string.error_usb_device_not_found),
+                errorType = ConnectionErrorType.HOST_NOT_FOUND,
+            )
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return
@@ -249,6 +265,31 @@ class TunnelService : VpnService() {
             .build()
     }
 
+    /**
+     * Classifies a connection exception into a user-friendly error type and message.
+     */
+    private fun classifyConnectionError(e: Exception): Pair<ConnectionErrorType, String> {
+        return when (e) {
+            is UnknownHostException, is NoRouteToHostException ->
+                ConnectionErrorType.HOST_NOT_FOUND to getString(R.string.error_host_not_found)
+            is SocketTimeoutException ->
+                ConnectionErrorType.TIMEOUT to getString(R.string.error_connection_timeout)
+            is ConnectException -> {
+                val msg = e.message?.lowercase() ?: ""
+                when {
+                    msg.contains("refused") || msg.contains("unreachable") ->
+                        ConnectionErrorType.HOST_NOT_FOUND to getString(R.string.error_host_not_found)
+                    msg.contains("timed out") ->
+                        ConnectionErrorType.TIMEOUT to getString(R.string.error_connection_timeout)
+                    else ->
+                        ConnectionErrorType.GENERIC to (e.message ?: getString(R.string.error_generic_connection_failed))
+                }
+            }
+            else ->
+                ConnectionErrorType.GENERIC to (e.message ?: getString(R.string.error_generic_connection_failed))
+        }
+    }
+
     override fun onDestroy() {
         disconnect()
         super.onDestroy()
@@ -300,6 +341,18 @@ class TunnelService : VpnService() {
                 action = ACTION_DISCONNECT
             }
             context.startService(intent)
+        }
+
+        fun updateTransportAvailability(
+            wifiAvailable: Boolean,
+            bluetoothAvailable: Boolean,
+            usbAvailable: Boolean,
+        ) {
+            _state.value = _state.value.copy(
+                wifiAvailable = wifiAvailable,
+                bluetoothAvailable = bluetoothAvailable,
+                usbAvailable = usbAvailable,
+            )
         }
     }
 }

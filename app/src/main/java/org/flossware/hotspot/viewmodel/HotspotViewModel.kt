@@ -1,7 +1,13 @@
 package org.flossware.hotspot.viewmodel
 
 import android.app.Application
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.hardware.usb.UsbManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.lifecycle.AndroidViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -21,10 +27,15 @@ class HotspotViewModel(application: Application) : AndroidViewModel(application)
             // Sync initial state from persisted preference
             HotspotService.setBluetoothOptIn(application, optIn)
         }
+        detectFeatureAvailability()
     }
 
     fun startHotspot() {
         HotspotService.start(getApplication())
+    }
+
+    fun startBluetoothOnly() {
+        HotspotService.startBluetoothOnly(getApplication())
     }
 
     fun stopHotspot() {
@@ -33,6 +44,34 @@ class HotspotViewModel(application: Application) : AndroidViewModel(application)
 
     fun setBluetoothOptIn(enabled: Boolean) {
         HotspotService.setBluetoothOptIn(getApplication(), enabled)
+    }
+
+    /**
+     * Detects which hardware features are available on this device and updates
+     * the shared state so the UI can show/hide sections accordingly.
+     */
+    fun detectFeatureAvailability() {
+        val app = getApplication<Application>()
+        val pm = app.packageManager
+
+        val wifiDirectAvailable = pm.hasSystemFeature(PackageManager.FEATURE_WIFI_DIRECT)
+
+        val btManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        val bluetoothAvailable = btManager?.adapter != null
+
+        val usbManager = app.getSystemService(Context.USB_SERVICE) as? UsbManager
+        val usbAvailable = usbManager != null
+
+        val cm = app.getSystemService(ConnectivityManager::class.java)
+        val mobileDataAvailable = cm?.getNetworkCapabilities(cm.activeNetwork)
+            ?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
+
+        HotspotService.updateFeatureAvailability(
+            wifiDirectAvailable = wifiDirectAvailable,
+            bluetoothAvailable = bluetoothAvailable,
+            usbAvailable = usbAvailable,
+            mobileDataAvailable = mobileDataAvailable,
+        )
     }
 
     fun generateQrBitmap(state: HotspotState, size: Int = 512): Bitmap? {

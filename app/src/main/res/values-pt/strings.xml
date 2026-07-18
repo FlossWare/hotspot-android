@@ -38,13 +38,13 @@
     <string name="open_settings">Abrir Configurações</string>
     <string name="ok">OK</string>
 
-    <string name="error_no_wifi_direct">Wi-Fi Direct não é suportado neste dispositivo</string>
-    <string name="error_no_mobile_data">Dados móveis não estão disponíveis</string>
+    <string name="error_no_wifi_direct">Wi-Fi Direct não é suportado neste dispositivo. Você ainda pode compartilhar sua conexão usando Bluetooth ou transporte USB.</string>
+    <string name="error_no_mobile_data">Dados móveis não estão disponíveis. Ative os dados móveis para compartilhar sua conexão.</string>
     <string name="error_group_creation_failed">Falha ao criar a rede de hotspot</string>
     <string name="error_socks_failed">Falha ao iniciar o servidor SOCKS5</string>
-    <string name="error_mobile_data_lost">Conexão de dados móveis perdida</string>
+    <string name="error_mobile_data_lost">Conexão de dados móveis perdida. Reative os dados móveis e reinicie o hotspot.</string>
     <string name="error_wifi_direct_not_supported">Wi-Fi Direct não suportado</string>
-    <string name="error_wifi_direct_disabled">Wi-Fi Direct está desativado</string>
+    <string name="error_wifi_direct_disabled">Wi-Fi Direct está desativado. Ative o Wi-Fi para usar Wi-Fi Direct, ou tente Bluetooth/USB.</string>
     <string name="error_wifi_direct_generic">Wi-Fi Direct falhou. Alguns dispositivos exigem que o Wi-Fi esteja ativado. Tente ativar o Wi-Fi e os serviços de localização e tente novamente.</string>
     <string name="error_wifi_direct_busy">Wi-Fi Direct está ocupado. Aguarde um momento e tente novamente.</string>
     <string name="error_service_discovery_failed">Falha na descoberta de serviços. Tente desativar e ativar o Wi-Fi.</string>
@@ -83,4 +83,16 @@
 
     <string name="share_logs">Compartilhar registros</string>
     <string name="cd_share_logs">Compartilhar registros de depuração</string>
+
+    <!-- Graceful degradation strings -->
+    <string name="error_wifi_direct_unavailable_suggestion">Wi-Fi Direct não está disponível. Tente usar Bluetooth ou transporte USB.</string>
+    <string name="error_mobile_data_guidance">Ative os dados móveis para compartilhar sua conexão. Vá para Configurações > Rede > Dados móveis.</string>
+    <string name="error_permissions_denied">Algumas permissões foram negadas. Sem elas, os seguintes recursos não funcionarão:</string>
+    <string name="error_permission_wifi_direct">Hotspot Wi-Fi Direct (requer %1$s)</string>
+    <string name="error_permission_bluetooth">Transporte Bluetooth (requer permissões de Bluetooth)</string>
+    <string name="continue_bluetooth_only">Continuar apenas com Bluetooth</string>
+    <string name="bluetooth_only_mode_active">Executando no modo somente Bluetooth. Wi-Fi Direct não está disponível.</string>
+    <string name="feature_unavailable_wifi_direct">Wi-Fi Direct não é suportado neste dispositivo</string>
+    <string name="feature_unavailable_bluetooth">Bluetooth não está disponível neste dispositivo</string>
+    <string name="feature_unavailable_usb">O modo USB Accessory não é suportado neste dispositivo</string>
 </resources>

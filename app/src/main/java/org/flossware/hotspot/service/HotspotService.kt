@@ -48,6 +48,7 @@ class HotspotService : Service() {
             ACTION_START -> startHotspot()
             ACTION_STOP -> stopHotspot()
             ACTION_TOGGLE_BT -> toggleBluetooth(intent.getBooleanExtra(EXTRA_BT_ENABLED, false))
+            ACTION_START_BT_ONLY -> startBluetoothOnly()
         }
         return START_NOT_STICKY
     }
@@ -127,6 +128,98 @@ class HotspotService : Service() {
         }
 
         wifiDirectManager.start(this)
+    }
+
+    /**
+     * Starts the hotspot in Bluetooth-only mode when Wi-Fi Direct is unavailable.
+     * Binds the SOCKS5 proxy to the loopback address and starts Bluetooth transport.
+     */
+    private fun startBluetoothOnly() {
+        Log.i(TAG, "Starting hotspot in Bluetooth-only mode")
+        scope.cancel()
+        scope = CoroutineScope(Dispatchers.Main + Job())
+        networkManager.onNetworkLost = {
+            _state.value = _state.value.copy(error = getString(R.string.error_mobile_data_lost))
+            proxyManager.notifyNetworkLost()
+        }
+        networkManager.unregister()
+        startForeground(NOTIFICATION_ID, notificationHelper.build(0))
+        networkManager.register()
+        acquireWakeLock()
+        startTimeElapsed = SystemClock.elapsedRealtime()
+        lastBytesTransferred = 0L
+        idlePolls = 0
+
+        val bindAddr = InetAddress.getByName("127.0.0.1")
+        proxyManager.start(
+            bindAddress = bindAddr,
+            socketFactoryProvider = { networkManager.socketFactory },
+            upstreamDnsProvider = { networkManager.upstreamDns ?: InetAddress.getByName("8.8.8.8") },
+            socketBinder = { sock -> networkManager.bindSocket(sock) },
+        )
+
+        _state.value = _state.value.copy(
+            bluetoothOptIn = true,
+            bluetoothOnlyMode = true,
+        )
+        if (hasBluetoothPermissions()) {
+            bluetoothManager.start(this, scope)
+        }
+
+        scope.launch {
+            bluetoothManager.status.collect { status ->
+                _state.value = _state.value.copy(
+                    bluetoothEnabled = status.enabled,
+                    bluetoothDeviceName = status.deviceName,
+                )
+            }
+        }
+
+        scope.launch {
+            bluetoothManager.connectedDevices.collect { devices ->
+                _state.value = _state.value.copy(bluetoothConnectedDevices = devices)
+            }
+        }
+
+        _state.value = _state.value.copy(
+            isRunning = true,
+            socksHost = "127.0.0.1",
+        )
+
+        scope.launch {
+            while (true) {
+                val currentBytes = proxyManager.bytesTransferred
+                val isIdle = currentBytes == lastBytesTransferred && currentBytes > 0L
+                if (isIdle) idlePolls++ else idlePolls = 0
+                lastBytesTransferred = currentBytes
+
+                val pollInterval = when {
+                    idlePolls >= IDLE_THRESHOLD_POLLS -> IDLE_POLL_MS
+                    else -> ACTIVE_POLL_MS
+                }
+
+                if (idlePolls == IDLE_THRESHOLD_POLLS) {
+                    releaseWakeLock()
+                } else if (idlePolls == 0 && wakeLock?.isHeld != true) {
+                    acquireWakeLock()
+                }
+
+                delay(pollInterval)
+                if (!proxyManager.isRunning) continue
+                val current = _state.value
+                if (current.isRunning) {
+                    val uptimeMs = SystemClock.elapsedRealtime() - startTimeElapsed
+                    _state.value = current.copy(
+                        bytesTransferred = proxyManager.bytesTransferred,
+                        dnsCacheHits = proxyManager.dnsCacheHits,
+                        httpCacheHits = proxyManager.httpCacheHits,
+                        dataSaved = proxyManager.dataSaved,
+                        uptimeSeconds = uptimeMs / 1000,
+                        isIdle = idlePolls >= IDLE_THRESHOLD_POLLS,
+                    )
+                }
+            }
+        }
     }
 
     private fun startServices(wifiState: WifiDirectState.GroupCreated) {
@@ -276,6 +369,7 @@ class HotspotService : Service() {
         const val ACTION_START = "org.flossware.hotspot.START"
         const val ACTION_STOP = "org.flossware.hotspot.STOP"
         const val ACTION_TOGGLE_BT = "org.flossware.hotspot.TOGGLE_BT"
+        const val ACTION_START_BT_ONLY = "org.flossware.hotspot.START_BT_ONLY"
         const val EXTRA_BT_ENABLED = "bt_enabled"
         const val CHANNEL_ID = "hotspot_service"
         const val NOTIFICATION_ID = 1
@@ -321,6 +415,31 @@ class HotspotService : Service() {
         fun getBluetoothOptIn(context: Context): Boolean {
             return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getBoolean(KEY_BT_OPT_IN, false)
+        }
+
+        fun updateFeatureAvailability(
+            wifiDirectAvailable: Boolean,
+            bluetoothAvailable: Boolean,
+            usbAvailable: Boolean,
+            mobileDataAvailable: Boolean,
+        ) {
+            _state.value = _state.value.copy(
+                wifiDirectAvailable = wifiDirectAvailable,
+                bluetoothAvailable = bluetoothAvailable,
+                usbAvailable = usbAvailable,
+                mobileDataAvailable = mobileDataAvailable,
+            )
+        }
+
+        fun updatePermissionsDenied(denied: Boolean) {
+            _state.value = _state.value.copy(permissionsDenied = denied)
+        }
+
+        fun startBluetoothOnly(context: Context) {
+            val intent = Intent(context, HotspotService::class.java).apply {
+                action = ACTION_START_BT_ONLY
+            }
+            context.startForegroundService(intent)
         }
     }
 }

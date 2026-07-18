@@ -1,15 +1,20 @@
 package org.flossware.hotspot.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,11 +22,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -48,6 +58,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.flossware.hotspot.R
 import org.flossware.hotspot.log.LogExporter
+import org.flossware.hotspot.service.HotspotService
 import org.flossware.hotspot.ui.components.BluetoothInfo
 import org.flossware.hotspot.ui.components.CacheInfo
 import org.flossware.hotspot.ui.components.CompatibilityTips
@@ -73,6 +84,7 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
         if (results.values.all { it }) {
             viewModel.startHotspot()
         } else {
+            HotspotService.updatePermissionsDenied(true)
             showRationale = true
         }
     }
@@ -158,6 +170,72 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     .padding(bottom = 8.dp),
             )
 
+            // Feature unavailability warnings (shown before starting)
+            if (!state.isRunning && !state.wifiDirectAvailable) {
+                FeatureWarningCard(
+                    message = stringResource(R.string.error_wifi_direct_unavailable_suggestion),
+                )
+            }
+
+            if (!state.isRunning && !state.mobileDataAvailable) {
+                FeatureWarningCard(
+                    message = stringResource(R.string.error_mobile_data_guidance),
+                )
+            }
+
+            // Permission denied banner with Open Settings button
+            if (state.permissionsDenied && !state.isRunning) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.error_permissions_denied),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Text(
+                                text = stringResource(
+                                    R.string.error_permission_wifi_direct,
+                                    "Nearby Devices",
+                                ),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(
+                                    R.string.error_permission_wifi_direct,
+                                    "Location",
+                                ),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context.packageName, null),
+                                )
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.padding(top = 8.dp),
+                        ) {
+                            Text(stringResource(R.string.open_settings))
+                        }
+                    }
+                }
+            }
+
             state.error?.let { error ->
                 Text(
                     text = error,
@@ -167,6 +245,18 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                         .padding(bottom = 4.dp)
                         .semantics { liveRegion = LiveRegionMode.Polite },
                 )
+
+                // Offer Bluetooth-only fallback when Wi-Fi Direct fails
+                if (!state.isRunning && state.bluetoothAvailable && !state.wifiDirectAvailable) {
+                    Button(
+                        onClick = { viewModel.startBluetoothOnly() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                    ) {
+                        Text(stringResource(R.string.continue_bluetooth_only))
+                    }
+                }
             }
 
             HotspotToggle(
@@ -175,29 +265,44 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                 onStop = { viewModel.stopHotspot() },
             )
 
+            // Bluetooth-only mode banner
+            if (state.isRunning && state.bluetoothOnlyMode) {
+                FeatureWarningCard(
+                    message = stringResource(R.string.bluetooth_only_mode_active),
+                )
+            }
+
             if (state.isRunning) {
                 val qrBitmap = remember(state.networkName, state.passphrase) {
                     viewModel.generateQrBitmap(state)
                 }
 
-                ConnectionInfo(state = state, qrBitmap = qrBitmap)
+                if (!state.bluetoothOnlyMode) {
+                    ConnectionInfo(state = state, qrBitmap = qrBitmap)
+                }
 
                 DeviceList(devices = state.connectedDevices)
 
-                BluetoothInfo(
-                    state = state,
-                    onBluetoothOptInChanged = { enabled ->
-                        viewModel.setBluetoothOptIn(enabled)
-                    },
-                )
+                if (state.bluetoothAvailable) {
+                    BluetoothInfo(
+                        state = state,
+                        onBluetoothOptInChanged = { enabled ->
+                            viewModel.setBluetoothOptIn(enabled)
+                        },
+                    )
+                }
 
-                UsbInfo(state = state)
+                if (state.usbAvailable) {
+                    UsbInfo(state = state)
+                }
 
                 ProxyStats(state = state)
 
                 CompatibilityTips()
 
-                SetupInstructions(state = state)
+                if (!state.bluetoothOnlyMode) {
+                    SetupInstructions(state = state)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -225,12 +330,51 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     Text(stringResource(R.string.ok))
                 }
             },
+            dismissButton = {
+                TextButton(onClick = {
+                    showRationale = false
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", context.packageName, null),
+                    )
+                    context.startActivity(intent)
+                }) {
+                    Text(stringResource(R.string.open_settings))
+                }
+            },
         )
     }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
             snackbarHostState.showSnackbar(error)
+        }
+    }
+}
+
+@Composable
+private fun FeatureWarningCard(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(modifier = Modifier.padding(16.dp)) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.padding(end = 12.dp),
+            )
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
