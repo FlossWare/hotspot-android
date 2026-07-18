@@ -80,4 +80,7 @@
     <string name="compatibility_tip_location">Sur Android 12 et versions antérieures, les services de localisation doivent être activés. Certains fabricants l\'exigent même sur les versions plus récentes d\'Android.</string>
     <string name="compatibility_tip_retry">Si le point d\'accès ne démarre pas au premier essai, l\'application réessaiera automatiquement. Vous pouvez aussi essayer de désactiver puis réactiver le Wi-Fi.</string>
     <string name="compatibility_tip_battery">L\'application réduit automatiquement la consommation d\'énergie lorsqu\'aucune donnée n\'est transférée. L\'utilisation de la batterie augmente avec le proxy actif.</string>
+
+    <string name="share_logs">Partager les journaux</string>
+    <string name="cd_share_logs">Partager les journaux de débogage</string>
 </resources>

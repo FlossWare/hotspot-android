@@ -80,4 +80,7 @@
     <string name="compatibility_tip_location">在 Android 12 及更早版本上，必须开启位置服务。某些制造商即使在更新的 Android 版本上也需要此设置。</string>
     <string name="compatibility_tip_retry">如果热点首次启动失败，应用会自动重试。您也可以尝试关闭并重新开启 Wi-Fi。</string>
     <string name="compatibility_tip_battery">当没有数据传输时，应用会自动降低耗电。代理活动时电池使用量会增加。</string>
+
+    <string name="share_logs">分享日志</string>
+    <string name="cd_share_logs">分享调试日志</string>
 </resources>
