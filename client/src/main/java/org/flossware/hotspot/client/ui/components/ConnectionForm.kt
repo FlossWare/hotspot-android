@@ -24,6 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.flossware.hotspot.client.R
@@ -116,6 +120,7 @@ private fun BluetoothDeviceList(
         Text(
             stringResource(R.string.paired_devices),
             style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.semantics { heading() },
         )
         IconButton(onClick = onRefresh, enabled = enabled) {
             Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
@@ -141,9 +146,11 @@ private fun BluetoothDeviceList(
                         enabled = enabled,
                     )
                 },
-                modifier = Modifier.clickable(enabled = enabled) {
-                    onDeviceSelected(device)
-                },
+                modifier = Modifier
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(enabled = enabled) {
+                        onDeviceSelected(device)
+                    },
             )
         }
     }
@@ -171,7 +178,12 @@ private fun ConnectionStatus(
         color = if (isConnected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                heading()
+                liveRegion = LiveRegionMode.Polite
+            },
     )
 }
 

@@ -23,7 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import org.flossware.hotspot.R
 
 @Composable
 fun CollapsibleSection(
@@ -40,7 +44,11 @@ fun CollapsibleSection(
         Column {
             ListItem(
                 headlineContent = {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() },
+                    )
                 },
                 supportingContent = if (subtitle != null) {
                     { Text(subtitle) }
@@ -60,7 +68,11 @@ fun CollapsibleSection(
                         Icon(
                             imageVector = if (expanded) Icons.Default.ExpandLess
                             else Icons.Default.ExpandMore,
-                            contentDescription = null,
+                            contentDescription = if (expanded) {
+                                stringResource(R.string.cd_collapse_section, title)
+                            } else {
+                                stringResource(R.string.cd_expand_section, title)
+                            },
                         )
                     }
                 },

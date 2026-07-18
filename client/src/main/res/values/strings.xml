@@ -25,4 +25,9 @@
     <string name="paired_devices">Paired Devices</string>
     <string name="no_paired_devices">No paired devices found. Pair with the hotspot device in Bluetooth settings first.</string>
     <string name="refresh">Refresh</string>
+
+    <!-- Accessibility: content descriptions -->
+    <string name="cd_flossware_logo">FlossWare logo</string>
+    <string name="cd_wifi_transport_icon">Wi-Fi Direct transport</string>
+    <string name="cd_bluetooth_transport_icon">Bluetooth transport</string>
 </resources>

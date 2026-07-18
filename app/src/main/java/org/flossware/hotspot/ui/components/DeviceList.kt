@@ -9,6 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import org.flossware.hotspot.R
 import org.flossware.hotspot.model.ConnectedDevice
 
@@ -21,7 +24,7 @@ fun DeviceList(
     CollapsibleSection(
         title = stringResource(R.string.connected_devices),
         badge = if (devices.isNotEmpty()) "${devices.size}" else null,
-        modifier = modifier,
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
         initiallyExpanded = initiallyExpanded,
     ) {
         if (devices.isEmpty()) {
@@ -39,8 +42,12 @@ fun DeviceList(
                     headlineContent = { Text(device.deviceName) },
                     supportingContent = { Text(device.macAddress) },
                     leadingContent = {
-                        Icon(Icons.Default.PhoneAndroid, contentDescription = null)
+                        Icon(
+                            Icons.Default.PhoneAndroid,
+                            contentDescription = stringResource(R.string.cd_device_icon),
+                        )
                     },
+                    modifier = Modifier.semantics(mergeDescendants = true) {},
                 )
             }
         }

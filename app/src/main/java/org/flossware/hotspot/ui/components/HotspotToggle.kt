@@ -20,6 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.flossware.hotspot.R
 
@@ -42,6 +46,10 @@ fun HotspotToggle(
                 text = if (isRunning) stringResource(R.string.hotspot_active)
                 else stringResource(R.string.hotspot_inactive),
                 style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics {
+                    heading()
+                    liveRegion = LiveRegionMode.Polite
+                },
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
@@ -53,7 +61,11 @@ fun HotspotToggle(
             ) {
                 Icon(
                     imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = null,
+                    contentDescription = if (isRunning) {
+                        stringResource(R.string.cd_stop_hotspot_icon)
+                    } else {
+                        stringResource(R.string.cd_start_hotspot_icon)
+                    },
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.size(8.dp))
