@@ -60,6 +60,9 @@
 
     <string name="uptime">Uptime</string>
 
+    <string name="connection_info">Connection</string>
+    <string name="statistics">Statistics</string>
+
     <string name="compatibility_tips_title">Device Compatibility</string>
     <string name="compatibility_tip_wifi">Some devices (Samsung, Xiaomi) require Wi-Fi to be enabled for Wi-Fi Direct to work, even though the hotspot creates its own network.</string>
     <string name="compatibility_tip_location">On Android 12 and below, Location Services must be enabled. Some manufacturers require this even on newer Android versions.</string>
