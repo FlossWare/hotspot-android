@@ -127,6 +127,7 @@ class HttpCache(
         var contentType = ""
         var maxAge = DEFAULT_MAX_AGE
         var hasExplicitMaxAge = false
+        var headerCount = 0
 
         // Don't cache responses to requests with Authorization headers
         if (containsHeader(requestHeaders, "authorization")) cacheable = false
@@ -137,6 +138,12 @@ class HttpCache(
             clientOutput.write(line.toByteArray())
             clientOutput.write(CRLF)
             if (line.isEmpty()) break
+
+            headerCount++
+            if (headerCount >= MAX_RESPONSE_HEADERS) {
+                if (debugMode) Log.d(TAG, "Too many response headers ($headerCount), stopping parse for $key")
+                break
+            }
 
             val lower = line.lowercase()
             when {
@@ -264,6 +271,7 @@ class HttpCache(
         const val DEFAULT_MAX_ENTRY_BYTES = 5 * 1024 * 1024 // 5 MB
         const val DEFAULT_MAX_AGE = 3600
         const val MAX_LINE_LENGTH = 8192
+        const val MAX_RESPONSE_HEADERS = 100
         private val CRLF = "\r\n".toByteArray()
         private val MAX_AGE_REGEX = Regex("""max-age\s*=\s*(\d+)""")
 

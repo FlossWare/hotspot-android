@@ -57,6 +57,7 @@ class HotspotService : Service() {
         scope = CoroutineScope(Dispatchers.Main + Job())
         networkManager.onNetworkLost = {
             _state.value = _state.value.copy(error = getString(R.string.error_mobile_data_lost))
+            proxyManager.notifyNetworkLost()
         }
         networkManager.unregister()
         startForeground(NOTIFICATION_ID, notificationHelper.build(0))

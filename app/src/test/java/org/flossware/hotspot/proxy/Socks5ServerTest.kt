@@ -27,6 +27,7 @@ class Socks5ServerTest {
             bindAddress = InetAddress.getLoopbackAddress(),
             port = serverPort,
             socketFactoryProvider = { SocketFactory.getDefault() },
+            ssrfProtection = false,
         )
     }
 
@@ -416,6 +417,7 @@ class Socks5ServerTest {
             socketFactoryProvider = { SocketFactory.getDefault() },
             maxConnectionsPerClient = 2,
             maxTotalConnections = 100,
+            ssrfProtection = false,
         )
         limitServer.start()
         Thread.sleep(300)
@@ -478,6 +480,7 @@ class Socks5ServerTest {
             socketFactoryProvider = { SocketFactory.getDefault() },
             maxConnectionsPerClient = 100,
             maxTotalConnections = 2,
+            ssrfProtection = false,
         )
         limitServer.start()
         Thread.sleep(300)
@@ -590,6 +593,7 @@ class Socks5ServerTest {
             socketFactoryProvider = { SocketFactory.getDefault() },
             username = "myuser",
             password = "mypass",
+            ssrfProtection = false,
         )
         authServer.start()
         Thread.sleep(500)
@@ -706,6 +710,7 @@ class Socks5ServerTest {
                 resolvedHost = hostname
                 InetAddress.getLoopbackAddress()
             },
+            ssrfProtection = false,
         )
         resolverServer.start()
         Thread.sleep(500)
@@ -1043,6 +1048,54 @@ class Socks5ServerTest {
         assertEquals(0x05.toByte(), Socks5Server.REPLY_CONNECTION_REFUSED)
         assertEquals(0x07.toByte(), Socks5Server.REPLY_CMD_NOT_SUPPORTED)
         assertEquals(0x08.toByte(), Socks5Server.REPLY_ADDR_NOT_SUPPORTED)
+    }
+
+    @Test
+    fun `CONNECT blocks loopback destination with SSRF protection`() {
+        val ssrfPort = findFreePort()
+        val ssrfServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = ssrfPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            ssrfProtection = true,
+        )
+        ssrfServer.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), ssrfPort)
+        client.soTimeout = 5000
+
+        // Negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // CONNECT to loopback (should be blocked)
+        val connectRequest = byteArrayOf(
+            0x05, 0x01, 0x00, 0x01,
+            127.toByte(), 0, 0, 1,
+            0x00, 0x50, // port 80
+        )
+        client.getOutputStream().write(connectRequest)
+        client.getOutputStream().flush()
+
+        val reply = ByteArray(10)
+        readFully(client.getInputStream(), reply)
+        assertEquals("Expected NOT_ALLOWED for loopback", Socks5Server.REPLY_NOT_ALLOWED, reply[1])
+
+        client.close()
+        ssrfServer.stop()
+    }
+
+    @Test
+    fun `isBlockedDestination blocks loopback and link-local`() {
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("127.0.0.1")))
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("127.0.0.2")))
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("::1")))
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("169.254.1.1")))
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("8.8.8.8")))
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("192.168.1.1")))
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("10.0.0.1")))
     }
 
     @Test

@@ -31,6 +31,7 @@ class Socks5Server(
     private val password: String? = null,
     private val maxConnectionsPerClient: Int = 10,
     private val maxTotalConnections: Int = 100,
+    private val ssrfProtection: Boolean = true,
     @Volatile var debugMode: Boolean = false,
 ) {
     @Volatile private var serverSocket: ServerSocket? = null
@@ -340,6 +341,12 @@ class Socks5Server(
             return
         }
 
+        if (ssrfProtection && isBlockedDestination(resolved)) {
+            Log.w(TAG, "SSRF blocked: CONNECT to $host:$port ($resolved) from $clientAddr")
+            sendReply(output, REPLY_NOT_ALLOWED)
+            return
+        }
+
         if (httpCache != null && port == 80) {
             handleCachedHttpConnect(client, input, output, host, resolved, factory)
             return
@@ -522,7 +529,7 @@ class Socks5Server(
         }
     }
 
-    companion object {
+    internal companion object {
         private const val TAG = "Socks5Server"
         const val VERSION: Byte = 0x05
         const val AUTH_NONE: Byte = 0x00
@@ -544,6 +551,14 @@ class Socks5Server(
         const val REPLY_CMD_NOT_SUPPORTED: Byte = 0x07
         const val REPLY_ADDR_NOT_SUPPORTED: Byte = 0x08
         const val SOCKET_TIMEOUT_MS = 60_000
+
+        /**
+         * Returns true if the given address is a loopback or link-local address
+         * that should be blocked to prevent SSRF attacks.
+         */
+        fun isBlockedDestination(addr: InetAddress): Boolean {
+            return addr.isLoopbackAddress || addr.isLinkLocalAddress
+        }
 
         internal fun constantTimeEquals(a: String, b: String): Boolean {
             val aBytes = a.toByteArray(Charsets.UTF_8)
