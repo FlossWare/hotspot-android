@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import android.util.Log
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -11,8 +12,6 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.logging.Level
-import java.util.logging.Logger
 
 class DnsRelay(
     private val bindAddress: InetAddress,
@@ -20,6 +19,7 @@ class DnsRelay(
     private val upstreamDnsProvider: () -> InetAddress,
     private val upstreamPort: Int = 53,
     private val socketBinder: (DatagramSocket) -> Unit = {},
+    @Volatile var debugMode: Boolean = false,
 ) {
     @Volatile private var socket: DatagramSocket? = null
     private val running = AtomicBoolean(false)
@@ -45,7 +45,7 @@ class DnsRelay(
                 sock = DatagramSocket(listenPort, bindAddress)
                 sock.soTimeout = 1000
                 socket = sock
-                log.info("DNS relay listening on $bindAddress:$listenPort")
+                Log.i(TAG, "DNS relay listening on $bindAddress:$listenPort")
 
                 val buffer = ByteArray(4096)
                 while (running.get()) {
@@ -60,13 +60,17 @@ class DnsRelay(
                     val clientPort = packet.port
                     val queryData = packet.data.copyOf(packet.length)
 
+                    if (debugMode) {
+                        Log.d(TAG, "DNS query from ${clientAddr.hostAddress}:$clientPort (${queryData.size}B)")
+                    }
+
                     queryExecutor.execute {
                         forwardQuery(sock, queryData, clientAddr, clientPort)
                     }
                 }
             } catch (e: IOException) {
                 if (running.get()) {
-                    log.log(Level.SEVERE, "DNS relay error", e)
+                    Log.e(TAG, "DNS relay error", e)
                 }
             } finally {
                 sock?.close()
@@ -86,6 +90,7 @@ class DnsRelay(
         thread = null
         queryExecutor.shutdownNow()
         cache.clear()
+        Log.i(TAG, "DNS relay stopped (cache: ${_cacheHits.get()} hits, ${_cacheMisses.get()} misses)")
     }
 
     internal fun forwardQuery(
@@ -100,6 +105,7 @@ class DnsRelay(
             val cached = cache[cacheKey]
             if (cached != null && !cached.isExpired()) {
                 _cacheHits.incrementAndGet()
+                if (debugMode) Log.d(TAG, "DNS cache hit for ${clientAddr.hostAddress}:$clientPort")
                 val response = patchTransactionId(cached.responseData, queryData)
                 val replyPacket = DatagramPacket(response, response.size, clientAddr, clientPort)
                 synchronized(listenSocket) {
@@ -110,6 +116,7 @@ class DnsRelay(
         }
 
         _cacheMisses.incrementAndGet()
+        if (debugMode) Log.d(TAG, "DNS cache miss for ${clientAddr.hostAddress}:$clientPort")
 
         var upstream: DatagramSocket? = null
         try {
@@ -119,6 +126,7 @@ class DnsRelay(
             socketBinder(upstream)
 
             val dnsServer = upstreamDnsProvider()
+            if (debugMode) Log.d(TAG, "Forwarding DNS query to ${dnsServer.hostAddress}:$upstreamPort")
             val queryPacket = DatagramPacket(queryData, queryData.size, dnsServer, upstreamPort)
             upstream.send(queryPacket)
 
@@ -149,7 +157,7 @@ class DnsRelay(
                 listenSocket.send(replyPacket)
             }
         } catch (e: IOException) {
-            log.fine("DNS forward failed: ${e.message}")
+            Log.w(TAG, "DNS forward failed for ${clientAddr.hostAddress}:$clientPort: ${e.message}")
         } finally {
             upstream?.close()
         }
@@ -264,7 +272,7 @@ class DnsRelay(
     }
 
     companion object {
-        private val log = Logger.getLogger(DnsRelay::class.java.name)
+        private const val TAG = "DnsRelay"
         internal const val MAX_CACHE_SIZE = 1000
         internal const val DEFAULT_TTL = 60
         internal const val MIN_TTL = 10

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.logging.Level
-import java.util.logging.Logger
 
 sealed class BluetoothState {
     data object Idle : BluetoothState()
@@ -30,7 +29,9 @@ sealed class BluetoothState {
     data class Error(val message: String) : BluetoothState()
 }
 
-class BluetoothServer {
+class BluetoothServer(
+    @Volatile var debugMode: Boolean = false,
+) {
     private val _state = MutableStateFlow<BluetoothState>(BluetoothState.Idle)
     val state: StateFlow<BluetoothState> = _state.asStateFlow()
 
@@ -52,11 +53,13 @@ class BluetoothServer {
         val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = btManager?.adapter
         if (adapter == null) {
+            Log.w(TAG, "Bluetooth not supported on this device")
             _state.value = BluetoothState.Error("Bluetooth not supported")
             running.set(false)
             return
         }
         if (!adapter.isEnabled) {
+            Log.w(TAG, "Bluetooth is disabled")
             _state.value = BluetoothState.Error("Bluetooth is disabled")
             running.set(false)
             return
@@ -65,20 +68,24 @@ class BluetoothServer {
         try {
             serverSocket = adapter.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SERVICE_UUID)
         } catch (e: IOException) {
+            Log.e(TAG, "Failed to create Bluetooth server", e)
             _state.value = BluetoothState.Error("Failed to create Bluetooth server: ${e.message}")
             running.set(false)
             return
         }
 
         _state.value = BluetoothState.Listening(adapter.name ?: "Unknown")
-        log.info("Bluetooth RFCOMM listening as '${adapter.name}'")
+        Log.i(TAG, "Bluetooth RFCOMM listening as '${adapter.name}'")
 
         executor.execute {
             while (running.get()) {
                 try {
                     val btSocket = serverSocket?.accept() ?: break
                     executor.execute { handleClient(btSocket, socksPort) }
-                } catch (_: IOException) {
+                } catch (e: IOException) {
+                    if (running.get()) {
+                        Log.w(TAG, "Bluetooth accept failed: ${e.message}")
+                    }
                     break
                 }
             }
@@ -87,16 +94,24 @@ class BluetoothServer {
 
     fun stop() {
         running.set(false)
-        try { serverSocket?.close() } catch (_: IOException) { }
+        try {
+            serverSocket?.close()
+        } catch (e: IOException) {
+            Log.d(TAG, "Server socket close: ${e.message}")
+        }
         serverSocket = null
         for (conn in activeConnections) {
-            try { conn.close() } catch (_: IOException) { }
+            try {
+                conn.close()
+            } catch (e: IOException) {
+                Log.d(TAG, "Connection close: ${e.message}")
+            }
         }
         activeConnections.clear()
         _connectedDevices.value = emptyList()
         executor.shutdownNow()
         _state.value = BluetoothState.Idle
-        log.info("Bluetooth server stopped")
+        Log.i(TAG, "Bluetooth server stopped")
     }
 
     @SuppressLint("MissingPermission")
@@ -113,7 +128,7 @@ class BluetoothServer {
             )
         }
 
-        log.info("Bluetooth client connected: ${device.deviceName} (${device.macAddress})")
+        Log.i(TAG, "Bluetooth client connected: ${device.deviceName} (${device.macAddress})")
 
         var tcpSocket: Socket? = null
         try {
@@ -139,7 +154,7 @@ class BluetoothServer {
             btToTcp.join()
             tcpToBt.join()
         } catch (e: IOException) {
-            log.log(Level.FINE, "Bluetooth relay error: ${e.message}")
+            Log.w(TAG, "Bluetooth relay error for ${device.deviceName}: ${e.message}")
         } finally {
             tcpSocket?.closeSilently()
             btSocket.closeSilently()
@@ -151,15 +166,15 @@ class BluetoothServer {
                     deviceName = sock.remoteDevice.name ?: "Unknown",
                 )
             }
-            log.info("Bluetooth client disconnected: ${device.deviceName}")
+            Log.i(TAG, "Bluetooth client disconnected: ${device.deviceName}")
         }
     }
 
     companion object {
+        private const val TAG = "BluetoothServer"
         val SERVICE_UUID: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         const val SERVICE_NAME = "FlossHotspotSOCKS"
         private const val RELAY_BUFFER_SIZE = 8192
-        private val log = Logger.getLogger(BluetoothServer::class.java.name)
 
         internal fun relay(input: InputStream, output: OutputStream) {
             val buffer = ByteArray(RELAY_BUFFER_SIZE)
@@ -171,15 +186,24 @@ class BluetoothServer {
                     output.flush()
                 }
             } catch (_: IOException) {
+                // Expected during connection teardown
             }
         }
 
         private fun Socket.closeSilently() {
-            try { close() } catch (_: IOException) { }
+            try {
+                close()
+            } catch (_: IOException) {
+                // Socket already closed
+            }
         }
 
         private fun BluetoothSocket.closeSilently() {
-            try { close() } catch (_: IOException) { }
+            try {
+                close()
+            } catch (_: IOException) {
+                // Socket already closed
+            }
         }
     }
 }

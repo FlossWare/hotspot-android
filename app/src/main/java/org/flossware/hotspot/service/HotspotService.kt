@@ -54,6 +54,7 @@ class HotspotService : Service() {
     }
 
     private fun startHotspot() {
+        Log.i(TAG, "Starting hotspot service")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
         unregisterMobileNetwork()
@@ -157,6 +158,7 @@ class HotspotService : Service() {
     }
 
     private fun stopHotspot() {
+        Log.i(TAG, "Stopping hotspot service")
         bluetoothServer?.stop()
         bluetoothServer = null
         dnsRelay?.stop()
@@ -196,6 +198,7 @@ class HotspotService : Service() {
             override fun onLost(network: Network) {
                 if (network == mobileNetwork) {
                     mobileNetwork = null
+                    Log.w(TAG, "Mobile data connection lost")
                     _state.value = _state.value.copy(
                         error = "Mobile data connection lost",
                     )
@@ -210,7 +213,8 @@ class HotspotService : Service() {
         networkCallback?.let { cb ->
             try {
                 getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(cb)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.d(TAG, "Unregister network callback: ${e.message}")
             }
         }
         networkCallback = null

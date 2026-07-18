@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -7,11 +8,11 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
-import java.util.logging.Logger
 
 class HttpCache(
     private val maxTotalBytes: Long = DEFAULT_MAX_TOTAL_BYTES,
     private val maxEntryBytes: Int = DEFAULT_MAX_ENTRY_BYTES,
+    @Volatile var debugMode: Boolean = false,
 ) {
     private val entries = ConcurrentHashMap<String, CacheEntry>()
     private val currentSize = AtomicLong(0)
@@ -36,6 +37,7 @@ class HttpCache(
         val key = "GET $host$path"
         val entry = entries[key] ?: run {
             _misses.incrementAndGet()
+            if (debugMode) Log.d(TAG, "Cache miss: $key")
             return false
         }
 
@@ -44,11 +46,13 @@ class HttpCache(
                 currentSize.addAndGet(-entry.body.size.toLong())
             }
             _misses.incrementAndGet()
+            if (debugMode) Log.d(TAG, "Cache expired: $key")
             return false
         }
 
         _hits.incrementAndGet()
         _dataSaved.addAndGet(entry.body.size.toLong())
+        if (debugMode) Log.d(TAG, "Cache hit: $key (${entry.body.size}B saved)")
 
         clientOutput.write(entry.statusLine.toByteArray())
         clientOutput.write(CRLF)
@@ -110,11 +114,13 @@ class HttpCache(
         clientOutput.flush()
 
         if (!cacheable || contentLength > maxEntryBytes || contentLength == 0) {
+            if (debugMode && !cacheable) Log.d(TAG, "Not cacheable (headers): $key")
             relay(responseStream, clientOutput)
             return
         }
 
         if (!isCacheableContentType(contentType)) {
+            if (debugMode) Log.d(TAG, "Not cacheable (content-type: $contentType): $key")
             relay(responseStream, clientOutput)
             return
         }
@@ -132,12 +138,14 @@ class HttpCache(
                 bodyBuffer.write(buf, 0, n)
                 totalRead += n
                 if (totalRead > maxEntryBytes) {
+                    if (debugMode) Log.d(TAG, "Response too large to cache: $key (${totalRead}B)")
                     relay(responseStream, clientOutput)
                     return
                 }
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
             ioError = true
+            if (debugMode) Log.d(TAG, "IO error during cache read for $key: ${e.message}")
         }
 
         val body = bodyBuffer.toByteArray()
@@ -152,6 +160,7 @@ class HttpCache(
             val old = entries.put(key, newEntry)
             if (old != null) currentSize.addAndGet(-old.body.size.toLong())
             currentSize.addAndGet(body.size.toLong())
+            if (debugMode) Log.d(TAG, "Cached: $key (${body.size}B, max-age=${maxAge}s)")
         }
     }
 
@@ -168,6 +177,7 @@ class HttpCache(
             val oldest = entries.entries.minByOrNull { it.value.expiresAt } ?: break
             if (entries.remove(oldest.key, oldest.value)) {
                 currentSize.addAndGet(-oldest.value.body.size.toLong())
+                if (debugMode) Log.d(TAG, "Evicted: ${oldest.key}")
             }
         }
     }
@@ -197,7 +207,7 @@ class HttpCache(
     }
 
     companion object {
-        private val log = Logger.getLogger(HttpCache::class.java.name)
+        private const val TAG = "HttpCache"
         const val DEFAULT_MAX_TOTAL_BYTES = 50L * 1024 * 1024 // 50 MB
         const val DEFAULT_MAX_ENTRY_BYTES = 5 * 1024 * 1024 // 5 MB
         const val DEFAULT_MAX_AGE = 3600
@@ -233,6 +243,7 @@ class HttpCache(
                     output.flush()
                 }
             } catch (_: IOException) {
+                // Expected during connection teardown
             }
         }
     }

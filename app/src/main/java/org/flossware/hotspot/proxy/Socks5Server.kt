@@ -1,5 +1,6 @@
 package org.flossware.hotspot.proxy
 
+import android.util.Log
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -15,8 +16,6 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.net.SocketFactory
 
 class Socks5Server(
@@ -25,6 +24,7 @@ class Socks5Server(
     private val socketFactoryProvider: () -> SocketFactory?,
     private val dnsResolver: (String) -> InetAddress = { InetAddress.getByName(it) },
     private val httpCache: HttpCache? = null,
+    @Volatile var debugMode: Boolean = false,
 ) {
     @Volatile private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(
@@ -42,17 +42,20 @@ class Socks5Server(
                 ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                log.info("SOCKS5 listening on $bindAddress:$port")
+                Log.i(TAG, "SOCKS5 listening on $bindAddress:$port")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
+                        if (debugMode) {
+                            Log.d(TAG, "New connection from ${client.inetAddress.hostAddress}:${client.port}")
+                        }
                         executor.execute { handleClient(client) }
                     } catch (_: SocketException) {
                         break
                     }
                 }
             } catch (e: IOException) {
-                log.log(Level.SEVERE, "SOCKS5 server error", e)
+                Log.e(TAG, "SOCKS5 server error", e)
             } finally {
                 ss?.close()
             }
@@ -64,20 +67,30 @@ class Socks5Server(
         serverSocket?.close()
         serverSocket = null
         executor.shutdownNow()
+        Log.i(TAG, "SOCKS5 server stopped")
     }
 
     val isRunning: Boolean get() = running.get()
 
     internal fun handleClient(client: Socket) {
+        val startTime = System.currentTimeMillis()
+        val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
+        val connectionBytes = AtomicLong(0)
         try {
             client.soTimeout = 60_000
             val input = client.getInputStream()
             val output = client.getOutputStream()
 
-            if (!negotiate(input, output)) return
+            if (!negotiate(input, output)) {
+                if (debugMode) Log.d(TAG, "Negotiation failed for $clientAddr")
+                return
+            }
 
             val version = input.read()
-            if (version != VERSION.toInt() and 0xFF) return
+            if (version != VERSION.toInt() and 0xFF) {
+                Log.w(TAG, "Invalid SOCKS version from $clientAddr: $version")
+                return
+            }
 
             val cmd = input.read()
             input.read() // reserved
@@ -85,12 +98,22 @@ class Socks5Server(
             val (host, port) = readAddress(input)
 
             when (cmd) {
-                CMD_CONNECT.toInt() and 0xFF -> handleConnect(client, input, output, host, port)
-                else -> sendReply(output, REPLY_CMD_NOT_SUPPORTED)
+                CMD_CONNECT.toInt() and 0xFF -> {
+                    if (debugMode) Log.d(TAG, "CONNECT $host:$port from $clientAddr")
+                    handleConnect(client, input, output, host, port, connectionBytes)
+                }
+                else -> {
+                    Log.w(TAG, "Unsupported SOCKS command $cmd from $clientAddr")
+                    sendReply(output, REPLY_CMD_NOT_SUPPORTED)
+                }
             }
         } catch (e: IOException) {
-            log.fine("Client handler error: ${e.message}")
+            Log.d(TAG, "Client handler error for $clientAddr: ${e.message}")
         } finally {
+            val duration = System.currentTimeMillis() - startTime
+            if (debugMode) {
+                Log.d(TAG, "Connection closed for $clientAddr: ${connectionBytes.get()}B transferred in ${duration}ms")
+            }
             client.closeSilently()
         }
     }
@@ -167,8 +190,10 @@ class Socks5Server(
         output: OutputStream,
         host: String,
         port: Int,
+        connectionBytes: AtomicLong = AtomicLong(0),
     ) {
         val factory = socketFactoryProvider() ?: run {
+            Log.w(TAG, "No socket factory available for CONNECT to $host:$port")
             sendReply(output, REPLY_GENERAL_FAILURE)
             return
         }
@@ -176,6 +201,7 @@ class Socks5Server(
         val resolved = try {
             dnsResolver(host)
         } catch (e: Exception) {
+            Log.w(TAG, "DNS resolution failed for $host: ${e.message}")
             sendReply(output, REPLY_HOST_UNREACHABLE)
             return
         }
@@ -189,7 +215,8 @@ class Socks5Server(
         try {
             upstream = factory.createSocket(resolved, port)
             upstream.soTimeout = 60_000
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            Log.w(TAG, "Connection refused to $host:$port ($resolved): ${e.message}")
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -201,14 +228,14 @@ class Socks5Server(
 
             val clientToServer = Thread {
                 try {
-                    relay(input, upstream.getOutputStream())
+                    relay(input, upstream.getOutputStream(), connectionBytes)
                 } finally {
                     upstream.closeSilently()
                 }
             }
             val serverToClient = Thread {
                 try {
-                    relay(upstream.getInputStream(), client.getOutputStream())
+                    relay(upstream.getInputStream(), client.getOutputStream(), connectionBytes)
                 } finally {
                     client.closeSilently()
                 }
@@ -236,7 +263,8 @@ class Socks5Server(
         try {
             upstream = factory.createSocket(resolved, 80)
             upstream.soTimeout = 60_000
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            Log.w(TAG, "Connection refused to $host:80 ($resolved): ${e.message}")
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -272,6 +300,7 @@ class Socks5Server(
             }
 
             if (cache.tryServeFromCache(host, requestLine, headers.toString(), output)) {
+                if (debugMode) Log.d(TAG, "Served from cache: $host $requestLine")
                 upstream.closeSilently()
                 return
             }
@@ -317,7 +346,11 @@ class Socks5Server(
         output.flush()
     }
 
-    internal fun relay(input: InputStream, output: OutputStream) {
+    internal fun relay(
+        input: InputStream,
+        output: OutputStream,
+        connectionBytes: AtomicLong? = null,
+    ) {
         val buffer = ByteArray(8192)
         try {
             while (true) {
@@ -326,8 +359,10 @@ class Socks5Server(
                 output.write(buffer, 0, count)
                 output.flush()
                 _bytesTransferred.addAndGet(count.toLong())
+                connectionBytes?.addAndGet(count.toLong())
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Relay stream closed: ${e.message}")
         }
     }
 
@@ -341,10 +376,15 @@ class Socks5Server(
     }
 
     private fun Socket.closeSilently() {
-        try { close() } catch (_: IOException) { }
+        try {
+            close()
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "Socket close: ${e.message}")
+        }
     }
 
     companion object {
+        private const val TAG = "Socks5Server"
         const val VERSION: Byte = 0x05
         const val AUTH_NONE: Byte = 0x00
         val AUTH_NO_ACCEPTABLE: Byte = 0xFF.toByte()
@@ -358,6 +398,5 @@ class Socks5Server(
         const val REPLY_CONNECTION_REFUSED: Byte = 0x05
         const val REPLY_CMD_NOT_SUPPORTED: Byte = 0x07
         const val REPLY_ADDR_NOT_SUPPORTED: Byte = 0x08
-        private val log = Logger.getLogger(Socks5Server::class.java.name)
     }
 }
