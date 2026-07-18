@@ -74,6 +74,7 @@ class DnsRelay(
                 }
             } finally {
                 sock?.close()
+                socket = null
             }
         }.apply {
             name = "dns-relay"
@@ -135,6 +136,14 @@ class DnsRelay(
             upstream.receive(responsePacket)
 
             val responseData = responsePacket.data.copyOf(responsePacket.length)
+
+            // Validate transaction ID: first 2 bytes of response must match the query
+            if (responseData.size < 2 || queryData.size < 2 ||
+                responseData[0] != queryData[0] || responseData[1] != queryData[1]
+            ) {
+                Log.w(TAG, "DNS transaction ID mismatch for ${clientAddr.hostAddress}:$clientPort, dropping response")
+                return
+            }
 
             if (cacheKey != null) {
                 val ttl = extractMinTtl(responseData)

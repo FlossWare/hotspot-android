@@ -1,5 +1,6 @@
 package org.flossware.hotspot.service
 
+import android.util.Log
 import org.flossware.hotspot.model.HotspotState
 import org.flossware.hotspot.proxy.DnsRelay
 import org.flossware.hotspot.proxy.HttpCache
@@ -35,7 +36,7 @@ class ProxyManager {
      */
     fun start(
         bindAddress: InetAddress,
-        socketFactoryProvider: () -> SocketFactory,
+        socketFactoryProvider: () -> SocketFactory?,
         upstreamDnsProvider: () -> InetAddress,
         socketBinder: (DatagramSocket) -> Unit,
     ) {
@@ -63,6 +64,15 @@ class ProxyManager {
         ).also { it.start() }
     }
 
+    /**
+     * Called when the mobile network is lost. The socketFactoryProvider will
+     * already return null (causing new connections to fail immediately), but
+     * this method logs the event for observability.
+     */
+    fun notifyNetworkLost() {
+        Log.w(TAG, "Mobile network lost — new proxy connections will fail until network returns")
+    }
+
     /** Stops all proxy components and clears the HTTP cache. */
     fun stop() {
         dnsRelay?.stop()
@@ -72,5 +82,9 @@ class ProxyManager {
         socksServer?.stop()
         socksServer = null
         httpCache.clear()
+    }
+
+    companion object {
+        private const val TAG = "ProxyManager"
     }
 }

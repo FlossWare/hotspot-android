@@ -10,7 +10,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.net.URL
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -24,7 +24,7 @@ class ProxyServer(
     @Volatile var debugMode: Boolean = false,
 ) {
     private var serverSocket: ServerSocket? = null
-    private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue())
+    private val executor = ThreadPoolExecutor(4, 32, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(64), ThreadPoolExecutor.CallerRunsPolicy())
     private val running = AtomicBoolean(false)
     private val _bytesTransferred = AtomicLong(0)
     val bytesTransferred: Long get() = _bytesTransferred.get()

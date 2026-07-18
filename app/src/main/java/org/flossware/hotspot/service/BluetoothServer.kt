@@ -3,6 +3,7 @@ package org.flossware.hotspot.service
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
@@ -116,6 +117,13 @@ class BluetoothServer(
 
     @SuppressLint("MissingPermission")
     private fun handleClient(btSocket: BluetoothSocket, socksPort: Int) {
+        // Reject unbonded devices to prevent unauthorized access
+        if (btSocket.remoteDevice.bondState != BluetoothDevice.BOND_BONDED) {
+            Log.w(TAG, "Rejecting unbonded device: ${btSocket.remoteDevice.address}")
+            btSocket.closeSilently()
+            return
+        }
+
         val device = ConnectedDevice(
             macAddress = btSocket.remoteDevice.address,
             deviceName = btSocket.remoteDevice.name ?: "Unknown",

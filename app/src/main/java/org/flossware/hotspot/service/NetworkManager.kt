@@ -30,9 +30,9 @@ class NetworkManager(private val context: Context) {
     /** Callback invoked on the ConnectivityManager thread when mobile data is lost. */
     var onNetworkLost: (() -> Unit)? = null
 
-    /** Returns the mobile-network socket factory, falling back to the system default. */
-    val socketFactory: SocketFactory
-        get() = network?.socketFactory ?: SocketFactory.getDefault()
+    /** Returns the mobile-network socket factory, or null when no mobile network is available. */
+    val socketFactory: SocketFactory?
+        get() = network?.socketFactory
 
     /** Binds a UDP socket to the mobile network (no-op when no network is available). */
     fun bindSocket(socket: DatagramSocket) {
