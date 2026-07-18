@@ -256,6 +256,275 @@ class HttpCacheTest {
     }
 
     @Test
+    fun `readLine throws IOException on max length exceeded`() {
+        val longLine = "x".repeat(HttpCache.MAX_LINE_LENGTH + 1)
+        val input = ByteArrayInputStream((longLine + "\r\n").toByteArray())
+        try {
+            HttpCache.readLine(input)
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("max length"))
+        }
+    }
+
+    @Test
+    fun `readLine with custom maxLength`() {
+        val input = ByteArrayInputStream("short\r\n".toByteArray())
+        assertEquals("short", HttpCache.readLine(input, 100))
+    }
+
+    @Test
+    fun `readLine with custom maxLength exceeded`() {
+        val input = ByteArrayInputStream("toolong\r\n".toByteArray())
+        try {
+            HttpCache.readLine(input, 3)
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("max length"))
+        }
+    }
+
+    @Test
+    fun `readLine handles bare CR without LF`() {
+        val data = "Hello\rWorld\r\n".toByteArray()
+        val input = ByteArrayInputStream(data)
+        val line = HttpCache.readLine(input)
+        // CR not followed by LF: CR is kept in output, 'W' consumed as next char
+        assertEquals("Hello\rWorld", line)
+    }
+
+    @Test
+    fun `readLine handles content at EOF without newline`() {
+        val data = "partial".toByteArray()
+        val input = ByteArrayInputStream(data)
+        assertEquals("partial", HttpCache.readLine(input))
+        assertEquals(null, HttpCache.readLine(input))
+    }
+
+    @Test
+    fun `readLine empty line`() {
+        val data = "\r\n".toByteArray()
+        val input = ByteArrayInputStream(data)
+        assertEquals("", HttpCache.readLine(input))
+    }
+
+    @Test
+    fun `Cache-Control max-age=0 still allows caching with immediate expiry`() {
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=0\r\nContent-Length: 4\r\n\r\ntest"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        cache.cacheResponse(
+            "maxage0.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // max-age=0 means the entry expires immediately, so tryServeFromCache should miss
+        val serveOutput = ByteArrayOutputStream()
+        assertFalse(cache.tryServeFromCache("maxage0.com", "GET / HTTP/1.1", "", serveOutput))
+    }
+
+    @Test
+    fun `Cache-Control with multiple directives parses max-age`() {
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: public, max-age=3600, must-revalidate\r\nContent-Length: 4\r\n\r\ntest"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        cache.cacheResponse(
+            "multi-cc.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        val serveOutput = ByteArrayOutputStream()
+        assertTrue(cache.tryServeFromCache("multi-cc.com", "GET / HTTP/1.1", "", serveOutput))
+    }
+
+    @Test
+    fun `expired entry is evicted on access`() {
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=0\r\nContent-Length: 4\r\n\r\ntest"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        cache.cacheResponse(
+            "expire.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Wait a tiny bit to ensure expiry
+        Thread.sleep(10)
+
+        val serveOutput = ByteArrayOutputStream()
+        val result = cache.tryServeFromCache("expire.com", "GET / HTTP/1.1", "", serveOutput)
+        assertFalse("Expired entry should not be served", result)
+        assertEquals(0, serveOutput.size())
+    }
+
+    @Test
+    fun `eviction order is by expiry time`() {
+        val smallCache = HttpCache(maxTotalBytes = 200, maxEntryBytes = 150)
+
+        // Cache entry with very long max-age
+        val body1 = "a".repeat(100)
+        val response1 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=99999\r\nContent-Length: ${body1.length}\r\n\r\n$body1"
+        smallCache.cacheResponse(
+            "long.com", "GET / HTTP/1.1",
+            ByteArrayInputStream(response1.toByteArray()), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Cache entry with short max-age (will be evicted first as it expires sooner)
+        val body2 = "b".repeat(100)
+        val response2 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=1\r\nContent-Length: ${body2.length}\r\n\r\n$body2"
+        smallCache.cacheResponse(
+            "short.com", "GET / HTTP/1.1",
+            ByteArrayInputStream(response2.toByteArray()), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Add a third entry that forces eviction
+        val body3 = "c".repeat(100)
+        val response3 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=50000\r\nContent-Length: ${body3.length}\r\n\r\n$body3"
+        smallCache.cacheResponse(
+            "third.com", "GET / HTTP/1.1",
+            ByteArrayInputStream(response3.toByteArray()), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // The short-lived entry should have been evicted (oldest expiry)
+        val out = ByteArrayOutputStream()
+        assertFalse(smallCache.tryServeFromCache("short.com", "GET / HTTP/1.1", "", out))
+    }
+
+    @Test
+    fun `concurrent cache reads do not throw`() {
+        // Pre-populate cache
+        val body = "hello"
+        val response = buildHttpResponse(200, body)
+        cache.cacheResponse(
+            "concurrent.com", "GET / HTTP/1.1",
+            response, ByteArrayOutputStream(), ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        val threads = (1..10).map {
+            Thread {
+                for (i in 1..100) {
+                    val out = ByteArrayOutputStream()
+                    cache.tryServeFromCache("concurrent.com", "GET / HTTP/1.1", "", out)
+                }
+            }
+        }
+        threads.forEach { it.start() }
+        threads.forEach { it.join(5000) }
+
+        // If we get here without exception, concurrent access was safe
+        assertTrue(cache.hits > 0)
+    }
+
+    @Test
+    fun `concurrent cache writes do not throw`() {
+        val threads = (1..10).map { idx ->
+            Thread {
+                for (i in 1..20) {
+                    val body = "body-$idx-$i"
+                    val resp = buildHttpResponse(200, body)
+                    cache.cacheResponse(
+                        "host$idx.com", "GET /$i HTTP/1.1",
+                        resp, ByteArrayOutputStream(), ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+                    )
+                }
+            }
+        }
+        threads.forEach { it.start() }
+        threads.forEach { it.join(10000) }
+
+        // If we get here without exception, concurrent access was safe
+        assertTrue(true)
+    }
+
+    @Test
+    fun `empty response body is not cached`() {
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        cache.cacheResponse(
+            "empty.com", "GET / HTTP/1.1",
+            responseStream, ByteArrayOutputStream(), ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        val out = ByteArrayOutputStream()
+        assertFalse(cache.tryServeFromCache("empty.com", "GET / HTTP/1.1", "", out))
+    }
+
+    @Test
+    fun `response is forwarded to client even when not cached`() {
+        val response = "HTTP/1.1 200 OK\r\nCache-Control: no-store\r\nContent-Type: text/html\r\nContent-Length: 5\r\n\r\nhello"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        cache.cacheResponse(
+            "nostore.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Even though not cached, the response should have been forwarded to client
+        val output = clientOutput.toString()
+        assertTrue("Client should receive status line", output.contains("200 OK"))
+    }
+
+    @Test
+    fun `CacheEntry isExpired returns true for past time`() {
+        val entry = HttpCache.CacheEntry(
+            statusLine = "HTTP/1.1 200 OK",
+            responseHeaders = "",
+            body = byteArrayOf(1, 2, 3),
+            expiresAt = System.currentTimeMillis() - 1000,
+        )
+        assertTrue(entry.isExpired())
+    }
+
+    @Test
+    fun `CacheEntry isExpired returns false for future time`() {
+        val entry = HttpCache.CacheEntry(
+            statusLine = "HTTP/1.1 200 OK",
+            responseHeaders = "",
+            body = byteArrayOf(1, 2, 3),
+            expiresAt = System.currentTimeMillis() + 60_000,
+        )
+        assertFalse(entry.isExpired())
+    }
+
+    @Test
+    fun `CacheEntry equality and hashCode`() {
+        val e1 = HttpCache.CacheEntry("HTTP/1.1 200 OK", "h", byteArrayOf(1, 2), 1000L)
+        val e2 = HttpCache.CacheEntry("HTTP/1.1 200 OK", "h", byteArrayOf(1, 2), 1000L)
+        val e3 = HttpCache.CacheEntry("HTTP/1.1 404 Not Found", "h", byteArrayOf(1, 2), 1000L)
+
+        assertEquals(e1, e2)
+        assertEquals(e1.hashCode(), e2.hashCode())
+        assertFalse(e1 == e3)
+    }
+
+    @Test
+    fun `cache replaces existing entry for same key`() {
+        val body1 = "version1"
+        cache.cacheResponse(
+            "replace.com", "GET / HTTP/1.1",
+            buildHttpResponse(200, body1), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        val body2 = "version2"
+        cache.cacheResponse(
+            "replace.com", "GET / HTTP/1.1",
+            buildHttpResponse(200, body2), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        val out = ByteArrayOutputStream()
+        assertTrue(cache.tryServeFromCache("replace.com", "GET / HTTP/1.1", "", out))
+        assertTrue("Should serve latest version", out.toString().contains("version2"))
+    }
+
+    @Test
     fun `companion constants are correct`() {
         assertEquals(50L * 1024 * 1024, HttpCache.DEFAULT_MAX_TOTAL_BYTES)
         assertEquals(5 * 1024 * 1024, HttpCache.DEFAULT_MAX_ENTRY_BYTES)

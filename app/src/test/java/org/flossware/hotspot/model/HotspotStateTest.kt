@@ -199,6 +199,35 @@ class HotspotStateTest {
     }
 
     @Test
+    fun `toString contains key fields`() {
+        val state = HotspotState(isRunning = true, networkName = "TestNet")
+        val str = state.toString()
+        assertTrue(str.contains("isRunning=true"))
+        assertTrue(str.contains("networkName=TestNet"))
+    }
+
+    @Test
+    fun `destructuring works`() {
+        val state = HotspotState(isRunning = true, networkName = "Net", passphrase = "pass")
+        val (running, name, pass) = state
+        assertTrue(running)
+        assertEquals("Net", name)
+        assertEquals("pass", pass)
+    }
+
+    @Test
+    fun `multiple connected devices`() {
+        val devices = listOf(
+            ConnectedDevice("AA:BB:CC:DD:EE:01", "Phone1"),
+            ConnectedDevice("AA:BB:CC:DD:EE:02", "Phone2"),
+            ConnectedDevice("AA:BB:CC:DD:EE:03", "Phone3"),
+        )
+        val state = HotspotState(connectedDevices = devices)
+        assertEquals(3, state.connectedDevices.size)
+        assertEquals("Phone2", state.connectedDevices[1].deviceName)
+    }
+
+    @Test
     fun `equality includes bluetooth and cache fields`() {
         val a = HotspotState(bluetoothOptIn = true, bluetoothEnabled = true, dnsCacheHits = 10)
         val b = HotspotState(bluetoothOptIn = true, bluetoothEnabled = true, dnsCacheHits = 10)

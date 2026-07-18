@@ -101,6 +101,40 @@ class VpnStateTest {
     }
 
     @Test
+    fun `toString contains key fields`() {
+        val state = VpnState(isConnected = true, socksHost = "10.0.0.1")
+        val str = state.toString()
+        assertTrue(str.contains("isConnected=true"))
+        assertTrue(str.contains("socksHost=10.0.0.1"))
+    }
+
+    @Test
+    fun `destructuring works`() {
+        val state = VpnState(isConnected = true, socksHost = "1.2.3.4", socksPort = 9999)
+        val (connected, host, port) = state
+        assertTrue(connected)
+        assertEquals("1.2.3.4", host)
+        assertEquals(9999, port)
+    }
+
+    @Test
+    fun `copy with all fields changed`() {
+        val state = VpnState()
+        val modified = state.copy(
+            isConnected = true,
+            socksHost = "10.0.0.1",
+            socksPort = 9050,
+            transport = Transport.BLUETOOTH,
+            error = "some error",
+        )
+        assertTrue(modified.isConnected)
+        assertEquals("10.0.0.1", modified.socksHost)
+        assertEquals(9050, modified.socksPort)
+        assertEquals(Transport.BLUETOOTH, modified.transport)
+        assertEquals("some error", modified.error)
+    }
+
+    @Test
     fun `bluetooth state with loopback address`() {
         val state = VpnState(
             isConnected = true,
