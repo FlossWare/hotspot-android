@@ -1083,6 +1083,185 @@ class Socks5ServerTest {
         failResolver.stop()
     }
 
+    // --- handleCachedHttpConnect tests ---
+
+    @Test
+    fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`() {
+        val echoServer = createCacheFriendlyHttpServer()
+        val echoPort = echoServer.localPort
+        val httpCache = HttpCache()
+
+        val cachePort = findFreePort()
+        val cacheServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = cachePort,
+            socketFactoryProvider = { createRedirectingSocketFactory(echoPort) },
+            dnsResolver = { InetAddress.getLoopbackAddress() },
+            httpCache = httpCache,
+        )
+        cacheServer.start()
+        Thread.sleep(500)
+
+        // First connection: cache miss
+        run {
+            val client = Socket(InetAddress.getLoopbackAddress(), cachePort)
+            client.soTimeout = 5000
+
+            // SOCKS5 negotiate
+            client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+            client.getOutputStream().flush()
+            readFully(client.getInputStream(), ByteArray(2))
+
+            // CONNECT to port 80 (triggers cache path)
+            val domain = "cached-test.local".toByteArray(Charsets.US_ASCII)
+            val req = ByteArray(4 + 1 + domain.size + 2)
+            req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+            req[4] = domain.size.toByte()
+            System.arraycopy(domain, 0, req, 5, domain.size)
+            req[req.size - 2] = 0x00; req[req.size - 1] = 0x50 // port 80
+            client.getOutputStream().write(req)
+            client.getOutputStream().flush()
+            readFully(client.getInputStream(), ByteArray(10)) // CONNECT reply
+
+            // Send HTTP GET through tunnel
+            client.getOutputStream().write("GET / HTTP/1.1\r\nHost: cached-test.local\r\n\r\n".toByteArray())
+            client.getOutputStream().flush()
+
+            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+            val statusLine = reader.readLine()
+            assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+            client.close()
+        }
+
+        Thread.sleep(300) // Let cache entry be stored
+
+        assertEquals("First request should be a cache miss", 1L, httpCache.misses)
+
+        // Second connection: cache hit
+        run {
+            val client = Socket(InetAddress.getLoopbackAddress(), cachePort)
+            client.soTimeout = 5000
+
+            client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+            client.getOutputStream().flush()
+            readFully(client.getInputStream(), ByteArray(2))
+
+            val domain = "cached-test.local".toByteArray(Charsets.US_ASCII)
+            val req = ByteArray(4 + 1 + domain.size + 2)
+            req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+            req[4] = domain.size.toByte()
+            System.arraycopy(domain, 0, req, 5, domain.size)
+            req[req.size - 2] = 0x00; req[req.size - 1] = 0x50
+            client.getOutputStream().write(req)
+            client.getOutputStream().flush()
+            readFully(client.getInputStream(), ByteArray(10))
+
+            client.getOutputStream().write("GET / HTTP/1.1\r\nHost: cached-test.local\r\n\r\n".toByteArray())
+            client.getOutputStream().flush()
+
+            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+            val statusLine = reader.readLine()
+            assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+            client.close()
+        }
+
+        Thread.sleep(200)
+        assertTrue("Second request should be a cache hit", httpCache.hits > 0)
+
+        echoServer.close()
+        cacheServer.stop()
+    }
+
+    @Test
+    fun `CONNECT to port 80 with non-GET request forwards without caching`() {
+        val echoServer = createCacheFriendlyPostEchoServer()
+        val echoPort = echoServer.localPort
+        val httpCache = HttpCache()
+
+        val cachePort = findFreePort()
+        val cacheServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = cachePort,
+            socketFactoryProvider = { createRedirectingSocketFactory(echoPort) },
+            dnsResolver = { InetAddress.getLoopbackAddress() },
+            httpCache = httpCache,
+        )
+        cacheServer.start()
+        Thread.sleep(500)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), cachePort)
+        client.soTimeout = 5000
+
+        // SOCKS5 negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // CONNECT to port 80
+        val domain = "post-test.local".toByteArray(Charsets.US_ASCII)
+        val req = ByteArray(4 + 1 + domain.size + 2)
+        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+        req[4] = domain.size.toByte()
+        System.arraycopy(domain, 0, req, 5, domain.size)
+        req[req.size - 2] = 0x00; req[req.size - 1] = 0x50 // port 80
+        client.getOutputStream().write(req)
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(10))
+
+        // Send POST through tunnel (non-GET is forwarded directly, not cached)
+        val postBody = "data=test"
+        client.getOutputStream().write(
+            ("POST /submit HTTP/1.1\r\nHost: post-test.local\r\n" +
+                "Content-Length: ${postBody.length}\r\n\r\n$postBody").toByteArray(),
+        )
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+
+        client.close()
+        Thread.sleep(200)
+
+        // POST requests should not be cached
+        assertEquals("POST should not produce cache hits", 0L, httpCache.hits)
+
+        echoServer.close()
+        cacheServer.stop()
+    }
+
+    // --- Additional constantTimeEquals tests ---
+
+    @Test
+    fun `constantTimeEquals with unicode characters`() {
+        assertTrue(Socks5Server.constantTimeEquals("éèê", "éèê"))
+        assertFalse(Socks5Server.constantTimeEquals("éèê", "éèë"))
+    }
+
+    @Test
+    fun `constantTimeEquals with single character difference`() {
+        assertFalse(Socks5Server.constantTimeEquals("password1", "password2"))
+        assertFalse(Socks5Server.constantTimeEquals("Apassword", "apassword"))
+    }
+
+    // --- Additional sendReply IPv6 tests ---
+
+    @Test
+    fun `sendReply with IPv6 encodes full 16-byte address and correct port`() {
+        val output = ByteArrayOutputStream()
+        val addr = InetAddress.getByName("2001:db8::1")
+        server.sendReply(output, Socks5Server.REPLY_SUCCESS, addr, 8080)
+        val reply = output.toByteArray()
+        assertEquals(22, reply.size) // 4 header + 16 IPv6 + 2 port
+        assertEquals(0x05.toByte(), reply[0])
+        assertEquals(0x00.toByte(), reply[1]) // success
+        assertEquals(0x00.toByte(), reply[2]) // reserved
+        assertEquals(0x04.toByte(), reply[3]) // IPv6 address type
+        // Port 8080 = 0x1F90
+        assertEquals(0x1F.toByte(), reply[20])
+        assertEquals(0x90.toByte(), reply[21])
+    }
+
     // --- Helpers ---
 
     private fun findFreePort(): Int {
@@ -1128,5 +1307,95 @@ class Socks5ServerTest {
             }
         }.apply { isDaemon = true; start() }
         return server
+    }
+
+    private fun createCacheFriendlyHttpServer(): ServerSocket {
+        val server = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
+        Thread {
+            while (!server.isClosed) {
+                try {
+                    val client = server.accept()
+                    Thread {
+                        try {
+                            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+                            while (true) {
+                                val line = reader.readLine() ?: break
+                                if (line.isEmpty()) break
+                            }
+                            val body = "cached content"
+                            val response = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: text/html\r\n" +
+                                "Content-Length: ${body.length}\r\n" +
+                                "Cache-Control: max-age=3600\r\n" +
+                                "\r\n" + body
+                            client.getOutputStream().write(response.toByteArray())
+                            client.getOutputStream().flush()
+                            client.close()
+                        } catch (_: Exception) {
+                        }
+                    }.start()
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        return server
+    }
+
+    private fun createCacheFriendlyPostEchoServer(): ServerSocket {
+        val server = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
+        Thread {
+            while (!server.isClosed) {
+                try {
+                    val client = server.accept()
+                    Thread {
+                        try {
+                            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+                            var contentLength = 0
+                            while (true) {
+                                val line = reader.readLine() ?: break
+                                if (line.isEmpty()) break
+                                if (line.lowercase().startsWith("content-length:")) {
+                                    contentLength = line.substringAfter(":").trim().toInt()
+                                }
+                            }
+                            if (contentLength > 0) {
+                                val bodyChars = CharArray(contentLength)
+                                var read = 0
+                                while (read < contentLength) {
+                                    val n = reader.read(bodyChars, read, contentLength - read)
+                                    if (n == -1) break
+                                    read += n
+                                }
+                            }
+                            val body = "OK"
+                            val response = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: text/html\r\n" +
+                                "Content-Length: ${body.length}\r\n" +
+                                "\r\n" + body
+                            client.getOutputStream().write(response.toByteArray())
+                            client.getOutputStream().flush()
+                            client.close()
+                        } catch (_: Exception) {
+                        }
+                    }.start()
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        return server
+    }
+
+    private fun createRedirectingSocketFactory(actualPort: Int): javax.net.SocketFactory {
+        return object : javax.net.SocketFactory() {
+            override fun createSocket(): Socket = Socket()
+            override fun createSocket(host: String?, port: Int): Socket = Socket(host, actualPort)
+            override fun createSocket(host: String?, port: Int, localHost: InetAddress?, localPort: Int): Socket =
+                Socket(host, actualPort)
+            override fun createSocket(host: InetAddress?, port: Int): Socket = Socket(host, actualPort)
+            override fun createSocket(host: InetAddress?, port: Int, localHost: InetAddress?, localPort: Int): Socket =
+                Socket(host, actualPort)
+        }
     }
 }

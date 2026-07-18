@@ -1,7 +1,12 @@
 package org.flossware.hotspot.service
 
 import android.net.wifi.p2p.WifiP2pManager
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.flossware.hotspot.model.ConnectedDevice
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -42,5 +47,108 @@ class WifiDirectManagerTest {
     @Test
     fun `MAX_RETRIES is reasonable`() {
         assertEquals(2, WifiDirectManager.MAX_RETRIES)
+    }
+
+    // --- WifiDirectState sealed class tests ---
+
+    @Test
+    fun `WifiDirectState Idle is a singleton object`() {
+        val idle1 = WifiDirectState.Idle
+        val idle2 = WifiDirectState.Idle
+        assertEquals(idle1, idle2)
+    }
+
+    @Test
+    fun `WifiDirectState GroupCreated holds network info`() {
+        val state = WifiDirectState.GroupCreated(
+            networkName = "DIRECT-FW-Test",
+            passphrase = "TestPass123",
+            groupOwnerAddress = "192.168.49.1",
+        )
+        assertEquals("DIRECT-FW-Test", state.networkName)
+        assertEquals("TestPass123", state.passphrase)
+        assertEquals("192.168.49.1", state.groupOwnerAddress)
+        assertTrue(state.connectedDevices.isEmpty())
+    }
+
+    @Test
+    fun `WifiDirectState GroupCreated holds connected devices`() {
+        val devices = listOf(
+            ConnectedDevice(macAddress = "AA:BB:CC:DD:EE:FF", deviceName = "Phone1"),
+            ConnectedDevice(macAddress = "11:22:33:44:55:66", deviceName = "Phone2"),
+        )
+        val state = WifiDirectState.GroupCreated(
+            networkName = "DIRECT-FW-Test",
+            passphrase = "pass",
+            groupOwnerAddress = "192.168.49.1",
+            connectedDevices = devices,
+        )
+        assertEquals(2, state.connectedDevices.size)
+        assertEquals("Phone1", state.connectedDevices[0].deviceName)
+        assertEquals("AA:BB:CC:DD:EE:FF", state.connectedDevices[0].macAddress)
+    }
+
+    @Test
+    fun `WifiDirectState Error holds error message`() {
+        val state = WifiDirectState.Error("Something went wrong")
+        assertEquals("Something went wrong", state.message)
+    }
+
+    @Test
+    fun `WifiDirectState GroupCreated equality`() {
+        val state1 = WifiDirectState.GroupCreated("net", "pass", "192.168.49.1")
+        val state2 = WifiDirectState.GroupCreated("net", "pass", "192.168.49.1")
+        val state3 = WifiDirectState.GroupCreated("other", "pass", "192.168.49.1")
+        assertEquals(state1, state2)
+        assertNotEquals(state1, state3)
+    }
+
+    @Test
+    fun `WifiDirectState Error equality`() {
+        val state1 = WifiDirectState.Error("error A")
+        val state2 = WifiDirectState.Error("error A")
+        val state3 = WifiDirectState.Error("error B")
+        assertEquals(state1, state2)
+        assertNotEquals(state1, state3)
+    }
+
+    // --- Initial state tests ---
+
+    @Test
+    fun `initial state is Idle`() = runBlocking {
+        val manager = WifiDirectManager()
+        val state = manager.state.first()
+        assertTrue("Initial state should be Idle", state is WifiDirectState.Idle)
+    }
+
+    @Test
+    fun `state flow is accessible before start`() {
+        val manager = WifiDirectManager()
+        val stateFlow = manager.state
+        assertTrue("StateFlow should be available", stateFlow.value is WifiDirectState.Idle)
+    }
+
+    // --- mapFailureReason coverage ---
+
+    @Test
+    fun `mapFailureReason returns different messages for each standard reason code`() {
+        val errorMsg = WifiDirectManager.mapFailureReason(WifiP2pManager.ERROR)
+        val unsupportedMsg = WifiDirectManager.mapFailureReason(WifiP2pManager.P2P_UNSUPPORTED)
+        val busyMsg = WifiDirectManager.mapFailureReason(WifiP2pManager.BUSY)
+
+        assertFalse("ERROR and P2P_UNSUPPORTED should have different messages",
+            errorMsg == unsupportedMsg)
+        assertFalse("ERROR and BUSY should have different messages",
+            errorMsg == busyMsg)
+        assertFalse("P2P_UNSUPPORTED and BUSY should have different messages",
+            unsupportedMsg == busyMsg)
+    }
+
+    @Test
+    fun `mapFailureReason includes error code for all unknown values`() {
+        for (code in listOf(10, 42, 100, -1)) {
+            val msg = WifiDirectManager.mapFailureReason(code)
+            assertTrue("Should include error code $code", msg.contains("error code: $code"))
+        }
     }
 }

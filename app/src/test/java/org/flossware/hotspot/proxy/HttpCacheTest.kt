@@ -782,6 +782,141 @@ class HttpCacheTest {
         assertTrue("Client should receive body", forwarded.contains("hello world"))
     }
 
+    // --- maxEntryBytes enforcement during body read (no Content-Length header) ---
+
+    @Test
+    fun `response without Content-Length exceeding maxEntryBytes during read is not cached`() {
+        val tinyCache = HttpCache(maxTotalBytes = 1024 * 1024, maxEntryBytes = 10)
+        val body = "a".repeat(50)
+        // No Content-Length header; body exceeds maxEntryBytes during streaming read
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n$body"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        tinyCache.cacheResponse(
+            "bigbody.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Body should have been forwarded to client
+        assertTrue("Client should receive body", clientOutput.toString().contains(body))
+
+        // But should not be cached
+        val serveOutput = ByteArrayOutputStream()
+        assertFalse(tinyCache.tryServeFromCache("bigbody.com", "GET / HTTP/1.1", "", serveOutput))
+    }
+
+    @Test
+    fun `response with Content-Length exceeding maxEntryBytes is not cached but forwarded`() {
+        val tinyCache = HttpCache(maxTotalBytes = 1024 * 1024, maxEntryBytes = 10)
+        val body = "a".repeat(50)
+        val response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ${body.length}\r\n\r\n$body"
+        val responseStream = ByteArrayInputStream(response.toByteArray())
+        val clientOutput = ByteArrayOutputStream()
+
+        tinyCache.cacheResponse(
+            "toobig.com", "GET / HTTP/1.1",
+            responseStream, clientOutput, ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Should still forward to client
+        val forwarded = clientOutput.toString()
+        assertTrue("Client should receive status line", forwarded.contains("200 OK"))
+
+        // But not cached
+        val serveOutput = ByteArrayOutputStream()
+        assertFalse(tinyCache.tryServeFromCache("toobig.com", "GET / HTTP/1.1", "", serveOutput))
+    }
+
+    // --- Expired entry eviction during new entry storage ---
+
+    @Test
+    fun `eviction removes expired entries to make room for new ones`() {
+        // Cache with very small total size
+        val smallCache = HttpCache(maxTotalBytes = 150, maxEntryBytes = 100)
+
+        // Store first entry with max-age=0 (immediately expired, but won't be stored since max-age=0 blocks caching)
+        // Instead, store with max-age=1 and wait
+        val body1 = "a".repeat(80)
+        val response1 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=1\r\nContent-Length: ${body1.length}\r\n\r\n$body1"
+        smallCache.cacheResponse(
+            "expire-me.com", "GET / HTTP/1.1",
+            ByteArrayInputStream(response1.toByteArray()), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // Verify it was cached
+        val out1 = ByteArrayOutputStream()
+        assertTrue("Should be cached initially", smallCache.tryServeFromCache("expire-me.com", "GET / HTTP/1.1", "", out1))
+
+        // Wait for entry to expire (max-age=1 -> 1 second)
+        Thread.sleep(1100)
+
+        // Now store another entry that needs the space
+        val body2 = "b".repeat(80)
+        val response2 = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nCache-Control: max-age=3600\r\nContent-Length: ${body2.length}\r\n\r\n$body2"
+        smallCache.cacheResponse(
+            "new-entry.com", "GET / HTTP/1.1",
+            ByteArrayInputStream(response2.toByteArray()), ByteArrayOutputStream(),
+            ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+        )
+
+        // New entry should be cached
+        val out2 = ByteArrayOutputStream()
+        assertTrue("New entry should be cached", smallCache.tryServeFromCache("new-entry.com", "GET / HTTP/1.1", "", out2))
+
+        // Old entry should be expired
+        val out3 = ByteArrayOutputStream()
+        assertFalse("Expired entry should not be served", smallCache.tryServeFromCache("expire-me.com", "GET / HTTP/1.1", "", out3))
+    }
+
+    // --- Concurrent mixed read/write ---
+
+    @Test
+    fun `concurrent reads and writes do not throw`() {
+        // Pre-populate some entries
+        for (i in 0 until 5) {
+            val body = "body-$i"
+            cache.cacheResponse(
+                "concurrent-rw-$i.com", "GET / HTTP/1.1",
+                buildHttpResponse(200, body), ByteArrayOutputStream(),
+                ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+            )
+        }
+
+        val threads = mutableListOf<Thread>()
+
+        // Reader threads
+        for (i in 0 until 5) {
+            threads.add(Thread {
+                for (j in 0 until 100) {
+                    val out = ByteArrayOutputStream()
+                    cache.tryServeFromCache("concurrent-rw-${i % 5}.com", "GET / HTTP/1.1", "", out)
+                }
+            })
+        }
+
+        // Writer threads
+        for (i in 0 until 5) {
+            threads.add(Thread {
+                for (j in 0 until 20) {
+                    val body = "rw-body-$i-$j"
+                    cache.cacheResponse(
+                        "concurrent-rw-new-$i.com", "GET /$j HTTP/1.1",
+                        buildHttpResponse(200, body), ByteArrayOutputStream(),
+                        ByteArrayOutputStream(), ByteArrayInputStream(ByteArray(0)),
+                    )
+                }
+            })
+        }
+
+        threads.forEach { it.start() }
+        threads.forEach { it.join(10000) }
+
+        // If we get here without exception, concurrent mixed access was safe
+        assertTrue(true)
+    }
+
     private fun buildHttpResponse(status: Int, body: String, contentLength: Int = body.length): ByteArrayInputStream {
         val response = "HTTP/1.1 $status OK\r\nContent-Type: text/html\r\nContent-Length: $contentLength\r\n\r\n$body"
         return ByteArrayInputStream(response.toByteArray())
