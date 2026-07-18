@@ -102,6 +102,12 @@
 
     <string name="share_logs">Share Logs</string>
 
+    <!-- Passphrase configuration -->
+    <string name="passphrase_label">Wi-Fi Passphrase</string>
+    <string name="passphrase_hint">Enter passphrase (min 8 characters)</string>
+    <string name="passphrase_error_too_short">Passphrase must be at least 8 characters (WPA2 requirement)</string>
+    <string name="passphrase_note_legacy">On Android 9 and below, the system generates a random passphrase that cannot be customized.</string>
+
     <!-- Accessibility: content descriptions -->
     <string name="cd_share_logs">Share debug logs</string>
     <string name="cd_flossware_logo">FlossWare logo</string>

@@ -82,6 +82,13 @@
     <string name="compatibility_tip_battery">O aplicativo reduz o consumo de energia automaticamente quando não há transferência de dados. O uso de bateria aumenta com o proxy ativo.</string>
 
     <string name="share_logs">Compartilhar registros</string>
+
+    <!-- Passphrase configuration -->
+    <string name="passphrase_label">Senha Wi-Fi</string>
+    <string name="passphrase_hint">Digite a senha (mín. 8 caracteres)</string>
+    <string name="passphrase_error_too_short">A senha deve ter pelo menos 8 caracteres (requisito WPA2)</string>
+    <string name="passphrase_note_legacy">No Android 9 e anteriores, o sistema gera uma senha aleatória que não pode ser personalizada.</string>
+
     <string name="cd_share_logs">Compartilhar registros de depuração</string>
 
     <!-- Graceful degradation strings -->

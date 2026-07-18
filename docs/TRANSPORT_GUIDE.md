@@ -46,7 +46,7 @@ Host creates P2P group
     ├── Network name: DIRECT-FW-FlossHotspot (Android 10+)
     │                 DIRECT-xx-random     (Android 8-9)
     │
-    ├── Passphrase:   FlossWare2024        (Android 10+)
+    ├── Passphrase:   User-configurable     (Android 10+)
     │                 System-generated      (Android 8-9)
     │
     ├── Group Owner:  192.168.49.1 (always)
@@ -64,7 +64,7 @@ Wi-Fi Direct is the default and recommended transport. Use it whenever both devi
 - Highest throughput (~250 Mbps, limited by Wi-Fi Direct spec)
 - No Bluetooth pairing step required
 - Works at greater range than Bluetooth
-- Deterministic network name and passphrase on Android 10+
+- Deterministic network name and configurable passphrase on Android 10+
 - QR code sharing for easy setup
 
 ### Limitations

@@ -51,11 +51,11 @@ FlossWare Hotspot creates a local network between two Android devices and forwar
 |----------|--------|
 | Encryption | WPA2 (provided by Android Wi-Fi Direct) |
 | Authentication | Pre-shared passphrase |
-| Passphrase (API 29+) | Hardcoded: `FlossWare2024` |
+| Passphrase (API 29+) | User-configurable (random default generated on first launch) |
 | Passphrase (API < 29) | Random, system-generated per group creation |
 | Discoverability | Wi-Fi Direct groups are discoverable by nearby devices |
 
-**Analysis:** On Android 10+ (API 29), the passphrase is hardcoded to `FlossWare2024` in `WifiDirectManager.kt` for a consistent user experience. This is a known trade-off: a deterministic passphrase is convenient (the user does not need to re-enter it) but means anyone who knows the passphrase can join. The network name (`DIRECT-FW-FlossHotspot`) is also deterministic and identifiable.
+**Analysis:** On Android 10+ (API 29), the passphrase is user-configurable via the host app UI. A cryptographically random passphrase is generated on first launch and stored in SharedPreferences. Users can change it before starting the hotspot. The network name (`DIRECT-FW-FlossHotspot`) is deterministic and identifiable.
 
 **Mitigation:** The passphrase is shared via the host UI (and optionally via QR code). Users should only share it with their own devices. For higher security, users on Android < 10 get a random passphrase per session.
 
@@ -163,7 +163,7 @@ The app is designed to avoid common tethering detection methods:
 
 2. **Use HTTPS for sensitive traffic.** The SOCKS5 tunnel does not encrypt traffic. HTTPS provides end-to-end encryption between the client app and the destination server, regardless of the proxy path.
 
-3. **Change the default passphrase** if distributing to others. The hardcoded `FlossWare2024` is convenient for personal use but should not be relied upon for security.
+3. **Use a strong passphrase.** A random passphrase is generated on first launch. You can change it in the host app UI before starting the hotspot. Choose a passphrase that is not easily guessable.
 
 4. **Review Bluetooth pairing.** The Bluetooth transport relies on system-level pairing for authentication. Ensure only trusted devices are paired with the host phone.
 

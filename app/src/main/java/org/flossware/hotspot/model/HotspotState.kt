@@ -4,6 +4,7 @@ data class HotspotState(
     val isRunning: Boolean = false,
     val networkName: String = "",
     val passphrase: String = "",
+    val configuredPassphrase: String = "",
     val socksHost: String = DEFAULT_HOST,
     val socksPort: Int = DEFAULT_SOCKS_PORT,
     val dnsPort: Int = DEFAULT_DNS_PORT,

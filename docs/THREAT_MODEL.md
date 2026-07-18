@@ -81,7 +81,7 @@ A trust boundary is a point where data crosses between components with different
 
 ### TB-1: Wi-Fi Direct Network Boundary
 
-Any device that knows the passphrase can join the Wi-Fi Direct group. On Android 10+ (API 29+), the passphrase is hardcoded to `FlossWare2024` in `WifiDirectManager.kt` (line 117). On older Android versions, the system generates a random passphrase per session.
+Any device that knows the passphrase can join the Wi-Fi Direct group. On Android 10+ (API 29+), the passphrase is user-configurable via the host app UI (a random passphrase is generated on first launch and stored in SharedPreferences). On older Android versions, the system generates a random passphrase per session.
 
 **What crosses this boundary:**
 - SOCKS5 CONNECT requests from any device on the 192.168.49.x subnet
@@ -224,7 +224,7 @@ The USB server (`UsbServer.kt`) relays data from a physically connected USB acce
 | **Threat** | An attacker intercepts traffic between client and host on the Wi-Fi Direct link |
 | **Severity** | MEDIUM |
 | **Current mitigation** | Wi-Fi Direct uses WPA2 encryption at the link layer. The host is always the group owner (192.168.49.1), and the passphrase must be known to join |
-| **Residual risk** | On Android 10+, the passphrase `FlossWare2024` is hardcoded and discoverable (it is in the source code, displayed in the UI, and shared via QR code). Anyone with this passphrase can join the group and passively observe all SOCKS5 traffic, since the proxy tunnel itself is unencrypted. WPA2 encrypts link-layer frames but all group members share the same key, so a member can decrypt other members' traffic. HTTPS traffic remains protected end-to-end, but DNS queries, plaintext HTTP, and SOCKS5 protocol headers are visible to any group member |
+| **Residual risk** | On Android 10+, the passphrase is user-configurable and displayed in the UI and shared via QR code. Anyone with the passphrase can join the group and passively observe all SOCKS5 traffic, since the proxy tunnel itself is unencrypted. WPA2 encrypts link-layer frames but all group members share the same key, so a member can decrypt other members' traffic. HTTPS traffic remains protected end-to-end, but DNS queries, plaintext HTTP, and SOCKS5 protocol headers are visible to any group member. The passphrase is stored in SharedPreferences (app-private, not encrypted at rest) |
 
 ### AV-7: Bluetooth Pairing Attacks
 
@@ -270,7 +270,7 @@ The USB server (`UsbServer.kt`) relays data from a physically connected USB acce
 
 | Segment | Encryption | Key Management |
 |---------|-----------|----------------|
-| Wi-Fi Direct link layer | WPA2-PSK | Hardcoded passphrase (API 29+) or system-generated |
+| Wi-Fi Direct link layer | WPA2-PSK | User-configurable passphrase (API 29+) or system-generated |
 | HTTPS traffic through proxy | TLS (end-to-end) | Managed by client apps and destination servers |
 | Bluetooth link layer | BT encryption (E0/AES-CCM) | Managed by Android Bluetooth stack |
 
@@ -296,10 +296,10 @@ The SOCKS5 tunnel itself is **not encrypted**. HTTPS traffic passing through the
 
 | Property | Detail |
 |----------|--------|
-| Storage | Hardcoded in source code (`WifiDirectManager.kt` line 117): `"FlossWare2024"` |
+| Storage | SharedPreferences (`hotspot_prefs`, key `wifi_direct_passphrase`); random default generated on first launch |
 | Transmission | Displayed in host app UI; optionally shared via QR code |
-| Rotation | None (static across all installations on API 29+) |
-| Scope | Universal -- same passphrase for every user of the app |
+| Rotation | User can change the passphrase in the host app UI before starting the hotspot |
+| Scope | Per-installation -- each device generates its own random passphrase on first launch |
 
 ### SOCKS5 Credentials
 
@@ -320,9 +320,9 @@ The SOCKS5 tunnel itself is **not encrypted**. HTTPS traffic passing through the
 
 ### Summary of Credential Risks
 
-1. The Wi-Fi Direct passphrase is the same for every installation. An attacker who reads the source code, scans a QR code, or sees the UI knows the passphrase for ALL hotspot instances.
+1. The Wi-Fi Direct passphrase is per-installation (random default) and user-configurable. An attacker who sees the UI or scans the QR code knows the passphrase for that specific instance, but not for other installations.
 2. SOCKS5 authentication is implemented but disabled. There is no defense-in-depth at the proxy layer.
-3. There is no mechanism to rotate, randomize, or derive per-session credentials.
+3. The passphrase persists across sessions (stored in SharedPreferences). Consider adding per-session rotation as a future option.
 
 ---
 
@@ -362,7 +362,7 @@ The `LogExporter` sanitizes the following patterns before writing to file:
 
 ### P0 -- Critical (address before public release)
 
-1. **Randomize the Wi-Fi Direct passphrase per session.** Generate a cryptographically random passphrase at group creation time instead of using the hardcoded `FlossWare2024`. Display it in the UI and QR code. This is the single most impactful security improvement.
+1. ~~**Randomize the Wi-Fi Direct passphrase per session.**~~ **DONE.** The passphrase is now user-configurable with a cryptographically random default generated on first launch. Consider adding an option to regenerate the passphrase automatically on each service restart for maximum security.
 
 2. **Enable SOCKS5 authentication by default.** Generate a random username/password pair per session and display them alongside the passphrase. The authentication code already exists in `Socks5Server.kt` -- `ProxyManager` just needs to pass credentials.
 
@@ -416,7 +416,7 @@ The `LogExporter` sanitizes the following patterns before writing to file:
 | HTTP Proxy | `app/.../proxy/ProxyServer.kt` | No auth, no SSRF protection, no connection limits |
 | Bluetooth | `app/.../service/BluetoothServer.kt` | Bond state check (L132), RFCOMM relay to loopback (L154) |
 | USB | `app/.../service/UsbServer.kt` | `RECEIVER_NOT_EXPORTED` (L90), relay to loopback (L148) |
-| Wi-Fi Direct | `app/.../service/WifiDirectManager.kt` | Hardcoded passphrase (L117), group creation (L108-131) |
+| Wi-Fi Direct | `app/.../service/WifiDirectManager.kt` | Configurable passphrase, group creation |
 | Log Sanitizer | `app/.../log/LogExporter.kt` | Regex patterns (L22-35), `sanitize()` (L40-46) |
 | Service Lifecycle | `app/.../service/HotspotService.kt` | WakeLock management (L215-235), idle detection (L93-109) |
 | Proxy Manager | `app/.../service/ProxyManager.kt` | Server instantiation without auth (L45-57) |

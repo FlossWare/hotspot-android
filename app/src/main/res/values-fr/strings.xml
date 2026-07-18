@@ -82,6 +82,13 @@
     <string name="compatibility_tip_battery">L\'application réduit automatiquement la consommation d\'énergie lorsqu\'aucune donnée n\'est transférée. L\'utilisation de la batterie augmente avec le proxy actif.</string>
 
     <string name="share_logs">Partager les journaux</string>
+
+    <!-- Passphrase configuration -->
+    <string name="passphrase_label">Mot de passe Wi-Fi</string>
+    <string name="passphrase_hint">Entrez le mot de passe (min. 8 caractères)</string>
+    <string name="passphrase_error_too_short">Le mot de passe doit comporter au moins 8 caractères (exigence WPA2)</string>
+    <string name="passphrase_note_legacy">Sur Android 9 et versions antérieures, le système génère un mot de passe aléatoire qui ne peut pas être personnalisé.</string>
+
     <string name="cd_share_logs">Partager les journaux de débogage</string>
 
     <!-- Graceful degradation strings -->

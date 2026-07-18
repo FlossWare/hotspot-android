@@ -16,6 +16,7 @@ import org.flossware.hotspot.R
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.flossware.hotspot.model.ConnectedDevice
+import java.security.SecureRandom
 
 sealed class WifiDirectState {
     data object Idle : WifiDirectState()
@@ -35,12 +36,14 @@ class WifiDirectManager {
     private var context: Context? = null
     private var retryCount = 0
     private var retryHandler: android.os.Handler? = null
+    private var configuredPassphrase: String = DEFAULT_PASSPHRASE
 
     private val _state = MutableStateFlow<WifiDirectState>(WifiDirectState.Idle)
     val state: StateFlow<WifiDirectState> = _state.asStateFlow()
 
     @SuppressLint("MissingPermission")
-    fun start(ctx: Context) {
+    fun start(ctx: Context, passphrase: String = DEFAULT_PASSPHRASE) {
+        configuredPassphrase = passphrase
         context = ctx
         retryHandler = android.os.Handler(Looper.getMainLooper())
 
@@ -120,7 +123,7 @@ class WifiDirectManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val config = WifiP2pConfig.Builder()
                 .setNetworkName("DIRECT-FW-FlossHotspot")
-                .setPassphrase("FlossWare2024")
+                .setPassphrase(configuredPassphrase)
                 .build()
             mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
@@ -215,7 +218,24 @@ class WifiDirectManager {
     companion object {
         private const val TAG = "WifiDirectManager"
         internal const val MAX_RETRIES = 2
+        internal const val MIN_PASSPHRASE_LENGTH = 8
         private val RETRY_DELAYS_MS = longArrayOf(1000L, 2000L)
+        private const val RANDOM_PASSPHRASE_LENGTH = 12
+        private const val PASSPHRASE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+
+        /** Default passphrase used when none is configured. */
+        const val DEFAULT_PASSPHRASE = "FlossWare2024"
+
+        /**
+         * Generates a cryptographically random passphrase.
+         * Uses characters that avoid ambiguity (no 0/O, 1/l/I).
+         */
+        fun generateRandomPassphrase(): String {
+            val random = SecureRandom()
+            return (1..RANDOM_PASSPHRASE_LENGTH)
+                .map { PASSPHRASE_CHARS[random.nextInt(PASSPHRASE_CHARS.length)] }
+                .joinToString("")
+        }
 
         internal fun mapFailureReason(reason: Int): String = when (reason) {
             WifiP2pManager.ERROR ->

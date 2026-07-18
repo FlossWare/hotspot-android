@@ -127,7 +127,8 @@ class HotspotService : Service() {
             }
         }
 
-        wifiDirectManager.start(this)
+        val passphrase = getPassphrase(this)
+        wifiDirectManager.start(this, passphrase)
     }
 
     /**
@@ -272,6 +273,7 @@ class HotspotService : Service() {
             isRunning = true,
             networkName = wifiState.networkName,
             passphrase = wifiState.passphrase,
+            configuredPassphrase = current.configuredPassphrase,
             socksHost = wifiState.groupOwnerAddress,
             connectedDevices = wifiState.connectedDevices,
             bytesTransferred = proxyManager.bytesTransferred,
@@ -366,6 +368,7 @@ class HotspotService : Service() {
         private const val TAG = "HotspotService"
         private const val PREFS_NAME = "hotspot_prefs"
         private const val KEY_BT_OPT_IN = "bluetooth_opt_in"
+        private const val KEY_PASSPHRASE = "wifi_direct_passphrase"
         const val ACTION_START = "org.flossware.hotspot.START"
         const val ACTION_STOP = "org.flossware.hotspot.STOP"
         const val ACTION_TOGGLE_BT = "org.flossware.hotspot.TOGGLE_BT"
@@ -415,6 +418,31 @@ class HotspotService : Service() {
         fun getBluetoothOptIn(context: Context): Boolean {
             return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getBoolean(KEY_BT_OPT_IN, false)
+        }
+
+        /**
+         * Sets the Wi-Fi Direct passphrase. Only takes effect before starting the hotspot.
+         * The passphrase must be at least [WifiDirectManager.MIN_PASSPHRASE_LENGTH] characters.
+         */
+        fun setPassphrase(context: Context, passphrase: String) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_PASSPHRASE, passphrase)
+                .apply()
+            _state.value = _state.value.copy(configuredPassphrase = passphrase)
+        }
+
+        /**
+         * Returns the configured passphrase, generating a random one on first launch.
+         */
+        fun getPassphrase(context: Context): String {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            var passphrase = prefs.getString(KEY_PASSPHRASE, null)
+            if (passphrase == null) {
+                passphrase = WifiDirectManager.generateRandomPassphrase()
+                prefs.edit().putString(KEY_PASSPHRASE, passphrase).apply()
+            }
+            return passphrase
         }
 
         fun updateFeatureAvailability(

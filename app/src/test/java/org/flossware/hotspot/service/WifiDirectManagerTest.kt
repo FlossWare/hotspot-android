@@ -151,4 +151,52 @@ class WifiDirectManagerTest {
             assertTrue("Should include error code $code", msg.contains("error code: $code"))
         }
     }
+
+    // --- Passphrase tests ---
+
+    @Test
+    fun `DEFAULT_PASSPHRASE is defined and meets minimum length`() {
+        assertTrue(
+            "Default passphrase should be at least MIN_PASSPHRASE_LENGTH characters",
+            WifiDirectManager.DEFAULT_PASSPHRASE.length >= WifiDirectManager.MIN_PASSPHRASE_LENGTH,
+        )
+    }
+
+    @Test
+    fun `MIN_PASSPHRASE_LENGTH is 8 for WPA2`() {
+        assertEquals(8, WifiDirectManager.MIN_PASSPHRASE_LENGTH)
+    }
+
+    @Test
+    fun `generateRandomPassphrase returns a string of correct length`() {
+        val passphrase = WifiDirectManager.generateRandomPassphrase()
+        assertEquals(12, passphrase.length)
+    }
+
+    @Test
+    fun `generateRandomPassphrase meets minimum passphrase length`() {
+        val passphrase = WifiDirectManager.generateRandomPassphrase()
+        assertTrue(
+            "Generated passphrase should meet WPA2 minimum length",
+            passphrase.length >= WifiDirectManager.MIN_PASSPHRASE_LENGTH,
+        )
+    }
+
+    @Test
+    fun `generateRandomPassphrase produces different values`() {
+        val passphrases = (1..10).map { WifiDirectManager.generateRandomPassphrase() }.toSet()
+        assertTrue(
+            "10 random passphrases should not all be identical",
+            passphrases.size > 1,
+        )
+    }
+
+    @Test
+    fun `generateRandomPassphrase contains only alphanumeric characters`() {
+        val passphrase = WifiDirectManager.generateRandomPassphrase()
+        assertTrue(
+            "Generated passphrase should be alphanumeric",
+            passphrase.all { it.isLetterOrDigit() },
+        )
+    }
 }

@@ -82,6 +82,13 @@
     <string name="compatibility_tip_battery">当没有数据传输时，应用会自动降低耗电。代理活动时电池使用量会增加。</string>
 
     <string name="share_logs">分享日志</string>
+
+    <!-- Passphrase configuration -->
+    <string name="passphrase_label">Wi-Fi 密码</string>
+    <string name="passphrase_hint">输入密码（至少8个字符）</string>
+    <string name="passphrase_error_too_short">密码必须至少8个字符（WPA2要求）</string>
+    <string name="passphrase_note_legacy">在 Android 9 及更早版本上，系统会生成随机密码，无法自定义。</string>
+
     <string name="cd_share_logs">分享调试日志</string>
 
     <!-- Graceful degradation strings -->

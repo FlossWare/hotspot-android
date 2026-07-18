@@ -14,6 +14,7 @@ class HotspotStateTest {
         assertFalse(state.isRunning)
         assertEquals("", state.networkName)
         assertEquals("", state.passphrase)
+        assertEquals("", state.configuredPassphrase)
         assertEquals("192.168.49.1", state.socksHost)
         assertEquals(1080, state.socksPort)
         assertEquals(5353, state.dnsPort)
@@ -377,6 +378,29 @@ class HotspotStateTest {
         assertEquals(a, b)
 
         val c = HotspotState(wifiDirectAvailable = true, permissionsDenied = true)
+        assertFalse(a == c)
+    }
+
+    @Test
+    fun `configuredPassphrase can be set`() {
+        val state = HotspotState(configuredPassphrase = "MySecurePass")
+        assertEquals("MySecurePass", state.configuredPassphrase)
+    }
+
+    @Test
+    fun `copy preserves configuredPassphrase`() {
+        val state = HotspotState(configuredPassphrase = "TestPass123")
+        val copied = state.copy(isRunning = true)
+        assertEquals("TestPass123", copied.configuredPassphrase)
+    }
+
+    @Test
+    fun `equality includes configuredPassphrase`() {
+        val a = HotspotState(configuredPassphrase = "pass1")
+        val b = HotspotState(configuredPassphrase = "pass1")
+        assertEquals(a, b)
+
+        val c = HotspotState(configuredPassphrase = "pass2")
         assertFalse(a == c)
     }
 }

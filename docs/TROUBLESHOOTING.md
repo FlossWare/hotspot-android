@@ -42,7 +42,7 @@ The host phone does not have an active cellular data connection. The hotspot sha
 
 ### Wrong password
 
-- On Android 10+, the password is `FlossWare2024` (displayed on the host screen)
+- On Android 10+, the password is configurable in the host app (displayed on the host screen). A random passphrase is generated on first launch
 - On Android 8-9, the password is randomly generated -- copy it from the host app screen
 - If using the QR code, scan it from the client device's camera app or Wi-Fi settings
 

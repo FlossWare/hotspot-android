@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -59,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.flossware.hotspot.R
 import org.flossware.hotspot.log.LogExporter
 import org.flossware.hotspot.service.HotspotService
+import org.flossware.hotspot.service.WifiDirectManager
 import org.flossware.hotspot.ui.components.BluetoothInfo
 import org.flossware.hotspot.ui.components.CacheInfo
 import org.flossware.hotspot.ui.components.CompatibilityTips
@@ -256,6 +258,34 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     ) {
                         Text(stringResource(R.string.continue_bluetooth_only))
                     }
+                }
+            }
+
+            // Passphrase configuration (only when not running, API 29+)
+            if (!state.isRunning) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val passphraseValue = state.configuredPassphrase
+                    val isError = passphraseValue.length < WifiDirectManager.MIN_PASSPHRASE_LENGTH
+                    OutlinedTextField(
+                        value = passphraseValue,
+                        onValueChange = { viewModel.setPassphrase(it) },
+                        label = { Text(stringResource(R.string.passphrase_label)) },
+                        placeholder = { Text(stringResource(R.string.passphrase_hint)) },
+                        isError = isError && passphraseValue.isNotEmpty(),
+                        supportingText = if (isError && passphraseValue.isNotEmpty()) {
+                            { Text(stringResource(R.string.passphrase_error_too_short)) }
+                        } else {
+                            null
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.passphrase_note_legacy),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
 

@@ -27,6 +27,13 @@ class HotspotViewModel(application: Application) : AndroidViewModel(application)
             // Sync initial state from persisted preference
             HotspotService.setBluetoothOptIn(application, optIn)
         }
+
+        // Sync configured passphrase from persisted preference
+        val savedPassphrase = HotspotService.getPassphrase(application)
+        if (hotspotState.value.configuredPassphrase != savedPassphrase) {
+            HotspotService.setPassphrase(application, savedPassphrase)
+        }
+
         detectFeatureAvailability()
     }
 
@@ -44,6 +51,14 @@ class HotspotViewModel(application: Application) : AndroidViewModel(application)
 
     fun setBluetoothOptIn(enabled: Boolean) {
         HotspotService.setBluetoothOptIn(getApplication(), enabled)
+    }
+
+    /**
+     * Updates the Wi-Fi Direct passphrase. Only effective before starting the hotspot.
+     * The passphrase must be at least 8 characters (WPA2 requirement).
+     */
+    fun setPassphrase(passphrase: String) {
+        HotspotService.setPassphrase(getApplication(), passphrase)
     }
 
     /**
