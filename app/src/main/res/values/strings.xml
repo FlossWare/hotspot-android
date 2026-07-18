@@ -43,9 +43,12 @@
     <string name="error_group_creation_failed">Failed to create hotspot network</string>
     <string name="error_socks_failed">Failed to start SOCKS5 server</string>
 
-    <string name="bluetooth_status">Bluetooth</string>
+    <string name="bluetooth_transport">Bluetooth Transport</string>
+    <string name="bluetooth_experimental_label">Experimental</string>
+    <string name="bluetooth_experimental_description">Bluetooth transport is experimental. It supports a maximum of ~7 concurrent connections and is slower than Wi-Fi Direct. Use only when Wi-Fi Direct is unavailable.</string>
+    <string name="bluetooth_status">Status</string>
     <string name="bluetooth_enabled">Listening</string>
-    <string name="bluetooth_disabled">Unavailable</string>
+    <string name="bluetooth_disabled">Not active</string>
     <string name="bluetooth_device_name">Device Name</string>
     <string name="bluetooth_connected_devices">Bluetooth Devices</string>
     <string name="no_bluetooth_devices">No Bluetooth devices connected</string>

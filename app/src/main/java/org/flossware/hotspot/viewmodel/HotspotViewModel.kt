@@ -14,12 +14,25 @@ class HotspotViewModel(application: Application) : AndroidViewModel(application)
 
     val hotspotState: StateFlow<HotspotState> = HotspotService.state
 
+    init {
+        val optIn = HotspotService.getBluetoothOptIn(application)
+        val current = hotspotState.value
+        if (current.bluetoothOptIn != optIn) {
+            // Sync initial state from persisted preference
+            HotspotService.setBluetoothOptIn(application, optIn)
+        }
+    }
+
     fun startHotspot() {
         HotspotService.start(getApplication())
     }
 
     fun stopHotspot() {
         HotspotService.stop(getApplication())
+    }
+
+    fun setBluetoothOptIn(enabled: Boolean) {
+        HotspotService.setBluetoothOptIn(getApplication(), enabled)
     }
 
     fun generateQrBitmap(state: HotspotState, size: Int = 512): Bitmap? {
