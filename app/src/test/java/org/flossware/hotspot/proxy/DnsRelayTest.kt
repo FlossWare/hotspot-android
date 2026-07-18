@@ -472,6 +472,132 @@ class DnsRelayTest {
         assertEquals(0L, relay.cacheHits)
     }
 
+    @Test
+    fun `cache handles many unique domains without failure`() {
+        upstreamServer = createMockDnsServerWithTtlResponse(upstreamPort)
+        relay = createRelay()
+        relay.start()
+        Thread.sleep(500)
+
+        val client = DatagramSocket()
+        client.soTimeout = 5000
+
+        val queryCount = 50
+        for (i in 0 until queryCount) {
+            val domain = "host-$i.example.com"
+            val query = buildDnsQuery((i shr 8) and 0xFF, i and 0xFF, domain)
+            client.send(DatagramPacket(query, query.size, InetAddress.getLoopbackAddress(), relayPort))
+            val resp = ByteArray(4096)
+            client.receive(DatagramPacket(resp, resp.size))
+        }
+
+        assertTrue("Relay should still be running after many queries", relay.isRunning)
+        assertEquals(queryCount.toLong(), relay.cacheMisses)
+
+        client.close()
+    }
+
+    @Test
+    fun `cached entry serves subsequent identical query as cache hit`() {
+        upstreamServer = createMockDnsServerWithTtlResponse(upstreamPort)
+        relay = createRelay()
+        relay.start()
+        Thread.sleep(500)
+
+        val client = DatagramSocket()
+        client.soTimeout = 5000
+
+        // Send 10 unique queries, each one twice
+        for (i in 0 until 10) {
+            val domain = "repeat-$i.example.com"
+            val query = buildDnsQuery(0x00, i, domain)
+            // First: cache miss
+            client.send(DatagramPacket(query, query.size, InetAddress.getLoopbackAddress(), relayPort))
+            val resp1 = ByteArray(4096)
+            client.receive(DatagramPacket(resp1, resp1.size))
+
+            Thread.sleep(50)
+
+            // Second: cache hit
+            client.send(DatagramPacket(query, query.size, InetAddress.getLoopbackAddress(), relayPort))
+            val resp2 = ByteArray(4096)
+            client.receive(DatagramPacket(resp2, resp2.size))
+        }
+
+        Thread.sleep(200)
+        assertEquals(10L, relay.cacheMisses)
+        assertEquals(10L, relay.cacheHits)
+
+        client.close()
+    }
+
+    @Test
+    fun `extractMinTtl with AAAA record type`() {
+        relay = createRelay()
+        val response = buildDnsResponseWithTypeAndTtl("ipv6.example.com", 0x001C, 600, ByteArray(16))
+        val ttl = relay.extractMinTtl(response)
+        assertEquals(600, ttl)
+    }
+
+    @Test
+    fun `extractMinTtl with truncated answer section returns default`() {
+        relay = createRelay()
+        // Header says 1 answer but data is truncated before the answer section
+        val out = mutableListOf<Byte>()
+        out.add(0x00); out.add(0x01) // Transaction ID
+        out.add(0x81.toByte()); out.add(0x80.toByte()) // Flags: response
+        out.add(0x00); out.add(0x01) // QDCOUNT: 1
+        out.add(0x00); out.add(0x01) // ANCOUNT: 1 (claims 1 answer)
+        out.add(0x00); out.add(0x00) // NSCOUNT
+        out.add(0x00); out.add(0x00) // ARCOUNT
+        // Question section for "a.com"
+        out.add(0x01); out.add('a'.code.toByte())
+        out.add(0x03); out.add('c'.code.toByte()); out.add('o'.code.toByte()); out.add('m'.code.toByte())
+        out.add(0x00)
+        out.add(0x00); out.add(0x01) // QTYPE: A
+        out.add(0x00); out.add(0x01) // QCLASS: IN
+        // No answer data (truncated)
+        val ttl = relay.extractMinTtl(out.toByteArray())
+        assertEquals(DnsRelay.DEFAULT_TTL, ttl)
+    }
+
+    private fun buildDnsResponseWithTypeAndTtl(
+        domain: String,
+        recordType: Int,
+        ttl: Int,
+        rdata: ByteArray,
+    ): ByteArray {
+        val out = mutableListOf<Byte>()
+        out.add(0x00); out.add(0x01) // Transaction ID
+        out.add(0x81.toByte()); out.add(0x80.toByte()) // Flags: response
+        out.add(0x00); out.add(0x01) // QDCOUNT: 1
+        out.add(0x00); out.add(0x01) // ANCOUNT: 1
+        out.add(0x00); out.add(0x00)
+        out.add(0x00); out.add(0x00)
+        // Question section
+        for (label in domain.split(".")) {
+            out.add(label.length.toByte())
+            for (ch in label) out.add(ch.code.toByte())
+        }
+        out.add(0x00)
+        out.add((recordType shr 8 and 0xFF).toByte())
+        out.add((recordType and 0xFF).toByte())
+        out.add(0x00); out.add(0x01) // QCLASS: IN
+        // Answer section
+        out.add(0xC0.toByte()); out.add(0x0C)
+        out.add((recordType shr 8 and 0xFF).toByte())
+        out.add((recordType and 0xFF).toByte())
+        out.add(0x00); out.add(0x01) // CLASS: IN
+        out.add((ttl shr 24 and 0xFF).toByte())
+        out.add((ttl shr 16 and 0xFF).toByte())
+        out.add((ttl shr 8 and 0xFF).toByte())
+        out.add((ttl and 0xFF).toByte())
+        out.add((rdata.size shr 8 and 0xFF).toByte())
+        out.add((rdata.size and 0xFF).toByte())
+        for (b in rdata) out.add(b)
+        return out.toByteArray()
+    }
+
     private fun buildDnsQuery(txnHi: Int, txnLo: Int, domain: String): ByteArray {
         val out = mutableListOf<Byte>()
         out.add(txnHi.toByte())

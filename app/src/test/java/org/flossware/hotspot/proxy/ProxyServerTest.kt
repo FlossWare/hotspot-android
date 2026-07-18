@@ -362,8 +362,157 @@ class ProxyServerTest {
         echoServer.close()
     }
 
+    // --- POST body relay ---
+
+    @Test
+    fun `HTTP proxy forwards POST request with body`() {
+        val echoServer = createPostEchoServer()
+        val echoPort = echoServer.localPort
+
+        proxy.start()
+        Thread.sleep(300)
+
+        val body = "key=value&foo=bar"
+        val client = Socket(InetAddress.getLoopbackAddress(), proxyPort)
+        client.soTimeout = 5000
+        val request = "POST http://127.0.0.1:$echoPort/submit HTTP/1.1\r\n" +
+            "Host: 127.0.0.1:$echoPort\r\n" +
+            "Content-Type: application/x-www-form-urlencoded\r\n" +
+            "Content-Length: ${body.length}\r\n" +
+            "\r\n" +
+            body
+        client.getOutputStream().write(request.toByteArray())
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+
+        // Read remaining headers
+        while (true) {
+            val line = reader.readLine() ?: break
+            if (line.isEmpty()) break
+        }
+        // Echo server returns the POST body
+        val responseBody = reader.readLine()
+        assertEquals("key=value&foo=bar", responseBody)
+
+        client.close()
+        echoServer.close()
+    }
+
+    // --- CONNECT error paths ---
+
+    @Test
+    fun `CONNECT returns 502 when upstream connection fails`() {
+        val closedPort = findFreePort() // port is freed immediately after findFreePort returns
+
+        proxy.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), proxyPort)
+        client.soTimeout = 5000
+        val connectRequest = "CONNECT 127.0.0.1:$closedPort HTTP/1.1\r\n" +
+            "Host: 127.0.0.1:$closedPort\r\n" +
+            "\r\n"
+        client.getOutputStream().write(connectRequest.toByteArray())
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 502 Bad Gateway, got: $statusLine", statusLine?.contains("502") == true)
+
+        client.close()
+    }
+
+    @Test
+    fun `CONNECT returns 502 when no socket factory for CONNECT`() {
+        val noNetPort = findFreePort()
+        val noNetProxy = ProxyServer(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = noNetPort,
+            socketFactoryProvider = { null },
+        )
+        noNetProxy.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), noNetPort)
+        client.soTimeout = 5000
+        val connectRequest = "CONNECT example.com:443 HTTP/1.1\r\n" +
+            "Host: example.com:443\r\n" +
+            "\r\n"
+        client.getOutputStream().write(connectRequest.toByteArray())
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 502, got: $statusLine", statusLine?.contains("502") == true)
+
+        client.close()
+        noNetProxy.stop()
+    }
+
+    // --- readLine additional coverage ---
+
+    @Test
+    fun `readLine with LF only (no CR)`() {
+        val input = ByteArrayInputStream("Hello\nWorld\n".toByteArray())
+        assertEquals("Hello", proxy.readLine(input))
+        assertEquals("World", proxy.readLine(input))
+    }
+
+    @Test
+    fun `readLine returns partial data at EOF without newline`() {
+        val input = ByteArrayInputStream("partial".toByteArray())
+        assertEquals("partial", proxy.readLine(input))
+        assertNull(proxy.readLine(input))
+    }
+
     private fun findFreePort(): Int {
         ServerSocket(0).use { return it.localPort }
+    }
+
+    private fun createPostEchoServer(): ServerSocket {
+        val server = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
+        Thread {
+            while (!server.isClosed) {
+                try {
+                    val client = server.accept()
+                    Thread {
+                        try {
+                            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+                            var contentLength = 0
+                            while (true) {
+                                val line = reader.readLine() ?: break
+                                if (line.isEmpty()) break
+                                if (line.lowercase().startsWith("content-length:")) {
+                                    contentLength = line.substringAfter(":").trim().toInt()
+                                }
+                            }
+                            val bodyChars = CharArray(contentLength)
+                            var read = 0
+                            while (read < contentLength) {
+                                val n = reader.read(bodyChars, read, contentLength - read)
+                                if (n == -1) break
+                                read += n
+                            }
+                            val body = String(bodyChars, 0, read)
+                            val response = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Length: ${body.length}\r\n" +
+                                "Connection: close\r\n" +
+                                "\r\n" + body
+                            client.getOutputStream().write(response.toByteArray())
+                            client.getOutputStream().flush()
+                            client.close()
+                        } catch (_: Exception) {
+                        }
+                    }.start()
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        return server
     }
 
     private fun createEchoHttpServer(): ServerSocket {
