@@ -373,6 +373,244 @@ class Socks5ServerTest {
     }
 
     @Test
+    fun `negotiate rejects zero methods count`() {
+        val input = ByteArrayInputStream(byteArrayOf(0x05, 0x00))
+        val output = ByteArrayOutputStream()
+        assertFalse(server.negotiate(input, output))
+        val response = output.toByteArray()
+        assertEquals(0xFF.toByte(), response[1])
+    }
+
+    @Test
+    fun `negotiate returns false on EOF during methods read`() {
+        // Version OK, says 3 methods but only provides 1 byte then EOF
+        val input = ByteArrayInputStream(byteArrayOf(0x05, 0x03, 0x00))
+        val output = ByteArrayOutputStream()
+        // The stream has only 1 method byte but claims 3, so readFully will hit EOF
+        assertFalse(server.negotiate(input, output))
+    }
+
+    @Test
+    fun `readAddress throws on unsupported address type`() {
+        // Address type 0x02 is not supported (only 0x01=IPv4, 0x03=domain, 0x04=IPv6)
+        val data = byteArrayOf(0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50)
+        try {
+            server.readAddress(ByteArrayInputStream(data))
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Unsupported address type"))
+        }
+    }
+
+    @Test
+    fun `readAddress throws on truncated IPv4 data`() {
+        // IPv4 type but only 2 bytes of address instead of 4
+        val data = byteArrayOf(0x01, 127.toByte(), 0)
+        try {
+            server.readAddress(ByteArrayInputStream(data))
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Unexpected end of stream"))
+        }
+    }
+
+    @Test
+    fun `readAddress throws on truncated port`() {
+        // Valid IPv4 address but missing port bytes
+        val data = byteArrayOf(0x01, 127.toByte(), 0, 0, 1)
+        try {
+            server.readAddress(ByteArrayInputStream(data))
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Unexpected end of stream reading port"))
+        }
+    }
+
+    @Test
+    fun `readAddress throws on invalid domain length zero`() {
+        // Domain type with length 0
+        val data = byteArrayOf(0x03, 0x00, 0x00, 0x50)
+        try {
+            server.readAddress(ByteArrayInputStream(data))
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Invalid domain length"))
+        }
+    }
+
+    @Test
+    fun `readAddress parses high port numbers correctly`() {
+        // IPv4 with port 65535 (0xFF, 0xFF)
+        val data = byteArrayOf(
+            0x01,
+            10.toByte(), 0, 0, 1,
+            0xFF.toByte(), 0xFF.toByte(),
+        )
+        val (host, port) = server.readAddress(ByteArrayInputStream(data))
+        assertEquals("10.0.0.1", host)
+        assertEquals(65535, port)
+    }
+
+    @Test
+    fun `readAddress parses port zero`() {
+        val data = byteArrayOf(
+            0x01,
+            10.toByte(), 0, 0, 1,
+            0x00, 0x00,
+        )
+        val (_, port) = server.readAddress(ByteArrayInputStream(data))
+        assertEquals(0, port)
+    }
+
+    @Test
+    fun `readAddress parses full IPv6 address`() {
+        // ::ffff:192.168.1.1 (IPv4-mapped IPv6)
+        val addr = byteArrayOf(
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0xFF.toByte(), 0xFF.toByte(),
+            192.toByte(), 168.toByte(), 1, 1,
+        )
+        val data = ByteArray(1 + 16 + 2)
+        data[0] = 0x04 // IPv6
+        System.arraycopy(addr, 0, data, 1, 16)
+        data[data.size - 2] = 0x00
+        data[data.size - 1] = 0x50
+        val (host, port) = server.readAddress(ByteArrayInputStream(data))
+        assertTrue("Expected IPv6 address, got: $host", host.isNotEmpty())
+        assertEquals(80, port)
+    }
+
+    @Test
+    fun `sendReply writes IPv6 response`() {
+        val output = ByteArrayOutputStream()
+        val addr = InetAddress.getByName("::1")
+        server.sendReply(output, Socks5Server.REPLY_SUCCESS, addr, 443)
+        val reply = output.toByteArray()
+        assertEquals(22, reply.size) // 4 header + 16 IPv6 + 2 port
+        assertEquals(0x05.toByte(), reply[0])
+        assertEquals(0x00.toByte(), reply[1])
+        assertEquals(0x04.toByte(), reply[3]) // IPv6 address type
+        assertEquals(0x01.toByte(), reply[20]) // port 443 >> 8
+        assertEquals(0xBB.toByte(), reply[21]) // port 443 & 0xFF
+    }
+
+    @Test
+    fun `sendReply writes CONNECTION_REFUSED`() {
+        val output = ByteArrayOutputStream()
+        server.sendReply(output, Socks5Server.REPLY_CONNECTION_REFUSED)
+        val reply = output.toByteArray()
+        assertEquals(Socks5Server.REPLY_CONNECTION_REFUSED, reply[1])
+    }
+
+    @Test
+    fun `sendReply writes HOST_UNREACHABLE`() {
+        val output = ByteArrayOutputStream()
+        server.sendReply(output, Socks5Server.REPLY_HOST_UNREACHABLE)
+        val reply = output.toByteArray()
+        assertEquals(Socks5Server.REPLY_HOST_UNREACHABLE, reply[1])
+    }
+
+    @Test
+    fun `sendReply writes ADDR_NOT_SUPPORTED`() {
+        val output = ByteArrayOutputStream()
+        server.sendReply(output, Socks5Server.REPLY_ADDR_NOT_SUPPORTED)
+        val reply = output.toByteArray()
+        assertEquals(Socks5Server.REPLY_ADDR_NOT_SUPPORTED, reply[1])
+    }
+
+    @Test
+    fun `sendReply port encoding is correct for port 1`() {
+        val output = ByteArrayOutputStream()
+        server.sendReply(output, Socks5Server.REPLY_SUCCESS, InetAddress.getByName("0.0.0.0"), 1)
+        val reply = output.toByteArray()
+        assertEquals(0x00.toByte(), reply[8]) // high byte
+        assertEquals(0x01.toByte(), reply[9]) // low byte
+    }
+
+    @Test
+    fun `relay counts bytes across multiple calls`() {
+        val data1 = "Hello".toByteArray()
+        val data2 = "World".toByteArray()
+        server.relay(ByteArrayInputStream(data1), ByteArrayOutputStream())
+        server.relay(ByteArrayInputStream(data2), ByteArrayOutputStream())
+        assertEquals((data1.size + data2.size).toLong(), server.bytesTransferred)
+    }
+
+    @Test
+    fun `CONNECT returns CONNECTION_REFUSED for closed port`() {
+        // Start server, find a free port, then close it immediately to ensure it's refused
+        val closedPort = findFreePort()
+        server.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), serverPort)
+        client.soTimeout = 5000
+
+        // Negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // CONNECT to the closed port
+        val connectRequest = byteArrayOf(
+            0x05, 0x01, 0x00, 0x01,
+            127.toByte(), 0, 0, 1,
+            ((closedPort shr 8) and 0xFF).toByte(),
+            (closedPort and 0xFF).toByte(),
+        )
+        client.getOutputStream().write(connectRequest)
+        client.getOutputStream().flush()
+
+        val reply = ByteArray(10)
+        readFully(client.getInputStream(), reply)
+        assertEquals("Expected CONNECTION_REFUSED", Socks5Server.REPLY_CONNECTION_REFUSED, reply[1])
+
+        client.close()
+    }
+
+    @Test
+    fun `handleClient closes connection on wrong version in request phase`() {
+        server.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), serverPort)
+        client.soTimeout = 5000
+
+        // Send valid negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // Send request with wrong version (0x04 instead of 0x05)
+        client.getOutputStream().write(byteArrayOf(0x04, 0x01, 0x00, 0x01, 127.toByte(), 0, 0, 1, 0x00, 0x50))
+        client.getOutputStream().flush()
+
+        // Server should close the connection
+        Thread.sleep(500)
+        val result = client.getInputStream().read()
+        assertEquals("Expected EOF (connection closed)", -1, result)
+
+        client.close()
+    }
+
+    @Test
+    fun `companion constants have correct values`() {
+        assertEquals(0x05.toByte(), Socks5Server.VERSION)
+        assertEquals(0x00.toByte(), Socks5Server.AUTH_NONE)
+        assertEquals(0xFF.toByte(), Socks5Server.AUTH_NO_ACCEPTABLE)
+        assertEquals(0x01.toByte(), Socks5Server.CMD_CONNECT)
+        assertEquals(0x01.toByte(), Socks5Server.ADDR_IPV4)
+        assertEquals(0x03.toByte(), Socks5Server.ADDR_DOMAIN)
+        assertEquals(0x04.toByte(), Socks5Server.ADDR_IPV6)
+        assertEquals(0x00.toByte(), Socks5Server.REPLY_SUCCESS)
+        assertEquals(0x01.toByte(), Socks5Server.REPLY_GENERAL_FAILURE)
+        assertEquals(0x04.toByte(), Socks5Server.REPLY_HOST_UNREACHABLE)
+        assertEquals(0x05.toByte(), Socks5Server.REPLY_CONNECTION_REFUSED)
+        assertEquals(0x07.toByte(), Socks5Server.REPLY_CMD_NOT_SUPPORTED)
+        assertEquals(0x08.toByte(), Socks5Server.REPLY_ADDR_NOT_SUPPORTED)
+    }
+
+    @Test
     fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`() {
         val failPort = findFreePort()
         val failResolver = Socks5Server(
