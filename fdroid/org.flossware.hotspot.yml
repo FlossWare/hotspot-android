@@ -8,14 +8,33 @@ SourceCode: https://github.com/FlossWare/hotspot-android
 IssueTracker: https://github.com/FlossWare/hotspot-android/issues
 
 AutoName: FlossWare Hotspot
+Description: |
+  Share your phone's mobile data with other devices using Wi-Fi Direct
+  or Bluetooth -- no carrier hotspot plan required.
+
+  The app creates a Wi-Fi Direct group and runs a SOCKS5 proxy. A companion
+  Client app on the connecting device routes all traffic through a VPN tunnel
+  to the host. Every app works transparently -- browsers, social media,
+  streaming, games.
+
+  Features:
+  * Wi-Fi Direct transport -- no carrier detection
+  * Bluetooth RFCOMM transport -- alternative when Wi-Fi is unavailable
+  * SOCKS5 proxy with full TCP support
+  * DNS relay with LRU caching
+  * HTTP response caching for unencrypted traffic
+  * QR code for easy client setup
+  * Material 3 design with dark mode
+
+  Requires two Android devices running Android 8.0 or later.
 
 RepoType: git
 Repo: https://github.com/FlossWare/hotspot-android.git
 
 Builds:
-  - versionName: '0.5'
-    versionCode: 5
-    commit: v0.5
+  - versionName: '0.10'
+    versionCode: 10
+    commit: v0.10
     subdir: app
     submodules: true
     gradle:
@@ -24,5 +43,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: '0.5'
-CurrentVersionCode: 5
+CurrentVersion: '0.10'
+CurrentVersionCode: 10
