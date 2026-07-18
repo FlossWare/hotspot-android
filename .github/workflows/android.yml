@@ -45,6 +45,17 @@ jobs:
         run: ./gradlew lint
         continue-on-error: true
 
+      - name: Run detekt
+        run: ./gradlew detekt
+        continue-on-error: true
+
+      - name: Run kover reports
+        run: ./gradlew koverHtmlReport koverXmlReport
+        continue-on-error: true
+
+      - name: Validate version format
+        run: ./gradlew validateVersion
+
       - name: Upload host debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -90,3 +101,44 @@ jobs:
           name: lint-results
           path: app/build/reports/lint-results*.html
           retention-days: 30
+
+      - name: Upload detekt results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-results
+          path: |
+            app/build/reports/detekt/
+            client/build/reports/detekt/
+          retention-days: 30
+
+      - name: Upload kover results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kover-results
+          path: |
+            app/build/reports/kover/
+            client/build/reports/kover/
+          retention-days: 30
+
+      - name: Quality summary
+        if: always()
+        run: |
+          echo "## Quality Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for module in app client; do
+            DETEKT_XML="$module/build/reports/detekt/detekt.xml"
+            if [ -f "$DETEKT_XML" ]; then
+              ISSUES=$(grep -c '<error ' "$DETEKT_XML" 2>/dev/null || echo "0")
+              echo "- **$module detekt:** $ISSUES issue(s)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **$module detekt:** no report" >> $GITHUB_STEP_SUMMARY
+            fi
+            KOVER_XML="$module/build/reports/kover/report.xml"
+            if [ -f "$KOVER_XML" ]; then
+              echo "- **$module kover:** report generated" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **$module kover:** no report" >> $GITHUB_STEP_SUMMARY
+            fi
+          done

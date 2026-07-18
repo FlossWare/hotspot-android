@@ -1,0 +1,76 @@
+# Detekt configuration for hotspot-android
+# Builds upon default config with Jetpack Compose relaxations
+
+complexity:
+  LongMethod:
+    threshold: 60
+  CyclomaticComplexMethod:
+    threshold: 15
+  TooManyFunctions:
+    active: true
+    excludes:
+      - "**/ui/**"
+      - "**/composable/**"
+  LargeClass:
+    threshold: 600
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    allowedExceptionNameRegex: "_|(ignore|expected).*"
+
+naming:
+  FunctionNaming:
+    active: true
+    excludes:
+      - "**/*Preview*"
+    functionPattern: "[a-zA-Z][a-zA-Z0-9]*"
+  TopLevelPropertyNaming:
+    constantPattern: "[A-Z][A-Za-z0-9_]*"
+
+style:
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - "-1"
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "8"
+      - "10"
+      - "16"
+      - "24"
+      - "32"
+      - "48"
+      - "64"
+      - "100"
+      - "128"
+      - "200"
+      - "255"
+      - "256"
+      - "512"
+      - "1000"
+      - "1024"
+    ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreEnums: true
+    ignoreHashCodeFunction: true
+    ignoreAnnotated:
+      - "Composable"
+      - "Preview"
+  ReturnCount:
+    max: 4
+  MaxLineLength:
+    maxLineLength: 120
+    excludeCommentStatements: true
+  UnusedPrivateMember:
+    active: true
+    allowedNames: "(_|ignored|expected|serialVersionUID|preview.*)"
+    ignoreAnnotated:
+      - "Preview"
+      - "Composable"
