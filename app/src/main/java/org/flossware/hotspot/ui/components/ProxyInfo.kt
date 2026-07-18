@@ -75,6 +75,17 @@ fun ProxyInfo(
                     supportingContent = { Text(formatBytes(state.bytesTransferred)) },
                 )
             }
+            if (state.uptimeSeconds > 0) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.uptime)) },
+                    supportingContent = {
+                        Text(
+                            formatUptime(state.uptimeSeconds) +
+                            if (state.isIdle) " (idle)" else "",
+                        )
+                    },
+                )
+            }
         }
     }
 }
@@ -105,4 +116,15 @@ private fun formatBytes(bytes: Long): String = when {
     bytes < 1024 * 1024 -> "%.1f KB".format(bytes / 1024.0)
     bytes < 1024 * 1024 * 1024 -> "%.1f MB".format(bytes / (1024.0 * 1024.0))
     else -> "%.2f GB".format(bytes / (1024.0 * 1024.0 * 1024.0))
+}
+
+internal fun formatUptime(totalSeconds: Long): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, seconds)
+    } else {
+        "%d:%02d".format(minutes, seconds)
+    }
 }

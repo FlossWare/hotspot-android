@@ -57,4 +57,12 @@
     <string name="dns_cache_hits">DNS Cache Hits</string>
     <string name="http_cache_hits">HTTP Cache Hits</string>
     <string name="data_saved">Data Saved</string>
+
+    <string name="uptime">Uptime</string>
+
+    <string name="compatibility_tips_title">Device Compatibility</string>
+    <string name="compatibility_tip_wifi">Some devices (Samsung, Xiaomi) require Wi-Fi to be enabled for Wi-Fi Direct to work, even though the hotspot creates its own network.</string>
+    <string name="compatibility_tip_location">On Android 12 and below, Location Services must be enabled. Some manufacturers require this even on newer Android versions.</string>
+    <string name="compatibility_tip_retry">If the hotspot fails to start on the first attempt, the app will automatically retry. You can also try toggling Wi-Fi off and on.</string>
+    <string name="compatibility_tip_battery">The app reduces power usage automatically when no data is being transferred. Battery usage increases with active proxying.</string>
 </resources>

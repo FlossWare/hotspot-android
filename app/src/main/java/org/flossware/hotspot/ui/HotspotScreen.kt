@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import org.flossware.hotspot.R
 import org.flossware.hotspot.ui.components.BluetoothInfo
 import org.flossware.hotspot.ui.components.CacheInfo
+import org.flossware.hotspot.ui.components.CompatibilityTips
 import org.flossware.hotspot.ui.components.DeviceList
 import org.flossware.hotspot.ui.components.HotspotToggle
 import org.flossware.hotspot.ui.components.ProxyInfo
@@ -160,6 +161,8 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                 )
 
                 CacheInfo(state = state)
+
+                CompatibilityTips()
 
                 SetupInstructions(state = state)
             }

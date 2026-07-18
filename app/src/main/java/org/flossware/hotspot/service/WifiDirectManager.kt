@@ -32,6 +32,8 @@ class WifiDirectManager {
     private var channel: WifiP2pManager.Channel? = null
     private var receiver: BroadcastReceiver? = null
     private var context: Context? = null
+    private var retryCount = 0
+    private var retryHandler: android.os.Handler? = null
 
     private val _state = MutableStateFlow<WifiDirectState>(WifiDirectState.Idle)
     val state: StateFlow<WifiDirectState> = _state.asStateFlow()
@@ -39,6 +41,7 @@ class WifiDirectManager {
     @SuppressLint("MissingPermission")
     fun start(ctx: Context) {
         context = ctx
+        retryHandler = android.os.Handler(Looper.getMainLooper())
         manager = ctx.getSystemService(Context.WIFI_P2P_SERVICE) as? WifiP2pManager
         if (manager == null) {
             _state.value = WifiDirectState.Error("Wi-Fi Direct not supported")
@@ -78,6 +81,8 @@ class WifiDirectManager {
     }
 
     fun stop() {
+        retryHandler?.removeCallbacksAndMessages(null)
+        retryHandler = null
         removeGroup()
         context?.let { ctx ->
             receiver?.let { ctx.unregisterReceiver(it) }
@@ -95,6 +100,12 @@ class WifiDirectManager {
 
     @SuppressLint("MissingPermission")
     private fun createGroup() {
+        retryCount = 0
+        createGroupWithRetry()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun createGroupWithRetry() {
         val ch = channel ?: return
         val mgr = manager ?: return
 
@@ -106,6 +117,7 @@ class WifiDirectManager {
             mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
                     Log.i(TAG, "Group created (custom config)")
+                    retryCount = 0
                     requestGroupInfo()
                 }
                 override fun onFailure(reason: Int) {
@@ -125,19 +137,25 @@ class WifiDirectManager {
         mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 Log.i(TAG, "Group created (legacy)")
+                retryCount = 0
                 requestGroupInfo()
             }
             override fun onFailure(reason: Int) {
-                val msg = when (reason) {
-                    WifiP2pManager.P2P_UNSUPPORTED -> "Wi-Fi Direct not supported"
-                    WifiP2pManager.BUSY -> "Wi-Fi Direct busy, try again"
-                    WifiP2pManager.ERROR -> "Internal error creating group"
-                    else -> "Failed to create group (reason: $reason)"
+                if (retryCount < MAX_RETRIES && reason != WifiP2pManager.P2P_UNSUPPORTED) {
+                    retryCount++
+                    val delayMs = RETRY_DELAYS_MS.getOrElse(retryCount - 1) { RETRY_DELAYS_MS.last() }
+                    Log.w(TAG, "Group creation failed (reason=$reason), retry $retryCount/$MAX_RETRIES in ${delayMs}ms")
+                    retryHandler?.postDelayed({
+                        createGroupWithRetry()
+                    }, delayMs)
+                    return
                 }
-                _state.value = WifiDirectState.Error(msg)
+                _state.value = WifiDirectState.Error(mapFailureReason(reason))
             }
         })
     }
+
+    private fun mapFailureReason(reason: Int): String = Companion.mapFailureReason(reason)
 
     @SuppressLint("MissingPermission")
     private fun removeGroup() {
@@ -171,5 +189,22 @@ class WifiDirectManager {
 
     companion object {
         private const val TAG = "WifiDirectManager"
+        internal const val MAX_RETRIES = 2
+        private val RETRY_DELAYS_MS = longArrayOf(1000L, 2000L)
+
+        internal fun mapFailureReason(reason: Int): String = when (reason) {
+            WifiP2pManager.ERROR ->
+                "Wi-Fi Direct failed. Some devices require Wi-Fi to be ON. " +
+                "Try enabling Wi-Fi and Location services, then retry."
+            WifiP2pManager.P2P_UNSUPPORTED ->
+                "Wi-Fi Direct is not supported on this device."
+            WifiP2pManager.BUSY ->
+                "Wi-Fi Direct is busy. Please wait a moment and try again."
+            WifiP2pManager.NO_SERVICE_REQUESTS ->
+                "Service discovery failed. Try toggling Wi-Fi off and on."
+            else ->
+                "Failed to create hotspot (error code: $reason). " +
+                "Try restarting Wi-Fi or rebooting your device."
+        }
     }
 }
