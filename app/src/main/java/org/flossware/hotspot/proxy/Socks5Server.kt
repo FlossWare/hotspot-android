@@ -285,6 +285,7 @@ class Socks5Server(
             cache.cacheResponse(
                 host, requestLine, upstream.getInputStream(), output,
                 upstreamOut, bufferedInput,
+                requestHeaders = headers.toString(),
             )
         } finally {
             upstream.closeSilently()

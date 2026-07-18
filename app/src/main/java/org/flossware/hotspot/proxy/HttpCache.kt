@@ -9,6 +9,34 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 
+/**
+ * Simple HTTP response cache for plaintext HTTP (port 80) traffic only.
+ *
+ * This cache operates within a SOCKS5 proxy and can only cache responses to
+ * plaintext HTTP requests. HTTPS traffic (port 443) passes through the proxy
+ * as an opaque tunnel via CONNECT, so it cannot be inspected or cached.
+ * HTTP/2 connections are always over TLS and are therefore also not cacheable.
+ *
+ * In modern web traffic, most connections use HTTPS, so this cache has limited
+ * applicability. It remains useful for:
+ * - Captive portal detection pages (e.g. connectivity checks)
+ * - Some IoT device traffic
+ * - Legacy HTTP-only sites
+ *
+ * Caching rules:
+ * - Only GET requests with HTTP 200 OK responses are cached
+ * - Responses with Cache-Control: no-store, no-cache, or private are not cached
+ * - Responses with Set-Cookie headers are not cached
+ * - Responses with Vary headers are not cached (request header variations not tracked)
+ * - Requests with Authorization headers bypass the cache entirely
+ * - Pragma: no-cache is respected in both requests and responses
+ * - max-age=0 responses are not cached (immediately stale)
+ * - Only text, application/javascript, application/json, and image content types are cached
+ * - Individual entries are limited to [maxEntryBytes] (default 5 MB)
+ * - Total cache size is limited to [maxTotalBytes] (default 50 MB)
+ * - Content-Encoding (gzip, br) responses are stored and served as-is since
+ *   the original response headers are preserved
+ */
 class HttpCache(
     private val maxTotalBytes: Long = DEFAULT_MAX_TOTAL_BYTES,
     private val maxEntryBytes: Int = DEFAULT_MAX_ENTRY_BYTES,
@@ -31,6 +59,15 @@ class HttpCache(
     ): Boolean {
         val method = requestLine.substringBefore(' ')
         if (method != "GET") return false
+
+        // Don't serve from cache for authenticated requests
+        if (containsHeader(requestHeaders, "authorization")) return false
+
+        // Respect Pragma: no-cache in the request
+        if (headerContains(requestHeaders, "pragma", "no-cache")) {
+            _misses.incrementAndGet()
+            return false
+        }
 
         val path = requestLine.substringAfter(' ').substringBefore(' ')
         val key = "GET $host$path"
@@ -65,6 +102,7 @@ class HttpCache(
         clientOutput: OutputStream,
         upstreamOutput: OutputStream,
         clientInput: InputStream,
+        requestHeaders: String = "",
     ) {
         val method = requestLine.substringBefore(' ')
         val path = requestLine.substringAfter(' ').substringBefore(' ')
@@ -84,6 +122,10 @@ class HttpCache(
         var cacheable = method == "GET"
         var contentType = ""
         var maxAge = DEFAULT_MAX_AGE
+        var hasExplicitMaxAge = false
+
+        // Don't cache responses to requests with Authorization headers
+        if (containsHeader(requestHeaders, "authorization")) cacheable = false
 
         while (true) {
             val line = readLine(responseStream) ?: break
@@ -100,14 +142,24 @@ class HttpCache(
                     contentType = lower.substringAfter(":").trim()
                 lower.startsWith("cache-control:") -> {
                     val cc = lower.substringAfter(":").trim()
-                    if ("no-store" in cc || "private" in cc) cacheable = false
-                    val maMatch = Regex("max-age=(\\d+)").find(cc)
-                    if (maMatch != null) maxAge = maMatch.groupValues[1].toInt()
+                    if ("no-store" in cc || "no-cache" in cc || "private" in cc) cacheable = false
+                    val maMatch = MAX_AGE_REGEX.find(cc)
+                    if (maMatch != null) {
+                        maxAge = maMatch.groupValues[1].toInt()
+                        hasExplicitMaxAge = true
+                    }
                 }
                 lower.startsWith("set-cookie:") -> cacheable = false
+                lower.startsWith("pragma:") -> {
+                    if ("no-cache" in lower.substringAfter(":")) cacheable = false
+                }
+                lower.startsWith("vary:") -> cacheable = false
             }
         }
         clientOutput.flush()
+
+        // Don't cache if max-age=0 (response is immediately stale)
+        if (hasExplicitMaxAge && maxAge <= 0) cacheable = false
 
         if (!cacheable || contentLength > maxEntryBytes || contentLength == 0) {
             relay(responseStream, clientOutput)
@@ -203,6 +255,7 @@ class HttpCache(
         const val DEFAULT_MAX_AGE = 3600
         const val MAX_LINE_LENGTH = 8192
         private val CRLF = "\r\n".toByteArray()
+        private val MAX_AGE_REGEX = Regex("""max-age\s*=\s*(\d+)""")
 
         internal fun readLine(input: InputStream, maxLength: Int = MAX_LINE_LENGTH): String? {
             val sb = StringBuilder()
@@ -233,6 +286,29 @@ class HttpCache(
                     output.flush()
                 }
             } catch (_: IOException) {
+            }
+        }
+
+        /**
+         * Check if a header with the given name is present (case-insensitive).
+         * Headers are expected in "Name: value\r\n" format.
+         */
+        internal fun containsHeader(headers: String, name: String): Boolean {
+            val prefix = "$name:"
+            return headers.lineSequence().any {
+                it.trim().startsWith(prefix, ignoreCase = true)
+            }
+        }
+
+        /**
+         * Check if a header with the given name contains a specific value (case-insensitive).
+         */
+        internal fun headerContains(headers: String, name: String, value: String): Boolean {
+            val prefix = "$name:"
+            return headers.lineSequence().any { line ->
+                val trimmed = line.trim()
+                trimmed.startsWith(prefix, ignoreCase = true) &&
+                    trimmed.substringAfter(":").contains(value, ignoreCase = true)
             }
         }
     }
