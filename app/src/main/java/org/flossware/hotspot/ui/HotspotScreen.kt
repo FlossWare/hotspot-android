@@ -26,11 +26,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,14 +39,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import org.flossware.hotspot.R
 import org.flossware.hotspot.ui.components.BluetoothInfo
-import org.flossware.hotspot.ui.components.CacheInfo
+import org.flossware.hotspot.ui.components.ConnectionInfo
 import org.flossware.hotspot.ui.components.DeviceList
 import org.flossware.hotspot.ui.components.HotspotToggle
-import org.flossware.hotspot.ui.components.ProxyInfo
-import org.flossware.hotspot.ui.components.QrCode
+import org.flossware.hotspot.ui.components.ProxyStats
 import org.flossware.hotspot.ui.components.SetupInstructions
 import org.flossware.hotspot.viewmodel.HotspotViewModel
 
@@ -55,7 +53,6 @@ import org.flossware.hotspot.viewmodel.HotspotViewModel
 fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
     val state by viewModel.hotspotState.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var showRationale by remember { mutableStateOf(false) }
 
@@ -143,18 +140,17 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
             )
 
             if (state.isRunning) {
-                ProxyInfo(state = state)
-
                 val qrBitmap = remember(state.networkName, state.passphrase) {
                     viewModel.generateQrBitmap(state)
                 }
-                QrCode(bitmap = qrBitmap)
+
+                ConnectionInfo(state = state, qrBitmap = qrBitmap)
 
                 DeviceList(devices = state.connectedDevices)
 
                 BluetoothInfo(state = state)
 
-                CacheInfo(state = state)
+                ProxyStats(state = state)
 
                 SetupInstructions(state = state)
             }
@@ -187,8 +183,8 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
         )
     }
 
-    state.error?.let { error ->
-        scope.launch {
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
             snackbarHostState.showSnackbar(error)
         }
     }

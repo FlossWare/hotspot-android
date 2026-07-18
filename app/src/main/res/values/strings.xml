@@ -54,4 +54,7 @@
     <string name="dns_cache_hits">DNS Cache Hits</string>
     <string name="http_cache_hits">HTTP Cache Hits</string>
     <string name="data_saved">Data Saved</string>
+
+    <string name="connection_info">Connection</string>
+    <string name="statistics">Statistics</string>
 </resources>
