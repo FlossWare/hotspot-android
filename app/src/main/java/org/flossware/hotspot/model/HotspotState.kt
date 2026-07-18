@@ -10,6 +10,7 @@ data class HotspotState(
     val connectedDevices: List<ConnectedDevice> = emptyList(),
     val error: String? = null,
     val bytesTransferred: Long = 0L,
+    val bluetoothOptIn: Boolean = false,
     val bluetoothEnabled: Boolean = false,
     val bluetoothDeviceName: String = "",
     val bluetoothConnectedDevices: List<ConnectedDevice> = emptyList(),

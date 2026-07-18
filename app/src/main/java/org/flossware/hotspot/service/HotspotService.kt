@@ -9,6 +9,7 @@ import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -49,6 +50,7 @@ class HotspotService : Service() {
         when (intent?.action) {
             ACTION_START -> startHotspot()
             ACTION_STOP -> stopHotspot()
+            ACTION_TOGGLE_BT -> toggleBluetooth(intent.getBooleanExtra(EXTRA_BT_ENABLED, false))
         }
         return START_NOT_STICKY
     }
@@ -126,6 +128,32 @@ class HotspotService : Service() {
             socketBinder = { sock -> mobileNetwork?.bindSocket(sock) },
         ).also { it.start() }
 
+        val btOptIn = getBluetoothOptIn(this)
+        _state.value = _state.value.copy(bluetoothOptIn = btOptIn)
+        if (btOptIn && hasBluetoothPermissions()) {
+            startBluetoothServer()
+        }
+    }
+
+    private fun updateState(wifiState: WifiDirectState.GroupCreated) {
+        val current = _state.value
+        _state.value = HotspotState(
+            isRunning = true,
+            networkName = wifiState.networkName,
+            passphrase = wifiState.passphrase,
+            socksHost = wifiState.groupOwnerAddress,
+            connectedDevices = wifiState.connectedDevices,
+            bytesTransferred = socksServer?.bytesTransferred ?: 0,
+            bluetoothOptIn = current.bluetoothOptIn,
+            bluetoothEnabled = current.bluetoothEnabled,
+            bluetoothDeviceName = current.bluetoothDeviceName,
+            bluetoothConnectedDevices = current.bluetoothConnectedDevices,
+        )
+        updateNotification(wifiState.connectedDevices.size)
+    }
+
+    private fun startBluetoothServer() {
+        if (bluetoothServer != null) return
         bluetoothServer = BluetoothServer().also { it.start(this) }
 
         scope.launch {
@@ -144,16 +172,34 @@ class HotspotService : Service() {
         }
     }
 
-    private fun updateState(wifiState: WifiDirectState.GroupCreated) {
-        _state.value = HotspotState(
-            isRunning = true,
-            networkName = wifiState.networkName,
-            passphrase = wifiState.passphrase,
-            socksHost = wifiState.groupOwnerAddress,
-            connectedDevices = wifiState.connectedDevices,
-            bytesTransferred = socksServer?.bytesTransferred ?: 0,
+    private fun stopBluetoothServer() {
+        bluetoothServer?.stop()
+        bluetoothServer = null
+        _state.value = _state.value.copy(
+            bluetoothEnabled = false,
+            bluetoothDeviceName = "",
+            bluetoothConnectedDevices = emptyList(),
         )
-        updateNotification(wifiState.connectedDevices.size)
+    }
+
+    private fun toggleBluetooth(enabled: Boolean) {
+        _state.value = _state.value.copy(bluetoothOptIn = enabled)
+        if (!_state.value.isRunning) return
+        if (enabled && hasBluetoothPermissions()) {
+            startBluetoothServer()
+        } else {
+            stopBluetoothServer()
+        }
+    }
+
+    private fun hasBluetoothPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(android.Manifest.permission.BLUETOOTH_ADVERTISE) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+        return true
     }
 
     private fun stopHotspot() {
@@ -257,10 +303,14 @@ class HotspotService : Service() {
     companion object {
         const val ACTION_START = "org.flossware.hotspot.START"
         const val ACTION_STOP = "org.flossware.hotspot.STOP"
+        const val ACTION_TOGGLE_BT = "org.flossware.hotspot.TOGGLE_BT"
+        const val EXTRA_BT_ENABLED = "bt_enabled"
         const val CHANNEL_ID = "hotspot_service"
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "HotspotService"
+        private const val PREFS_NAME = "hotspot_prefs"
+        private const val KEY_BT_OPT_IN = "bluetooth_opt_in"
 
         private val _state = MutableStateFlow(HotspotState())
         val state: StateFlow<HotspotState> = _state.asStateFlow()
@@ -277,6 +327,28 @@ class HotspotService : Service() {
                 action = ACTION_STOP
             }
             context.startService(intent)
+        }
+
+        fun setBluetoothOptIn(context: Context, enabled: Boolean) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_BT_OPT_IN, enabled)
+                .apply()
+
+            if (_state.value.isRunning) {
+                val intent = Intent(context, HotspotService::class.java).apply {
+                    action = ACTION_TOGGLE_BT
+                    putExtra(EXTRA_BT_ENABLED, enabled)
+                }
+                context.startService(intent)
+            } else {
+                _state.value = _state.value.copy(bluetoothOptIn = enabled)
+            }
+        }
+
+        fun getBluetoothOptIn(context: Context): Boolean {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_BT_OPT_IN, false)
         }
     }
 }

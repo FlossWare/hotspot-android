@@ -152,7 +152,12 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
 
                 DeviceList(devices = state.connectedDevices)
 
-                BluetoothInfo(state = state)
+                BluetoothInfo(
+                    state = state,
+                    onBluetoothOptInChanged = { enabled ->
+                        viewModel.setBluetoothOptIn(enabled)
+                    },
+                )
 
                 CacheInfo(state = state)
 

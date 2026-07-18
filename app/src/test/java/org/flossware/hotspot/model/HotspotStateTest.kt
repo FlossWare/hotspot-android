@@ -83,6 +83,7 @@ class HotspotStateTest {
     @Test
     fun `default bluetooth fields are correct`() {
         val state = HotspotState()
+        assertFalse(state.bluetoothOptIn)
         assertFalse(state.bluetoothEnabled)
         assertEquals("", state.bluetoothDeviceName)
         assertTrue(state.bluetoothConnectedDevices.isEmpty())
@@ -100,10 +101,12 @@ class HotspotStateTest {
     fun `bluetooth fields can be set`() {
         val btDevices = listOf(ConnectedDevice("11:22:33:44:55:66", "Pixel"))
         val state = HotspotState(
+            bluetoothOptIn = true,
             bluetoothEnabled = true,
             bluetoothDeviceName = "Galaxy S24",
             bluetoothConnectedDevices = btDevices,
         )
+        assertTrue(state.bluetoothOptIn)
         assertTrue(state.bluetoothEnabled)
         assertEquals("Galaxy S24", state.bluetoothDeviceName)
         assertEquals(btDevices, state.bluetoothConnectedDevices)
@@ -124,6 +127,7 @@ class HotspotStateTest {
     @Test
     fun `copy preserves bluetooth and cache fields`() {
         val state = HotspotState(
+            bluetoothOptIn = true,
             bluetoothEnabled = true,
             bluetoothDeviceName = "Test BT",
             dnsCacheHits = 50,
@@ -131,6 +135,7 @@ class HotspotStateTest {
             dataSaved = 2048,
         )
         val copied = state.copy(isRunning = true)
+        assertTrue(copied.bluetoothOptIn)
         assertTrue(copied.bluetoothEnabled)
         assertEquals("Test BT", copied.bluetoothDeviceName)
         assertEquals(50L, copied.dnsCacheHits)
@@ -155,11 +160,27 @@ class HotspotStateTest {
 
     @Test
     fun `equality includes bluetooth and cache fields`() {
-        val a = HotspotState(bluetoothEnabled = true, dnsCacheHits = 10)
-        val b = HotspotState(bluetoothEnabled = true, dnsCacheHits = 10)
+        val a = HotspotState(bluetoothOptIn = true, bluetoothEnabled = true, dnsCacheHits = 10)
+        val b = HotspotState(bluetoothOptIn = true, bluetoothEnabled = true, dnsCacheHits = 10)
         assertEquals(a, b)
 
-        val c = HotspotState(bluetoothEnabled = false, dnsCacheHits = 10)
+        val c = HotspotState(bluetoothOptIn = false, bluetoothEnabled = true, dnsCacheHits = 10)
         assertFalse(a == c)
+
+        val d = HotspotState(bluetoothOptIn = true, bluetoothEnabled = false, dnsCacheHits = 10)
+        assertFalse(a == d)
+    }
+
+    @Test
+    fun `bluetoothOptIn defaults to false`() {
+        val state = HotspotState()
+        assertFalse(state.bluetoothOptIn)
+    }
+
+    @Test
+    fun `bluetoothOptIn can be toggled independently of bluetoothEnabled`() {
+        val state = HotspotState(bluetoothOptIn = true, bluetoothEnabled = false)
+        assertTrue(state.bluetoothOptIn)
+        assertFalse(state.bluetoothEnabled)
     }
 }

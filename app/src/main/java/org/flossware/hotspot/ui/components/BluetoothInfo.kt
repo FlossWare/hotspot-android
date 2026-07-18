@@ -9,6 +9,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,64 +21,92 @@ import org.flossware.hotspot.model.HotspotState
 @Composable
 fun BluetoothInfo(
     state: HotspotState,
+    onBluetoothOptInChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             ListItem(
-                headlineContent = { Text(stringResource(R.string.bluetooth_status)) },
+                headlineContent = {
+                    Text(stringResource(R.string.bluetooth_transport))
+                },
                 supportingContent = {
-                    Text(
-                        if (state.bluetoothEnabled) stringResource(R.string.bluetooth_enabled)
-                        else stringResource(R.string.bluetooth_disabled),
-                    )
+                    Text(stringResource(R.string.bluetooth_experimental_label))
                 },
                 leadingContent = {
                     Icon(
                         Icons.Default.Bluetooth,
                         contentDescription = null,
-                        tint = if (state.bluetoothEnabled) MaterialTheme.colorScheme.primary
+                        tint = if (state.bluetoothOptIn) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = state.bluetoothOptIn,
+                        onCheckedChange = onBluetoothOptInChanged,
                     )
                 },
             )
 
-            if (state.bluetoothEnabled && state.bluetoothDeviceName.isNotEmpty()) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.bluetooth_device_name)) },
-                    supportingContent = {
-                        Text(
-                            state.bluetoothDeviceName,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                )
-            }
-
-            if (state.bluetoothConnectedDevices.isNotEmpty()) {
-                ListItem(
-                    headlineContent = {
-                        Text("${stringResource(R.string.bluetooth_connected_devices)} (${state.bluetoothConnectedDevices.size})")
-                    },
-                )
-                for (device in state.bluetoothConnectedDevices) {
-                    ListItem(
-                        headlineContent = { Text(device.deviceName) },
-                        supportingContent = { Text(device.macAddress) },
-                        leadingContent = {
-                            Icon(Icons.Default.Bluetooth, contentDescription = null)
-                        },
-                    )
-                }
-            } else if (state.bluetoothEnabled) {
+            if (state.bluetoothOptIn) {
                 ListItem(
                     headlineContent = {
                         Text(
-                            stringResource(R.string.no_bluetooth_devices),
+                            stringResource(R.string.bluetooth_experimental_description),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
                 )
+
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.bluetooth_status)) },
+                    supportingContent = {
+                        Text(
+                            if (state.bluetoothEnabled) stringResource(R.string.bluetooth_enabled)
+                            else stringResource(R.string.bluetooth_disabled),
+                        )
+                    },
+                )
+
+                if (state.bluetoothEnabled && state.bluetoothDeviceName.isNotEmpty()) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.bluetooth_device_name)) },
+                        supportingContent = {
+                            Text(
+                                state.bluetoothDeviceName,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        },
+                    )
+                }
+
+                if (state.bluetoothConnectedDevices.isNotEmpty()) {
+                    ListItem(
+                        headlineContent = {
+                            Text("${stringResource(R.string.bluetooth_connected_devices)} (${state.bluetoothConnectedDevices.size})")
+                        },
+                    )
+                    for (device in state.bluetoothConnectedDevices) {
+                        ListItem(
+                            headlineContent = { Text(device.deviceName) },
+                            supportingContent = { Text(device.macAddress) },
+                            leadingContent = {
+                                Icon(Icons.Default.Bluetooth, contentDescription = null)
+                            },
+                        )
+                    }
+                } else if (state.bluetoothEnabled) {
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.no_bluetooth_devices),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                    )
+                }
             }
         }
     }
