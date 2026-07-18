@@ -10,7 +10,7 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -28,7 +28,7 @@ class Socks5Server(
 ) {
     @Volatile private var serverSocket: ServerSocket? = null
     private val executor = ThreadPoolExecutor(
-        4, 32, 60L, TimeUnit.SECONDS, SynchronousQueue(), ThreadPoolExecutor.CallerRunsPolicy(),
+        4, 32, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(64), ThreadPoolExecutor.CallerRunsPolicy(),
     )
     private val running = AtomicBoolean(false)
     private val _bytesTransferred = AtomicLong(0)
@@ -200,10 +200,18 @@ class Socks5Server(
             sendReply(output, REPLY_SUCCESS, localAddr, localPort)
 
             val clientToServer = Thread {
-                relay(input, upstream.getOutputStream())
+                try {
+                    relay(input, upstream.getOutputStream())
+                } finally {
+                    upstream.closeSilently()
+                }
             }
             val serverToClient = Thread {
-                relay(upstream.getInputStream(), client.getOutputStream())
+                try {
+                    relay(upstream.getInputStream(), client.getOutputStream())
+                } finally {
+                    client.closeSilently()
+                }
             }
             clientToServer.start()
             serverToClient.start()

@@ -6,7 +6,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,7 +27,7 @@ class DnsRelay(
 
     private val cache = ConcurrentHashMap<ByteArrayKey, CachedDnsResponse>()
     private val queryExecutor = ThreadPoolExecutor(
-        2, 8, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        4, 8, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(32),
         ThreadPoolExecutor.CallerRunsPolicy(),
     )
     private val _cacheHits = AtomicLong(0)

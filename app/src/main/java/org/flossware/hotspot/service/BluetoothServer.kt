@@ -17,7 +17,7 @@ import java.net.InetAddress
 import java.net.Socket
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,7 +41,7 @@ class BluetoothServer {
     private var serverSocket: BluetoothServerSocket? = null
     private val activeConnections = CopyOnWriteArrayList<BluetoothSocket>()
     private val executor = ThreadPoolExecutor(
-        2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        2, 16, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(16),
         ThreadPoolExecutor.CallerRunsPolicy(),
     )
 
@@ -121,10 +121,18 @@ class BluetoothServer {
             tcpSocket.soTimeout = 60_000
 
             val btToTcp = Thread {
-                relay(btSocket.inputStream, tcpSocket.getOutputStream())
+                try {
+                    relay(btSocket.inputStream, tcpSocket.getOutputStream())
+                } finally {
+                    tcpSocket.closeSilently()
+                }
             }
             val tcpToBt = Thread {
-                relay(tcpSocket.getInputStream(), btSocket.outputStream)
+                try {
+                    relay(tcpSocket.getInputStream(), btSocket.outputStream)
+                } finally {
+                    btSocket.closeSilently()
+                }
             }
             btToTcp.start()
             tcpToBt.start()

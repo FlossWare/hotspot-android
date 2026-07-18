@@ -15,7 +15,7 @@ import java.net.Socket
 import java.net.SocketException
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,7 +36,7 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
     private var localServer: ServerSocket? = null
     private val activeConnections = CopyOnWriteArrayList<Socket>()
     private val executor = ThreadPoolExecutor(
-        2, 16, 60L, TimeUnit.SECONDS, SynchronousQueue(),
+        2, 16, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(16),
         ThreadPoolExecutor.CallerRunsPolicy(),
     )
 
@@ -96,10 +96,18 @@ class BluetoothTunnel(private val remoteDevice: BluetoothDevice) {
             btSocket.connect()
 
             val localToBt = Thread {
-                relay(localSocket.getInputStream(), btSocket.outputStream)
+                try {
+                    relay(localSocket.getInputStream(), btSocket.outputStream)
+                } finally {
+                    btSocket.closeSilently()
+                }
             }
             val btToLocal = Thread {
-                relay(btSocket.inputStream, localSocket.getOutputStream())
+                try {
+                    relay(btSocket.inputStream, localSocket.getOutputStream())
+                } finally {
+                    localSocket.closeSilently()
+                }
             }
             localToBt.start()
             btToLocal.start()
