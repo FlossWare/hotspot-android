@@ -1,18 +1,10 @@
 package org.flossware.hotspot.service
 
-import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.LinkProperties
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.os.IBinder
+import android.app.Service
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import javax.net.SocketFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,26 +14,36 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.flossware.hotspot.MainActivity
-import org.flossware.hotspot.R
 import org.flossware.hotspot.model.HotspotState
-import org.flossware.hotspot.proxy.DnsRelay
-import org.flossware.hotspot.proxy.HttpCache
-import org.flossware.hotspot.proxy.Socks5Server
 import java.net.InetAddress
 
+/**
+ * Foreground service that orchestrates the hotspot subsystems.
+ *
+ * All domain work is delegated to focused managers:
+ * - [NetworkManager] — mobile-data callbacks and upstream DNS
+ * - [ProxyManager]   — SOCKS5 servers, DNS relay, HTTP cache
+ * - [BluetoothManager] — Bluetooth RFCOMM tunnel lifecycle
+ * - [NotificationHelper] — foreground notification building
+ * - [WifiDirectManager] — Wi-Fi Direct group creation (pre-existing)
+ *
+ * This class is responsible only for lifecycle ordering, state
+ * composition, and the Android [Service] contract.
+ */
 class HotspotService : Service() {
 
     private var scope = CoroutineScope(Dispatchers.Main + Job())
     private val wifiDirectManager = WifiDirectManager()
-    private var socksServer: Socks5Server? = null
-    private var localSocksServer: Socks5Server? = null
-    private var dnsRelay: DnsRelay? = null
-    private var bluetoothServer: BluetoothServer? = null
-    private val httpCache = HttpCache()
-    @Volatile private var mobileNetwork: Network? = null
-    @Volatile private var upstreamDns: InetAddress? = null
-    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private lateinit var networkManager: NetworkManager
+    private val proxyManager = ProxyManager()
+    private val bluetoothManager = BluetoothManager()
+    private lateinit var notificationHelper: NotificationHelper
+
+    override fun onCreate() {
+        super.onCreate()
+        networkManager = NetworkManager(this)
+        notificationHelper = NotificationHelper(this)
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -57,15 +59,18 @@ class HotspotService : Service() {
         Log.i(TAG, "Starting hotspot service")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
-        unregisterMobileNetwork()
-        startForeground(NOTIFICATION_ID, buildNotification(0))
-        registerMobileNetwork()
+        networkManager.onNetworkLost = {
+            _state.value = _state.value.copy(error = "Mobile data connection lost")
+        }
+        networkManager.unregister()
+        startForeground(NOTIFICATION_ID, notificationHelper.build(0))
+        networkManager.register()
 
         scope.launch {
             wifiDirectManager.state.collect { wifiState ->
                 when (wifiState) {
                     is WifiDirectState.GroupCreated -> {
-                        startSocksAndDns(wifiState)
+                        startServices(wifiState)
                         updateState(wifiState)
                     }
                     is WifiDirectState.Error -> {
@@ -82,15 +87,14 @@ class HotspotService : Service() {
         scope.launch {
             while (true) {
                 delay(2000)
-                val socks = socksServer ?: continue
+                if (!proxyManager.isRunning) continue
                 val current = _state.value
                 if (current.isRunning) {
-                    val dns = dnsRelay
                     _state.value = current.copy(
-                        bytesTransferred = socks.bytesTransferred,
-                        dnsCacheHits = dns?.cacheHits ?: 0L,
-                        httpCacheHits = httpCache.hits,
-                        dataSaved = httpCache.dataSaved,
+                        bytesTransferred = proxyManager.bytesTransferred,
+                        dnsCacheHits = proxyManager.dnsCacheHits,
+                        httpCacheHits = proxyManager.httpCacheHits,
+                        dataSaved = proxyManager.dataSaved,
                     )
                     wifiDirectManager.refreshPeers()
                 }
@@ -100,46 +104,31 @@ class HotspotService : Service() {
         wifiDirectManager.start(this)
     }
 
-    private fun startSocksAndDns(wifiState: WifiDirectState.GroupCreated) {
-        if (socksServer != null) return
+    private fun startServices(wifiState: WifiDirectState.GroupCreated) {
+        if (proxyManager.isRunning) return
 
         val bindAddr = InetAddress.getByName(wifiState.groupOwnerAddress)
-        val socketProvider = { mobileNetwork?.socketFactory ?: SocketFactory.getDefault() }
 
-        socksServer = Socks5Server(
+        proxyManager.start(
             bindAddress = bindAddr,
-            port = HotspotState.DEFAULT_SOCKS_PORT,
-            socketFactoryProvider = socketProvider,
-            httpCache = httpCache,
-        ).also { it.start() }
+            socketFactoryProvider = { networkManager.socketFactory },
+            upstreamDnsProvider = { networkManager.upstreamDns ?: InetAddress.getByName("8.8.8.8") },
+            socketBinder = { sock -> networkManager.bindSocket(sock) },
+        )
 
-        localSocksServer = Socks5Server(
-            bindAddress = InetAddress.getLoopbackAddress(),
-            port = HotspotState.DEFAULT_SOCKS_PORT,
-            socketFactoryProvider = socketProvider,
-            httpCache = httpCache,
-        ).also { it.start() }
-
-        dnsRelay = DnsRelay(
-            bindAddress = bindAddr,
-            listenPort = HotspotState.DEFAULT_DNS_PORT,
-            upstreamDnsProvider = { upstreamDns ?: InetAddress.getByName("8.8.8.8") },
-            socketBinder = { sock -> mobileNetwork?.bindSocket(sock) },
-        ).also { it.start() }
-
-        bluetoothServer = BluetoothServer().also { it.start(this) }
+        bluetoothManager.start(this, scope)
 
         scope.launch {
-            bluetoothServer?.state?.collect { btState ->
+            bluetoothManager.status.collect { status ->
                 _state.value = _state.value.copy(
-                    bluetoothEnabled = btState is BluetoothState.Listening,
-                    bluetoothDeviceName = (btState as? BluetoothState.Listening)?.deviceName ?: "",
+                    bluetoothEnabled = status.enabled,
+                    bluetoothDeviceName = status.deviceName,
                 )
             }
         }
 
         scope.launch {
-            bluetoothServer?.connectedDevices?.collect { devices ->
+            bluetoothManager.connectedDevices.collect { devices ->
                 _state.value = _state.value.copy(bluetoothConnectedDevices = devices)
             }
         }
@@ -152,105 +141,21 @@ class HotspotService : Service() {
             passphrase = wifiState.passphrase,
             socksHost = wifiState.groupOwnerAddress,
             connectedDevices = wifiState.connectedDevices,
-            bytesTransferred = socksServer?.bytesTransferred ?: 0,
+            bytesTransferred = proxyManager.bytesTransferred,
         )
-        updateNotification(wifiState.connectedDevices.size)
+        notificationHelper.update(wifiState.connectedDevices.size)
     }
 
     private fun stopHotspot() {
         Log.i(TAG, "Stopping hotspot service")
-        bluetoothServer?.stop()
-        bluetoothServer = null
-        dnsRelay?.stop()
-        dnsRelay = null
-        localSocksServer?.stop()
-        localSocksServer = null
-        socksServer?.stop()
-        socksServer = null
-        httpCache.clear()
+        bluetoothManager.stop()
+        proxyManager.stop()
         wifiDirectManager.stop()
-        unregisterMobileNetwork()
+        networkManager.unregister()
         _state.value = HotspotState()
         scope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-    }
-
-    private fun registerMobileNetwork() {
-        val cm = getSystemService(ConnectivityManager::class.java)
-        val request = NetworkRequest.Builder()
-            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-
-        networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                mobileNetwork = network
-                Log.i(TAG, "Mobile network available")
-            }
-
-            override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
-                if (network == mobileNetwork) {
-                    upstreamDns = lp.dnsServers.firstOrNull()
-                }
-            }
-
-            override fun onLost(network: Network) {
-                if (network == mobileNetwork) {
-                    mobileNetwork = null
-                    Log.w(TAG, "Mobile data connection lost")
-                    _state.value = _state.value.copy(
-                        error = "Mobile data connection lost",
-                    )
-                }
-            }
-        }.also {
-            cm.registerNetworkCallback(request, it)
-        }
-    }
-
-    private fun unregisterMobileNetwork() {
-        networkCallback?.let { cb ->
-            try {
-                getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(cb)
-            } catch (e: Exception) {
-                Log.d(TAG, "Unregister network callback: ${e.message}")
-            }
-        }
-        networkCallback = null
-    }
-
-    private fun buildNotification(deviceCount: Int): android.app.Notification {
-        val stopIntent = Intent(this, HotspotService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPending = PendingIntent.getService(
-            this, 0, stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        val openIntent = Intent(this, MainActivity::class.java)
-        val openPending = PendingIntent.getActivity(
-            this, 0, openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.notification_text, deviceCount))
-            .setSmallIcon(android.R.drawable.ic_menu_share)
-            .setContentIntent(openPending)
-            .addAction(
-                android.R.drawable.ic_media_pause,
-                getString(R.string.notification_action_stop),
-                stopPending,
-            )
-            .setOngoing(true)
-            .build()
-    }
-
-    private fun updateNotification(deviceCount: Int) {
-        val nm = getSystemService(android.app.NotificationManager::class.java)
-        nm.notify(NOTIFICATION_ID, buildNotification(deviceCount))
     }
 
     override fun onDestroy() {
@@ -259,12 +164,11 @@ class HotspotService : Service() {
     }
 
     companion object {
+        private const val TAG = "HotspotService"
         const val ACTION_START = "org.flossware.hotspot.START"
         const val ACTION_STOP = "org.flossware.hotspot.STOP"
         const val CHANNEL_ID = "hotspot_service"
         const val NOTIFICATION_ID = 1
-
-        private const val TAG = "HotspotService"
 
         private val _state = MutableStateFlow(HotspotState())
         val state: StateFlow<HotspotState> = _state.asStateFlow()
