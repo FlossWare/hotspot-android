@@ -68,7 +68,9 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth false when wifi direct available`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `canFallbackToBluetooth when wifi direct unavailable and bluetooth available`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `companion constants are correct`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `configuredPassphrase can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves bluetooth and cache fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves configuredPassphrase`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves feature availability fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves fields correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves power management fields`()</ID>
@@ -84,6 +86,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress formats correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress with custom host and port`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes bluetooth and cache fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes configuredPassphrase`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes feature availability fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes usbConnected`()</ID>
@@ -277,13 +280,19 @@
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `stop sets running to false`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `unsupported command returns CMD_NOT_SUPPORTED`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test(expected = java.io.IOException::class) fun `readAddress throws on empty stream`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `DEFAULT_PASSPHRASE is defined and meets minimum length`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MAX_RETRIES is reasonable`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MIN_PASSPHRASE_LENGTH is 8 for WPA2`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Error equality`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Error holds error message`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated equality`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated holds connected devices`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState GroupCreated holds network info`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `WifiDirectState Idle is a singleton object`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `generateRandomPassphrase contains only alphanumeric characters`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `generateRandomPassphrase meets minimum passphrase length`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `generateRandomPassphrase produces different values`()</ID>
+    <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `generateRandomPassphrase returns a string of correct length`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `initial state is Idle`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason includes error code for all unknown values`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `mapFailureReason returns different messages for each standard reason code`()</ID>
