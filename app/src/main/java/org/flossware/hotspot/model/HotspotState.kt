@@ -14,6 +14,7 @@ data class HotspotState(
     val bluetoothEnabled: Boolean = false,
     val bluetoothDeviceName: String = "",
     val bluetoothConnectedDevices: List<ConnectedDevice> = emptyList(),
+    val usbConnected: Boolean = false,
     val dnsCacheHits: Long = 0L,
     val httpCacheHits: Long = 0L,
     val dataSaved: Long = 0L,

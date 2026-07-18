@@ -1,6 +1,6 @@
 package org.flossware.hotspot.client.model
 
-enum class Transport { WIFI_DIRECT, BLUETOOTH }
+enum class Transport { WIFI_DIRECT, BLUETOOTH, USB }
 
 data class VpnState(
     val isConnected: Boolean = false,

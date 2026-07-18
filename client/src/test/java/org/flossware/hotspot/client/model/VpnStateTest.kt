@@ -80,17 +80,19 @@ class VpnStateTest {
     }
 
     @Test
-    fun `Transport enum has exactly two values`() {
+    fun `Transport enum has exactly three values`() {
         val values = Transport.entries
-        assertEquals(2, values.size)
+        assertEquals(3, values.size)
         assertEquals(Transport.WIFI_DIRECT, values[0])
         assertEquals(Transport.BLUETOOTH, values[1])
+        assertEquals(Transport.USB, values[2])
     }
 
     @Test
     fun `Transport valueOf works`() {
         assertEquals(Transport.WIFI_DIRECT, Transport.valueOf("WIFI_DIRECT"))
         assertEquals(Transport.BLUETOOTH, Transport.valueOf("BLUETOOTH"))
+        assertEquals(Transport.USB, Transport.valueOf("USB"))
     }
 
     @Test
@@ -144,5 +146,40 @@ class VpnStateTest {
         )
         assertEquals("127.0.0.1:12345", state.socksAddress)
         assertEquals(Transport.BLUETOOTH, state.transport)
+    }
+
+    @Test
+    fun `transport can be set to USB`() {
+        val state = VpnState(transport = Transport.USB)
+        assertEquals(Transport.USB, state.transport)
+    }
+
+    @Test
+    fun `copy preserves USB transport`() {
+        val state = VpnState(isConnected = true, transport = Transport.USB)
+        val copied = state.copy(error = "test")
+        assertEquals(Transport.USB, copied.transport)
+        assertTrue(copied.isConnected)
+    }
+
+    @Test
+    fun `usb state with loopback address`() {
+        val state = VpnState(
+            isConnected = true,
+            socksHost = "127.0.0.1",
+            socksPort = 54321,
+            transport = Transport.USB,
+        )
+        assertEquals("127.0.0.1:54321", state.socksAddress)
+        assertEquals(Transport.USB, state.transport)
+    }
+
+    @Test
+    fun `equality distinguishes USB from other transports`() {
+        val wifi = VpnState(isConnected = true, transport = Transport.WIFI_DIRECT)
+        val bt = VpnState(isConnected = true, transport = Transport.BLUETOOTH)
+        val usb = VpnState(isConnected = true, transport = Transport.USB)
+        assertFalse(wifi == usb)
+        assertFalse(bt == usb)
     }
 }

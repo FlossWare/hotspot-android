@@ -48,6 +48,7 @@ import org.flossware.hotspot.ui.components.DeviceList
 import org.flossware.hotspot.ui.components.HotspotToggle
 import org.flossware.hotspot.ui.components.ProxyStats
 import org.flossware.hotspot.ui.components.SetupInstructions
+import org.flossware.hotspot.ui.components.UsbInfo
 import org.flossware.hotspot.viewmodel.HotspotViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -156,6 +157,8 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                         viewModel.setBluetoothOptIn(enabled)
                     },
                 )
+
+                UsbInfo(state = state)
 
                 ProxyStats(state = state)
 

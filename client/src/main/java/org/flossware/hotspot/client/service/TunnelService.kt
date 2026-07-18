@@ -6,7 +6,10 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import android.net.VpnService
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -32,6 +35,7 @@ class TunnelService : VpnService() {
     private var tunInterface: ParcelFileDescriptor? = null
     private var socksTunnel: SocksTunnel? = null
     private var bluetoothTunnel: BluetoothTunnel? = null
+    private var usbTunnel: UsbTunnel? = null
     private var scope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -44,6 +48,10 @@ class TunnelService : VpnService() {
             ACTION_CONNECT_BT -> {
                 val address = intent.getStringExtra(EXTRA_BT_DEVICE_ADDRESS) ?: return START_NOT_STICKY
                 connectBluetooth(address)
+            }
+            ACTION_CONNECT_USB -> {
+                val deviceName = intent.getStringExtra(EXTRA_USB_DEVICE_NAME) ?: return START_NOT_STICKY
+                connectUsb(deviceName)
             }
             ACTION_DISCONNECT -> disconnect()
         }
@@ -134,6 +142,47 @@ class TunnelService : VpnService() {
         }
     }
 
+    private fun connectUsb(deviceName: String) {
+        if (tunInterface != null) return
+
+        startForeground(NOTIFICATION_ID, buildNotification())
+
+        val usbManager = getSystemService(Context.USB_SERVICE) as? UsbManager
+        if (usbManager == null) {
+            _state.value = _state.value.copy(error = "USB not available")
+            stopSelf()
+            return
+        }
+
+        val device = usbManager.deviceList.values.firstOrNull { it.deviceName == deviceName }
+        if (device == null) {
+            _state.value = _state.value.copy(error = "USB device not found")
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return
+        }
+
+        val tunnel = UsbTunnel(usbManager, device)
+        usbTunnel = tunnel
+        tunnel.start()
+
+        scope.launch {
+            val result = tunnel.state.first {
+                it is UsbTunnelState.Connected || it is UsbTunnelState.Error
+            }
+            when (result) {
+                is UsbTunnelState.Connected ->
+                    connect("127.0.0.1", result.localPort, Transport.USB)
+                is UsbTunnelState.Error -> {
+                    _state.value = _state.value.copy(error = result.message)
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                else -> {}
+            }
+        }
+    }
+
     private fun disconnect() {
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
@@ -141,6 +190,8 @@ class TunnelService : VpnService() {
         socksTunnel = null
         bluetoothTunnel?.stop()
         bluetoothTunnel = null
+        usbTunnel?.stop()
+        usbTunnel = null
         tunInterface?.close()
         tunInterface = null
         _state.value = VpnState()
@@ -185,10 +236,12 @@ class TunnelService : VpnService() {
     companion object {
         const val ACTION_CONNECT = "org.flossware.hotspot.client.CONNECT"
         const val ACTION_CONNECT_BT = "org.flossware.hotspot.client.CONNECT_BT"
+        const val ACTION_CONNECT_USB = "org.flossware.hotspot.client.CONNECT_USB"
         const val ACTION_DISCONNECT = "org.flossware.hotspot.client.DISCONNECT"
         const val EXTRA_SOCKS_HOST = "socks_host"
         const val EXTRA_SOCKS_PORT = "socks_port"
         const val EXTRA_BT_DEVICE_ADDRESS = "bt_device_address"
+        const val EXTRA_USB_DEVICE_NAME = "usb_device_name"
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "TunnelService"
@@ -209,6 +262,14 @@ class TunnelService : VpnService() {
             val intent = Intent(context, TunnelService::class.java).apply {
                 action = ACTION_CONNECT_BT
                 putExtra(EXTRA_BT_DEVICE_ADDRESS, deviceAddress)
+            }
+            context.startForegroundService(intent)
+        }
+
+        fun connectUsb(context: Context, deviceName: String) {
+            val intent = Intent(context, TunnelService::class.java).apply {
+                action = ACTION_CONNECT_USB
+                putExtra(EXTRA_USB_DEVICE_NAME, deviceName)
             }
             context.startForegroundService(intent)
         }

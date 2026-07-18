@@ -16,6 +16,9 @@
 
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
+    <!-- USB (optional transport) -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
     <application
         android:name=".ClientApp"
         android:allowBackup="false"
