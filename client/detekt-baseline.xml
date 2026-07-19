@@ -6,6 +6,35 @@
     <ID>CyclomaticComplexMethod:ClientScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ClientScreen(viewModel: ClientViewModel = viewModel())</ID>
     <ID>CyclomaticComplexMethod:UsbTunnel.kt$UsbTunnel$fun start()</ID>
     <ID>CyclomaticComplexMethod:UsbTunnel.kt$UsbTunnel$private fun handleConnection( localSocket: Socket, connection: UsbDeviceConnection, inEndpoint: UsbEndpoint, outEndpoint: UsbEndpoint, )</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `Bluetooth overhead is 50 bytes`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo copy works`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo data class holds correct values`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo equality works`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo from cache has null detection method`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo tcpMssV4 is mtu minus 40`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo tcpMssV6 is mtu minus 60`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `MtuInfo toString contains fields`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `TCP IPv4 header size is 40`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `TCP IPv6 header size is 60`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `UDP IP header size is 28`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `USB overhead is 60 bytes`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `WiFi Direct overhead is 80 bytes`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `all transport types have encapsulation overhead`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `cache max age is 30 days`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `cache prefs name is client_mtu_cache`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `default timeout is 5000ms`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `detection method enum has three values`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `encapsulation overhead for Bluetooth`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `encapsulation overhead for USB`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `encapsulation overhead for WiFi Direct`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `fallback MTU is 1280`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `maximum MTU is 1500`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `minimum MTU is 576`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `minimum tunnel MTU is 1000`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `probe sizes are in ascending order`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `probe sizes contain expected values`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `probe sizes has 6 entries`()</ID>
+    <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `safety margin is 20 bytes`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `DNS_ADDRESS is valid`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `TrafficStats equality`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `TrafficStats holds values`()</ID>
@@ -59,6 +88,7 @@
     <ID>MaxLineLength:TunnelService.kt$TunnelService$ConnectionErrorType.GENERIC to (e.message ?: getString(R.string.error_generic_connection_failed))</ID>
     <ID>TooGenericExceptionCaught:TunnelService.kt$TunnelService$e: Exception</ID>
     <ID>TooGenericExceptionCaught:UsbTunnel.kt$UsbTunnel$e: Exception</ID>
+    <ID>TooManyFunctions:ClientMtuManagerTest.kt$ClientMtuManagerTest</ID>
     <ID>TooManyFunctions:SocksTunnelTest.kt$SocksTunnelTest</ID>
     <ID>TooManyFunctions:VpnStateTest.kt$VpnStateTest</ID>
   </CurrentIssues>

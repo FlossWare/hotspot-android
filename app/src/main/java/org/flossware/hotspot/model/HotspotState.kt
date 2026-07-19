@@ -27,6 +27,7 @@ data class HotspotState(
     val mobileDataAvailable: Boolean = true,
     val permissionsDenied: Boolean = false,
     val bluetoothOnlyMode: Boolean = false,
+    val detectedMtu: Int? = null,
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"

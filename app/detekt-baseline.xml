@@ -71,6 +71,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `configuredPassphrase can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves bluetooth and cache fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves configuredPassphrase`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves detectedMtu`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves feature availability fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves fields correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves power management fields`()</ID>
@@ -78,15 +79,18 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy with error preserves other fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default bluetooth fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default cache fields are zero`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default detectedMtu is null`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default feature availability fields are true`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default power management fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default state has correct values`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default usbConnected is false`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `destructuring works`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `detectedMtu can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress formats correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress with custom host and port`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes bluetooth and cache fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes configuredPassphrase`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes detectedMtu`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes feature availability fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes usbConnected`()</ID>
@@ -182,6 +186,39 @@
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips token values`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username in quotes`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username with equals`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey combines transport and peer`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey is deterministic`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey produces different keys for different peers`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey produces different keys for different transports`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey with bluetooth transport`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey with empty peer identifier`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `buildKey with usb transport`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `entry copy works`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `entry data class holds correct values`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `entry destructuring works`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `entry equality works`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `entry toString contains fields`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `max age is 30 days in milliseconds`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `max age is positive`()</ID>
+    <ID>FunctionNaming:MtuCacheTest.kt$MtuCacheTest$@Test fun `prefs name is mtu_cache`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `UDP IP header size is 28 bytes`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `constructor accepts custom safety margin`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `constructor accepts custom timeout`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `default timeout is 5000ms`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `detect returns result with mtu at least MIN_MTU`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `detection method enum has three values`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `fallback MTU is 1280`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `maximum MTU is 1500`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `minimum MTU is 576`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `probe sizes are in ascending order`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `probe sizes contain expected values`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `probe sizes has 6 entries`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `result copy works`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `result data class holds correct values`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `result equality works`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `result with default fallback method`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `result with tcp fallback method`()</ID>
+    <ID>FunctionNaming:MtuDetectorTest.kt$MtuDetectorTest$@Test fun `safety margin is 20 bytes`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when no socket factory for CONNECT`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when upstream connection fails`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT tunnel establishes connection`()</ID>
@@ -377,6 +414,7 @@
     <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun negotiate(input: InputStream, output: OutputStream): Boolean</ID>
     <ID>SwallowedException:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>ThrowsCount:Socks5Server.kt$Socks5Server$internal fun readAddress(input: InputStream): Pair&lt;String, Int&gt;</ID>
+    <ID>TooGenericExceptionCaught:HotspotService.kt$HotspotService$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
@@ -385,6 +423,8 @@
     <ID>TooManyFunctions:HttpCacheTest.kt$HttpCacheTest</ID>
     <ID>TooManyFunctions:LogCollectorTest.kt$LogCollectorTest</ID>
     <ID>TooManyFunctions:LogExporterTest.kt$LogExporterTest</ID>
+    <ID>TooManyFunctions:MtuCacheTest.kt$MtuCacheTest</ID>
+    <ID>TooManyFunctions:MtuDetectorTest.kt$MtuDetectorTest</ID>
     <ID>TooManyFunctions:ProxyServer.kt$ProxyServer</ID>
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>

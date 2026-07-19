@@ -403,4 +403,36 @@ class HotspotStateTest {
         val c = HotspotState(configuredPassphrase = "pass2")
         assertFalse(a == c)
     }
+
+    @Test
+    fun `default detectedMtu is null`() {
+        val state = HotspotState()
+        assertNull(state.detectedMtu)
+    }
+
+    @Test
+    fun `detectedMtu can be set`() {
+        val state = HotspotState(detectedMtu = 1400)
+        assertEquals(1400, state.detectedMtu)
+    }
+
+    @Test
+    fun `copy preserves detectedMtu`() {
+        val state = HotspotState(detectedMtu = 1420)
+        val copied = state.copy(isRunning = true)
+        assertEquals(1420, copied.detectedMtu)
+    }
+
+    @Test
+    fun `equality includes detectedMtu`() {
+        val a = HotspotState(detectedMtu = 1400)
+        val b = HotspotState(detectedMtu = 1400)
+        assertEquals(a, b)
+
+        val c = HotspotState(detectedMtu = 1500)
+        assertFalse(a == c)
+
+        val d = HotspotState(detectedMtu = null)
+        assertFalse(a == d)
+    }
 }
