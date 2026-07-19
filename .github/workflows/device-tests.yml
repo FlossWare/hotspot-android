@@ -1,0 +1,161 @@
+name: Device Compatibility Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: >-
+          Comma-separated device specs (model:api), e.g. "redfin:30,oriole:33".
+          Leave empty to run the full default matrix.
+        required: false
+        default: ""
+      test_filter:
+        description: "Test class filter (e.g. org.flossware.hotspot.compat.WifiDirectCompatTest)"
+        required: false
+        default: ""
+
+# Cancel in-progress runs for the same ref
+concurrency:
+  group: device-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Build test APK
+        run: ./gradlew :app:assembleDebugAndroidTest
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-test-apk
+          path: app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          retention-days: 1
+
+  device-tests:
+    needs: build-apks
+    runs-on: ubuntu-latest
+    # Default matrix: representative devices across OEMs and API levels.
+    # Models use Firebase Test Lab device IDs (see: gcloud firebase test android models list).
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Google Pixel
+          - device_model: redfin
+            device_name: "Pixel 5"
+            api_level: 30
+          - device_model: oriole
+            device_name: "Pixel 6"
+            api_level: 33
+          - device_model: lynx
+            device_name: "Pixel 7a"
+            api_level: 34
+          # Samsung Galaxy
+          - device_model: b0q
+            device_name: "Galaxy S22 Ultra"
+            api_level: 33
+          - device_model: dm1q
+            device_name: "Galaxy S23"
+            api_level: 34
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+          path: apks/
+
+      - name: Download test APK
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-apk
+          path: apks/
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run device tests on ${{ matrix.device_name }}
+        id: ftl
+        env:
+          APP_APK: apks/app-debug.apk
+          TEST_APK: apks/app-debug-androidTest.apk
+          RESULTS_DIR: ftl-results
+        run: |
+          chmod +x ci/device-tests.sh
+          ./ci/device-tests.sh "${{ matrix.device_model }}" "${{ matrix.api_level }}" || true
+
+          # Capture status from the summary file
+          if [ -f ftl-results/summary.json ]; then
+            STATUS=$(jq -r .status ftl-results/summary.json)
+            echo "status=${STATUS}" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ERROR" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ftl-results-${{ matrix.device_model }}-api${{ matrix.api_level }}
+          path: ftl-results/
+          retention-days: 30
+
+      - name: Add to job summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.device_name }} (API ${{ matrix.api_level }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f ftl-results/summary.json ]; then
+            PASSED=$(jq .passed ftl-results/summary.json)
+            FAILED=$(jq .failed ftl-results/summary.json)
+            STATUS=$(jq -r .status ftl-results/summary.json)
+            ICON=$([ "$STATUS" = "PASS" ] && echo "✅" || echo "❌")
+            echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Status | ${ICON} ${STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Passed | ${PASSED} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Failed | ${FAILED} |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No results available." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f ftl-results/console-url.txt ]; then
+            echo "[Firebase Console]($(cat ftl-results/console-url.txt))" >> "$GITHUB_STEP_SUMMARY"
+          fi
