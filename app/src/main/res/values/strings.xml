@@ -138,4 +138,22 @@
     <string name="cd_info_icon">Information</string>
     <string name="cd_cache_icon">Cache statistics</string>
     <string name="cd_bluetooth_opt_in">Bluetooth transport, %1$s</string>
+
+    <!-- Diagnostics screen -->
+    <string name="diagnostics_title">Diagnostics</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="share_diagnostics">Share Diagnostics</string>
+    <string name="current_session">Current Session</string>
+    <string name="session_history">Session History</string>
+    <string name="transport_label">Transport</string>
+    <string name="transport_wifi_direct">Wi-Fi Direct</string>
+    <string name="transport_bluetooth">Bluetooth</string>
+    <string name="transport_none">None</string>
+    <string name="phase_label">Phase</string>
+    <string name="phase_idle">Idle</string>
+    <string name="active_connections">Active Connections</string>
+    <string name="session_duration_format">Duration: %1$s</string>
+    <string name="session_transferred_format">Transferred: %1$s</string>
+    <string name="cd_navigate_back">Navigate back</string>
+    <string name="cd_diagnostics">Open diagnostics</string>
 </resources>

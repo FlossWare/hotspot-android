@@ -71,6 +71,7 @@ dependencies {
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    testImplementation("org.json:json:20231013")
 }
 
 detekt {

@@ -5,18 +5,50 @@
     <ID>ComplexCondition:DnsRelay.kt$DnsRelay$responseData.size &lt; 2 || queryData.size &lt; 2 || responseData[0] != queryData[0] || responseData[1] != queryData[1]</ID>
     <ID>CyclomaticComplexMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
     <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
+    <ID>CyclomaticComplexMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen( viewModel: HotspotViewModel = viewModel(), onNavigateToDiagnostics: () -&gt; Unit = {}, )</ID>
     <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
     <ID>CyclomaticComplexMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>CyclomaticComplexMethod:PerformanceInfo.kt$@Composable fun PerformanceInfo( snapshot: MetricsSnapshot, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:ProxyServerTest.kt$ProxyServerTest$private fun createPostEchoServer(): ServerSocket</ID>
     <ID>CyclomaticComplexMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>CyclomaticComplexMethod:Socks5ServerTest.kt$Socks5ServerTest$private fun createCacheFriendlyPostEchoServer(): ServerSocket</ID>
+    <ID>EmptyElseBlock:DiagnosticsManagerTest.kt$FakeSharedPreferences.FakeEditor$if (key != null) pending[key] = value</ID>
+    <ID>EmptyElseBlock:DiagnosticsManagerTest.kt$FakeSharedPreferences.FakeEditor$if (key != null) pending[key] = values</ID>
+    <ID>EmptyElseBlock:DiagnosticsManagerTest.kt$FakeSharedPreferences.FakeEditor$if (key != null) removals.add(key)</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `all fields are set correctly`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `copy works correctly`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `default ipAddress is null`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `equality for identical devices`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `inequality for different mac addresses`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `toString contains all fields`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `ConnectionPhase enum has all expected values`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `TransportType enum has all expected values`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `default metrics have zero values`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `event copy preserves fields`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `event equality works`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `event has correct default values`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `event with errors stores error list`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `hashIp is deterministic`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `hashIp produces 8 character hex string`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `hashIp produces different hashes for different IPs`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `hashIp returns empty string for blank`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `hashIp returns empty string for null`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `metrics equality works`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `toJson includes all fields`()</ID>
+    <ID>FunctionNaming:DiagnosticEventTest.kt$DiagnosticEventTest$@Test fun `toJson with empty errors produces empty array`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `clear empties the buffer`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `exportReport produces valid JSON`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `getEvents returns defensive copy`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `getLatestEvent returns last recorded event`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `getLatestEvent returns null when empty`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `multiple sessions are recorded in order`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `onError records failed event with error message`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `onSessionEnd records closed event and persists session`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `onSessionEstablished records established event`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `onSessionStart records handshake event`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `recordEvent adds event to buffer`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `ring buffer drops oldest when full`()</ID>
+    <ID>FunctionNaming:DiagnosticsManagerTest.kt$DiagnosticsManagerTest$@Test fun `session error summary captures last error`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `ByteArrayKey equality and hashCode`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse equality and hashCode`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns false for future time`()</ID>
@@ -382,6 +414,14 @@
     <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `readDecrypted rejects negative frame length`()</ID>
     <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `readDecrypted rejects oversized frame length`()</ID>
     <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = java.io.IOException::class) fun `readFully throws on premature EOF`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `SessionSummary data class equality`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `clear removes all sessions`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `initially empty`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `limits to MAX_SESSIONS`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `most recent session appears first`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `recordSession adds session`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `session with error summary persists correctly`()</ID>
+    <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `toJsonArray includes all sessions`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks loopback destination with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns CONNECTION_REFUSED for closed port`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`()</ID>
@@ -528,8 +568,9 @@
     <ID>LargeClass:Socks5ServerTest.kt$Socks5ServerTest</ID>
     <ID>LongMethod:BluetoothInfo.kt$@Composable fun BluetoothInfo( state: HotspotState, onBluetoothOptInChanged: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
     <ID>LongMethod:ConnectionInfo.kt$@Composable fun ConnectionInfo( state: HotspotState, qrBitmap: Bitmap?, modifier: Modifier = Modifier, initiallyExpanded: Boolean = true, )</ID>
+    <ID>LongMethod:DiagnosticsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DiagnosticsScreen( diagnosticsManager: DiagnosticsManager, onBack: () -&gt; Unit, )</ID>
     <ID>LongMethod:DnsRelay.kt$DnsRelay$internal fun forwardQuery( listenSocket: DatagramSocket, queryData: ByteArray, clientAddr: InetAddress, clientPort: Int, )</ID>
-    <ID>LongMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
+    <ID>LongMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen( viewModel: HotspotViewModel = viewModel(), onNavigateToDiagnostics: () -&gt; Unit = {}, )</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startWatchdog()</ID>
@@ -607,6 +648,11 @@
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WatchdogManager.kt$WatchdogManager$e: Exception</ID>
     <ID>TooGenericExceptionThrown:WatchdogManagerTest.kt$WatchdogManagerTest$throw RuntimeException("boom")</ID>
+    <ID>TooManyFunctions:DiagnosticEventTest.kt$DiagnosticEventTest</ID>
+    <ID>TooManyFunctions:DiagnosticsManager.kt$DiagnosticsManager</ID>
+    <ID>TooManyFunctions:DiagnosticsManagerTest.kt$DiagnosticsManagerTest</ID>
+    <ID>TooManyFunctions:DiagnosticsManagerTest.kt$FakeSharedPreferences : SharedPreferences</ID>
+    <ID>TooManyFunctions:DiagnosticsManagerTest.kt$FakeSharedPreferences$FakeEditor : Editor</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService$Companion</ID>
