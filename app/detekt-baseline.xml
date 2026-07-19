@@ -9,6 +9,8 @@
     <ID>CyclomaticComplexMethod:ProxyServerTest.kt$ProxyServerTest$private fun createPostEchoServer(): ServerSocket</ID>
     <ID>CyclomaticComplexMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>CyclomaticComplexMethod:Socks5ServerTest.kt$Socks5ServerTest$private fun createCacheFriendlyPostEchoServer(): ServerSocket</ID>
+    <ID>CyclomaticComplexMethod:UdpRelay.kt$UdpRelay$@Suppress("LoopWithTooManyJumpStatements") private fun startResponseReceiver(mapping: OutboundMapping)</ID>
+    <ID>CyclomaticComplexMethod:UdpRelay.kt$UdpRelay$@Suppress("ReturnCount") internal fun parseUdpFrame(data: ByteArray): UdpFrame?</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `all fields are set correctly`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `copy works correctly`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `default ipAddress is null`()</ID>
@@ -280,6 +282,35 @@
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `stop sets running to false`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `unsupported command returns CMD_NOT_SUPPORTED`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test(expected = java.io.IOException::class) fun `readAddress throws on empty stream`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `CMD_UDP_ASSOCIATE constant is 0x03`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `MappingKey equals and hashCode`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `SSRF protection blocks loopback destination`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `UDP ASSOCIATE teardown on TCP close`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `UdpFrame equals and hashCode`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `buildUdpFrame creates correct IPv4 frame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `buildUdpFrame creates correct IPv6 frame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `buildUdpFrame roundtrips through parseUdpFrame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `companion constants have correct values`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `double start is idempotent`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `end-to-end UDP relay via SOCKS5 UDP ASSOCIATE`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `handleClientFrame drops fragmented frame without creating mapping`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `idle mappings are cleaned up after timeout`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `mapping pool rejects when at capacity`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `mappingCount starts at zero`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame parses IPv4 frame with no payload`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame parses IPv4 high port correctly`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame parses valid IPv4 frame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame parses valid IPv6 frame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame parses valid domain frame`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame preserves non-zero FRAG`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for empty domain length`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for short data`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for truncated IPv4`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for truncated IPv6`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for truncated domain data`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `parseUdpFrame returns null for unsupported ATYP`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `start sets running and binds port`()</ID>
+    <ID>FunctionNaming:UdpRelayTest.kt$UdpRelayTest$@Test fun `stop sets not running`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `DEFAULT_PASSPHRASE is defined and meets minimum length`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MAX_RETRIES is reasonable`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MIN_PASSPHRASE_LENGTH is 8 for WPA2`()</ID>
@@ -315,11 +346,13 @@
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleConnect( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
     <ID>LongMethod:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
+    <ID>LongMethod:UdpRelayTest.kt$UdpRelayTest$@Test fun `end-to-end UDP relay via SOCKS5 UDP ASSOCIATE`()</ID>
     <ID>LongParameterList:CollapsibleSection.kt$( title: String, modifier: Modifier = Modifier, subtitle: String? = null, badge: String? = null, initiallyExpanded: Boolean = true, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:HttpCache.kt$HttpCache$( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>LongParameterList:Socks5Server.kt$Socks5Server$( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
     <ID>LongParameterList:Socks5Server.kt$Socks5Server$( client: Socket, input: InputStream, output: OutputStream, host: String, resolved: InetAddress, factory: SocketFactory, )</ID>
     <ID>LongParameterList:Socks5Server.kt$Socks5Server$( private val bindAddress: InetAddress, private val port: Int = 1080, private val socketFactoryProvider: () -&gt; SocketFactory?, private val dnsResolver: (String) -&gt; InetAddress = { InetAddress.getByName(it) }, private val httpCache: HttpCache? = null, private val username: String? = null, private val password: String? = null, private val maxConnectionsPerClient: Int = 10, private val maxTotalConnections: Int = 100, private val ssrfProtection: Boolean = true, @Volatile var debugMode: Boolean = false, )</ID>
+    <ID>LongParameterList:UdpRelay.kt$UdpRelay$( private val bindAddress: InetAddress, private val dnsResolver: (String) -&gt; InetAddress = { InetAddress.getByName(it) }, private val ssrfProtection: Boolean = true, private val bytesTransferred: AtomicLong = AtomicLong(0), private val activeMappings: AtomicInteger = AtomicInteger(0), private val maxMappings: Int = MAX_MAPPINGS, internal val mappingTimeoutMs: Long = MAPPING_TIMEOUT_MS, @Volatile var debugMode: Boolean = false, )</ID>
     <ID>LoopWithTooManyJumpStatements:BluetoothServer.kt$BluetoothServer$while</ID>
     <ID>LoopWithTooManyJumpStatements:DnsRelay.kt$DnsRelay$for</ID>
     <ID>LoopWithTooManyJumpStatements:DnsRelayTest.kt$DnsRelayTest$while</ID>
@@ -369,6 +402,7 @@
     <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")</ID>
     <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")</ID>
     <ID>NestedBlockDepth:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>NestedBlockDepth:Socks5Server.kt$Socks5Server$internal fun handleUdpAssociate( client: Socket, output: OutputStream, )</ID>
     <ID>ReturnCount:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>ReturnCount:HttpCache.kt$HttpCache$fun tryServeFromCache( host: String, requestLine: String, requestHeaders: String, clientOutput: OutputStream, ): Boolean</ID>
     <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun authenticateUsernamePassword(input: InputStream, output: OutputStream): Boolean</ID>
@@ -379,6 +413,7 @@
     <ID>ThrowsCount:Socks5Server.kt$Socks5Server$internal fun readAddress(input: InputStream): Pair&lt;String, Int&gt;</ID>
     <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UdpRelay.kt$UdpRelay$e: Exception</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
     <ID>TooManyFunctions:HotspotStateTest.kt$HotspotStateTest</ID>
@@ -389,6 +424,7 @@
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
     <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
+    <ID>TooManyFunctions:UdpRelayTest.kt$UdpRelayTest</ID>
     <ID>TooManyFunctions:WifiDirectManagerTest.kt$WifiDirectManagerTest</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$clientInput: InputStream</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$upstreamOutput: OutputStream</ID>

@@ -49,6 +49,8 @@ class Socks5Server(
     private val totalActiveConnections = AtomicInteger(0)
     val activeConnections: Int get() = totalActiveConnections.get()
     private val activeSockets = CopyOnWriteArrayList<Socket>()
+    private val activeUdpRelays = CopyOnWriteArrayList<UdpRelay>()
+    private val totalActiveMappings = AtomicInteger(0)
 
     fun start() {
         if (running.getAndSet(true)) return
@@ -111,6 +113,10 @@ class Socks5Server(
         running.set(false)
         serverSocket?.close()
         serverSocket = null
+        for (relay in activeUdpRelays) {
+            relay.stop()
+        }
+        activeUdpRelays.clear()
         for (sock in activeSockets) {
             sock.closeSilently()
         }
@@ -185,6 +191,10 @@ class Socks5Server(
                 CMD_CONNECT.toInt() and 0xFF -> {
                     if (debugMode) Log.d(TAG, "CONNECT $host:$port from $clientAddr")
                     handleConnect(client, input, output, host, port, connectionBytes)
+                }
+                CMD_UDP_ASSOCIATE.toInt() and 0xFF -> {
+                    if (debugMode) Log.d(TAG, "UDP ASSOCIATE from $clientAddr")
+                    handleUdpAssociate(client, output)
                 }
                 else -> {
                     Log.w(TAG, "Unsupported SOCKS command $cmd from $clientAddr")
@@ -410,6 +420,60 @@ class Socks5Server(
         }
     }
 
+    internal fun handleUdpAssociate(
+        client: Socket,
+        output: OutputStream,
+    ) {
+        val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
+
+        if (totalActiveMappings.get() >= UdpRelay.MAX_MAPPINGS) {
+            Log.w(TAG, "UDP mapping pool at capacity, rejecting from $clientAddr")
+            sendReply(output, REPLY_GENERAL_FAILURE)
+            return
+        }
+
+        val relay = UdpRelay(
+            bindAddress = bindAddress,
+            dnsResolver = dnsResolver,
+            ssrfProtection = ssrfProtection,
+            bytesTransferred = _bytesTransferred,
+            activeMappings = totalActiveMappings,
+            maxMappings = UdpRelay.MAX_MAPPINGS,
+            debugMode = debugMode,
+        )
+
+        if (!relay.start()) {
+            sendReply(output, REPLY_GENERAL_FAILURE)
+            return
+        }
+
+        activeUdpRelays.add(relay)
+        sendReply(output, REPLY_SUCCESS, bindAddress, relay.port)
+
+        if (debugMode) {
+            Log.d(TAG, "UDP ASSOCIATE: relay on ${bindAddress.hostAddress}:${relay.port}")
+        }
+
+        // Keep TCP control connection open; tear down relay when it closes (RFC 1928 Section 7).
+        try {
+            val buffer = ByteArray(1)
+            while (true) {
+                try {
+                    if (client.getInputStream().read(buffer) == -1) break
+                } catch (_: SocketTimeoutException) {
+                    if (!running.get()) break
+                    continue
+                }
+            }
+        } catch (_: IOException) {
+            // TCP control connection closed
+        } finally {
+            relay.stop()
+            activeUdpRelays.remove(relay)
+            if (debugMode) Log.d(TAG, "UDP ASSOCIATE teardown for $clientAddr")
+        }
+    }
+
     private fun handleCachedHttpConnect(
         client: Socket,
         input: InputStream,
@@ -554,6 +618,7 @@ class Socks5Server(
         const val AUTH_SUCCESS: Byte = 0x00
         const val AUTH_FAILURE: Byte = 0x01
         const val CMD_CONNECT: Byte = 0x01
+        const val CMD_UDP_ASSOCIATE: Byte = 0x03
         const val ADDR_IPV4: Byte = 0x01
         const val ADDR_DOMAIN: Byte = 0x03
         const val ADDR_IPV6: Byte = 0x04
