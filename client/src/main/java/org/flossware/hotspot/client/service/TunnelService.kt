@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import android.net.ConnectivityManager
 import android.net.Network
 import android.net.VpnService
 import android.os.Build
@@ -124,7 +125,12 @@ class TunnelService : VpnService() {
             }
 
             tunInterface = tun
-            underlyingNetwork?.let { setUnderlyingNetworks(arrayOf(it)) }
+            underlyingNetwork?.let { network ->
+                setUnderlyingNetworks(arrayOf(network))
+                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                cm.bindProcessToNetwork(network)
+                Timber.tag(TAG).i("service_start event=bound_process_to_wifi_network netId=%s", network)
+            }
 
             socksTunnel = SocksTunnel(
                 tunFd = tun.fd,
@@ -303,6 +309,10 @@ class TunnelService : VpnService() {
         usbTunnel = null
         wifiConnector?.disconnect()
         wifiConnector = null
+        if (underlyingNetwork != null) {
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            cm.bindProcessToNetwork(null)
+        }
         underlyingNetwork = null
 
         // 4. Close VPN interface
