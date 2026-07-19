@@ -182,6 +182,26 @@
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips token values`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username in quotes`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username with equals`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `DiscoveryResult default discovery method is NSD`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `DiscoveryResult default signal strength is SIGNAL_UNKNOWN`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `DiscoveryResult holds custom values`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `PROTOCOL_VERSION is 1`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `SERVICE_NAME is FlossHotspot`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `SERVICE_TYPE follows mDNS convention`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `TXT record keys are short to stay within DNS-SD limits`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports ignores unknown transport names`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports parses multiple transports`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports parses single transport`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports returns empty set for blank string`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports returns empty set for null`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports returns empty set when all names are invalid`()</ID>
+    <ID>FunctionNaming:NsdDiscoveryTest.kt$NsdDiscoveryTest$@Test fun `parseTransports trims whitespace around names`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `PeerIdentity holds all fields`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `copy preserves unchanged fields`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `default values for optional fields`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `equality based on all fields`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `hashCode consistent with equals`()</ID>
+    <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `toString includes key fields`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when no socket factory for CONNECT`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when upstream connection fails`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT tunnel establishes connection`()</ID>
@@ -280,6 +300,21 @@
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `stop sets running to false`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `unsupported command returns CMD_NOT_SUPPORTED`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test(expected = java.io.IOException::class) fun `readAddress throws on empty stream`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `LATENCY_SENSITIVE falls back to Bluetooth when only option`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `LATENCY_SENSITIVE falls back to USB when Wi-Fi Direct unavailable`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `LATENCY_SENSITIVE prefers Wi-Fi Direct when all available`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `POWER_EFFICIENT falls back to USB when Bluetooth unavailable`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `POWER_EFFICIENT falls back to Wi-Fi Direct when only option`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `POWER_EFFICIENT prefers Bluetooth when all available`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `THROUGHPUT_OPTIMIZED falls back to Bluetooth when only option`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `THROUGHPUT_OPTIMIZED falls back to USB when Wi-Fi Direct unavailable`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `THROUGHPUT_OPTIMIZED prefers Wi-Fi Direct when all available`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `all hints return a non-null result when all transports available`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `priorityFor LATENCY_SENSITIVE returns Wi-Fi, USB, Bluetooth order`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `priorityFor POWER_EFFICIENT returns Bluetooth, USB, Wi-Fi order`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `priorityFor THROUGHPUT_OPTIMIZED returns Wi-Fi, USB, Bluetooth order`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `select returns null when no transports are available`()</ID>
+    <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `select returns the only available transport regardless of hint`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `DEFAULT_PASSPHRASE is defined and meets minimum length`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MAX_RETRIES is reasonable`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MIN_PASSPHRASE_LENGTH is 8 for WPA2`()</ID>
@@ -385,10 +420,12 @@
     <ID>TooManyFunctions:HttpCacheTest.kt$HttpCacheTest</ID>
     <ID>TooManyFunctions:LogCollectorTest.kt$LogCollectorTest</ID>
     <ID>TooManyFunctions:LogExporterTest.kt$LogExporterTest</ID>
+    <ID>TooManyFunctions:NsdDiscoveryTest.kt$NsdDiscoveryTest</ID>
     <ID>TooManyFunctions:ProxyServer.kt$ProxyServer</ID>
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
     <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
+    <ID>TooManyFunctions:TransportSelectorTest.kt$TransportSelectorTest</ID>
     <ID>TooManyFunctions:WifiDirectManagerTest.kt$WifiDirectManagerTest</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$clientInput: InputStream</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$upstreamOutput: OutputStream</ID>
