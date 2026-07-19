@@ -102,6 +102,18 @@
 
     <string name="share_logs">Share Logs</string>
 
+    <!-- Performance metrics -->
+    <string name="performance_title">Performance</string>
+    <string name="perf_throughput">Throughput</string>
+    <string name="perf_active_connections">Active Connections</string>
+    <string name="perf_dns_queries">DNS Queries</string>
+    <string name="perf_cpu">CPU Usage</string>
+    <string name="perf_memory">Heap Memory</string>
+    <string name="perf_native_memory">Native Memory</string>
+    <string name="perf_battery">Battery Used</string>
+    <string name="perf_reconnects">Reconnects</string>
+    <string name="perf_errors">Errors</string>
+
     <!-- Passphrase configuration -->
     <string name="passphrase_label">Wi-Fi Passphrase</string>
     <string name="passphrase_hint">Enter passphrase (min 8 characters)</string>
