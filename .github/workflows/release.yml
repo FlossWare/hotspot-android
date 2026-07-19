@@ -107,15 +107,17 @@ jobs:
             cp "${{ steps.sign.outputs.signedReleaseFile }}" \
               "release-apks/flossware-hotspot-host-${VERSION}-release.apk"
           else
-            cp app/build/outputs/apk/release/app-release-unsigned.apk \
-              "release-apks/flossware-hotspot-host-${VERSION}-release-unsigned.apk"
+            HOST_RELEASE=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+            cp "$HOST_RELEASE" \
+              "release-apks/flossware-hotspot-host-${VERSION}-release.apk"
           fi
 
           cp client/build/outputs/apk/debug/client-debug.apk \
             "release-apks/flossware-hotspot-client-${VERSION}-debug.apk"
 
-          cp client/build/outputs/apk/release/client-release-unsigned.apk \
-            "release-apks/flossware-hotspot-client-${VERSION}-release-unsigned.apk"
+          CLIENT_RELEASE=$(find client/build/outputs/apk/release -name '*.apk' | head -1)
+          cp "$CLIENT_RELEASE" \
+            "release-apks/flossware-hotspot-client-${VERSION}-release.apk"
 
       - name: Upload release APKs
         uses: actions/upload-artifact@v4

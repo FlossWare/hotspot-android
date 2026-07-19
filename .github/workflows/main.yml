@@ -65,8 +65,8 @@ jobs:
       - name: Upload host release APK
         uses: actions/upload-artifact@v4
         with:
-          name: host-release-unsigned
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: host-release
+          path: app/build/outputs/apk/release/app-release.apk
           retention-days: 90
 
       - name: Upload client debug APK
@@ -79,8 +79,8 @@ jobs:
       - name: Upload client release APK
         uses: actions/upload-artifact@v4
         with:
-          name: client-release-unsigned
-          path: client/build/outputs/apk/release/client-release-unsigned.apk
+          name: client-release
+          path: client/build/outputs/apk/release/client-release.apk
           retention-days: 90
 
       - name: Upload detekt results
