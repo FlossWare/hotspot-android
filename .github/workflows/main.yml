@@ -109,3 +109,10 @@ jobs:
 
       - name: Auto-rev version and tag
         run: ./ci/rev-version.sh
+
+      - name: Trigger release workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          gh workflow run release.yml -f tag="v${VERSION}"
