@@ -33,6 +33,34 @@ class SocksTunnelTest {
     }
 
     @Test
+    fun `buildConfig uses MTU 1280 when IPv6 enabled`() {
+        val config = SocksTunnel.buildConfig("192.168.49.1", 1080, ipv6Enabled = true)
+        assertTrue(config.contains("mtu: 1280"))
+    }
+
+    @Test
+    fun `buildConfig uses MTU 1500 when IPv6 disabled`() {
+        val config = SocksTunnel.buildConfig("192.168.49.1", 1080, ipv6Enabled = false)
+        assertTrue(config.contains("mtu: 1500"))
+    }
+
+    @Test
+    fun `buildConfig defaults to IPv6 disabled`() {
+        val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
+        assertTrue("Default should use MTU 1500 (IPv4)", config.contains("mtu: 1500"))
+    }
+
+    @Test
+    fun `IPv6 MTU constant is 1280 per RFC 8200`() {
+        assertEquals(1280, SocksTunnel.IPV6_MIN_MTU)
+    }
+
+    @Test
+    fun `IPv4 default MTU constant is 1500`() {
+        assertEquals(1500, SocksTunnel.IPV4_DEFAULT_MTU)
+    }
+
+    @Test
     fun `buildConfig contains misc settings`() {
         val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
         assertTrue(config.contains("connect-timeout: 5000"))

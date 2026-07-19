@@ -569,11 +569,41 @@ class Socks5Server(
         const val SHUTDOWN_TIMEOUT_MS = 3000L
 
         /**
-         * Returns true if the given address is a loopback or link-local address
-         * that should be blocked to prevent SSRF attacks.
+         * Returns true if the given address should be blocked to prevent SSRF attacks.
+         *
+         * Blocks:
+         * - IPv4/IPv6 loopback (127.0.0.0/8, ::1)
+         * - IPv4/IPv6 link-local (169.254.0.0/16, fe80::/10)
+         * - IPv6 site-local (fec0::/10, deprecated RFC 3879)
+         * - IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) where the mapped
+         *   IPv4 address is itself blocked
          */
         fun isBlockedDestination(addr: InetAddress): Boolean {
-            return addr.isLoopbackAddress || addr.isLinkLocalAddress
+            if (addr.isLoopbackAddress || addr.isLinkLocalAddress) return true
+            if (addr is Inet6Address) {
+                // Block deprecated IPv6 site-local (fec0::/10)
+                if (addr.isSiteLocalAddress) return true
+                // Check IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+                // to prevent SSRF bypass via IPv6-encoded IPv4 targets
+                val bytes = addr.address
+                if (isIpv4Mapped(bytes)) {
+                    val mapped = InetAddress.getByAddress(bytes.copyOfRange(12, 16))
+                    if (mapped.isLoopbackAddress || mapped.isLinkLocalAddress) return true
+                }
+            }
+            return false
+        }
+
+        /**
+         * Returns true if the 16-byte IPv6 address is an IPv4-mapped address
+         * (::ffff:x.x.x.x, bytes 0-9 are 0, bytes 10-11 are 0xFF).
+         */
+        internal fun isIpv4Mapped(addr: ByteArray): Boolean {
+            if (addr.size != 16) return false
+            for (i in 0 until 10) {
+                if (addr[i] != 0.toByte()) return false
+            }
+            return addr[10] == 0xFF.toByte() && addr[11] == 0xFF.toByte()
         }
 
         internal fun constantTimeEquals(a: String, b: String): Boolean {

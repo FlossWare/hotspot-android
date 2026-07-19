@@ -36,6 +36,8 @@
     <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `probe sizes has 6 entries`()</ID>
     <ID>FunctionNaming:ClientMtuManagerTest.kt$ClientMtuManagerTest$@Test fun `safety margin is 20 bytes`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `DNS_ADDRESS is valid`()</ID>
+    <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `IPv4 default MTU constant is 1500`()</ID>
+    <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `IPv6 MTU constant is 1280 per RFC 8200`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `TrafficStats equality`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `TrafficStats holds values`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `TrafficStats inequality`()</ID>
@@ -45,8 +47,11 @@
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig contains socks5 address`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig contains socks5 port`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig contains tunnel mtu`()</ID>
+    <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig defaults to IPv6 disabled`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig has no leading whitespace on top-level keys`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig is valid YAML structure`()</ID>
+    <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig uses MTU 1280 when IPv6 enabled`()</ID>
+    <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig uses MTU 1500 when IPv6 disabled`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `buildConfig with custom host and port`()</ID>
     <ID>FunctionNaming:SocksTunnelTest.kt$SocksTunnelTest$@Test fun `config filename is tun2socks yml`()</ID>
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `ConnectionErrorType enum has all expected values`()</ID>

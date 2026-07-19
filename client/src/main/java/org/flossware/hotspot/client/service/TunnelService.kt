@@ -80,6 +80,8 @@ class TunnelService : VpnService() {
             val targetAddress = InetAddress.getByName(socksHost)
             val mtuInfo = mtuManager.getMtu(transport, socksHost, targetAddress)
             Log.i(TAG, "Using MTU=${mtuInfo.mtu} (cached=${mtuInfo.fromCache}, method=${mtuInfo.detectionMethod})")
+            val ipv6Enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+            val mtu = if (ipv6Enabled) IPV6_MIN_MTU else IPV4_DEFAULT_MTU
 
             val builder = Builder()
                 .setSession("FlossWare Tunnel")
@@ -88,8 +90,19 @@ class TunnelService : VpnService() {
                 .addAddress("fd00::2", 128)
                 .addRoute("::", 0)
                 .setMtu(mtuInfo.mtu)
+                .setMtu(mtu)
                 .addDisallowedApplication(packageName)
                 .addDnsServer(DNS_ADDRESS)
+
+            if (ipv6Enabled) {
+                builder.addAddress("fd00::2", 128)
+                builder.addRoute("::", 0)
+                Log.i(TAG, "IPv6 enabled (API ${Build.VERSION.SDK_INT}): " +
+                    "added fd00::2/128 route, MTU=$mtu")
+            } else {
+                Log.w(TAG, "IPv6 routes skipped: requires API 28+ " +
+                    "(current: ${Build.VERSION.SDK_INT})")
+            }
 
             val tun = builder.establish() ?: run {
                 _state.value = _state.value.copy(
@@ -107,6 +120,7 @@ class TunnelService : VpnService() {
                 socksHost = socksHost,
                 socksPort = socksPort,
                 cacheDir = cacheDir,
+                ipv6Enabled = ipv6Enabled,
             ).also { it.start() }
 
             _state.value = VpnState(
@@ -319,6 +333,11 @@ class TunnelService : VpnService() {
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "TunnelService"
+
+        /** IPv6 minimum MTU per RFC 8200. */
+        internal const val IPV6_MIN_MTU = 1280
+        /** Default MTU for IPv4-only mode. */
+        internal const val IPV4_DEFAULT_MTU = 1500
 
         private val _state = MutableStateFlow(VpnState())
         val state: StateFlow<VpnState> = _state.asStateFlow()

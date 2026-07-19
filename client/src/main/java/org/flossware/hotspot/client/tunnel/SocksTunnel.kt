@@ -10,6 +10,7 @@ class SocksTunnel(
     private val socksHost: String,
     private val socksPort: Int,
     private val cacheDir: File,
+    private val ipv6Enabled: Boolean = false,
 ) {
     private val tproxy = TProxyService()
     private val running = AtomicBoolean(false)
@@ -17,9 +18,9 @@ class SocksTunnel(
     fun start() {
         if (running.getAndSet(true)) return
         val configFile = File(cacheDir, CONFIG_FILENAME)
-        configFile.writeText(buildConfig(socksHost, socksPort))
+        configFile.writeText(buildConfig(socksHost, socksPort, ipv6Enabled))
         tproxy.TProxyStartService(configFile.absolutePath, tunFd)
-        Log.i(TAG, "Native tunnel started -> $socksHost:$socksPort")
+        Log.i(TAG, "Native tunnel started -> $socksHost:$socksPort (IPv6: $ipv6Enabled)")
     }
 
     fun stop() {
@@ -49,23 +50,35 @@ class SocksTunnel(
 
         internal const val DNS_ADDRESS = "198.18.0.2"
 
-        internal fun buildConfig(socksHost: String, socksPort: Int): String = """
-            tunnel:
-              mtu: 1500
-            socks5:
-              port: $socksPort
-              address: $socksHost
-            mapdns:
-              address: $DNS_ADDRESS
-              port: 53
-              network: 100.64.0.0
-              netmask: 255.192.0.0
-              cache-size: 10000
-            misc:
-              log-level: warn
-              connect-timeout: 5000
-              read-write-timeout: 60000
-              limit-nofile: 65535
-        """.trimIndent()
+        /** IPv6 minimum MTU per RFC 8200. */
+        internal const val IPV6_MIN_MTU = 1280
+        /** Default MTU for IPv4-only mode. */
+        internal const val IPV4_DEFAULT_MTU = 1500
+
+        internal fun buildConfig(
+            socksHost: String,
+            socksPort: Int,
+            ipv6Enabled: Boolean = false,
+        ): String {
+            val mtu = if (ipv6Enabled) IPV6_MIN_MTU else IPV4_DEFAULT_MTU
+            return """
+                tunnel:
+                  mtu: $mtu
+                socks5:
+                  port: $socksPort
+                  address: $socksHost
+                mapdns:
+                  address: $DNS_ADDRESS
+                  port: 53
+                  network: 100.64.0.0
+                  netmask: 255.192.0.0
+                  cache-size: 10000
+                misc:
+                  log-level: warn
+                  connect-timeout: 5000
+                  read-write-timeout: 60000
+                  limit-nofile: 65535
+            """.trimIndent()
+        }
     }
 }
