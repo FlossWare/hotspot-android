@@ -211,7 +211,7 @@ class Socks5Server(
                     handleConnect(client, input, output, host, port, connectionBytes)
                 }
                 CMD_UDP_ASSOCIATE.toInt() and 0xFF -> {
-                    if (debugMode) Log.d(TAG, "UDP ASSOCIATE from $clientAddr")
+                    if (debugMode) Timber.tag(TAG).d("UDP ASSOCIATE from %s", clientAddr)
                     handleUdpAssociate(client, output)
                 }
                 else -> {
@@ -446,7 +446,7 @@ class Socks5Server(
         val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
 
         if (totalActiveMappings.get() >= UdpRelay.MAX_MAPPINGS) {
-            Log.w(TAG, "UDP mapping pool at capacity, rejecting from $clientAddr")
+            Timber.tag(TAG).w("UDP mapping pool at capacity, rejecting from %s", clientAddr)
             sendReply(output, REPLY_GENERAL_FAILURE)
             return
         }
@@ -470,7 +470,7 @@ class Socks5Server(
         sendReply(output, REPLY_SUCCESS, bindAddress, relay.port)
 
         if (debugMode) {
-            Log.d(TAG, "UDP ASSOCIATE: relay on ${bindAddress.hostAddress}:${relay.port}")
+            Timber.tag(TAG).d("UDP ASSOCIATE: relay on %s:%d", bindAddress.hostAddress, relay.port)
         }
 
         // Keep TCP control connection open; tear down relay when it closes (RFC 1928 Section 7).
@@ -489,7 +489,7 @@ class Socks5Server(
         } finally {
             relay.stop()
             activeUdpRelays.remove(relay)
-            if (debugMode) Log.d(TAG, "UDP ASSOCIATE teardown for $clientAddr")
+            if (debugMode) Timber.tag(TAG).d("UDP ASSOCIATE teardown for %s", clientAddr)
         }
     }
 

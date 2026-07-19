@@ -256,12 +256,12 @@ class DnsRelay(
                             responseData = responseData,
                             expiresAt = System.currentTimeMillis() + ttl * 1000L,
                         )
-                        if (debugMode) Log.d(TAG, "Prefetched AAAA record")
+                        if (debugMode) Timber.tag(TAG).d("Prefetched AAAA record")
                     }
                 }
             }
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "AAAA prefetch failed: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d("AAAA prefetch failed: %s", e.message)
         } finally {
             upstream?.close()
         }

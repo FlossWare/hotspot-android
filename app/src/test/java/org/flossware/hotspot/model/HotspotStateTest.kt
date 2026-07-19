@@ -445,6 +445,9 @@ class HotspotStateTest {
 
         val c = HotspotState(pairingRequired = false, pairedDeviceCount = 1)
         assertFalse(a == c)
+    }
+
+    @Test
     fun `default watchdog fields are healthy`() {
         val state = HotspotState()
         assertTrue(state.isHealthy)
@@ -481,6 +484,10 @@ class HotspotStateTest {
         assertFalse(a == c)
 
         val d = HotspotState(isHealthy = false, isDegraded = false)
+        assertFalse(a == d)
+    }
+
+    @Test
     fun `default detectedMtu is null`() {
         val state = HotspotState()
         assertNull(state.detectedMtu)

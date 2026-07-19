@@ -358,7 +358,7 @@ class HotspotService : Service() {
             try {
                 val cached = mtuCache.get(transportType, peerIdentifier)
                 if (cached != null) {
-                    Log.d(TAG, "Using cached MTU=$cached for $transportType/$peerIdentifier")
+                    Timber.tag(TAG).d("Using cached MTU=%d for %s/%s", cached, transportType, peerIdentifier)
                     _state.value = _state.value.copy(detectedMtu = cached)
                     return@launch
                 }
@@ -366,9 +366,9 @@ class HotspotService : Service() {
                 val result = mtuDetector.detect(targetAddress)
                 mtuCache.put(transportType, peerIdentifier, result.mtu)
                 _state.value = _state.value.copy(detectedMtu = result.mtu)
-                Log.i(TAG, "MTU detected: ${result.mtu} via ${result.method}")
+                Timber.tag(TAG).i("MTU detected: %d via %s", result.mtu, result.method)
             } catch (e: Exception) {
-                Log.w(TAG, "MTU detection failed: ${e.message}")
+                Timber.tag(TAG).w("MTU detection failed: %s", e.message)
                 _state.value = _state.value.copy(detectedMtu = MtuDetector.FALLBACK_MTU)
             }
         }
@@ -478,7 +478,7 @@ class HotspotService : Service() {
         }
 
         watchdogManager.onSoftRecovery = {
-            Log.i(TAG, "Watchdog: soft recovery -- restarting proxy")
+            Timber.tag(TAG).i("Watchdog: soft recovery -- restarting proxy")
             proxyManager.stop()
             val bindAddr = if (btOnlyMode) {
                 InetAddress.getByName("127.0.0.1")
@@ -496,7 +496,7 @@ class HotspotService : Service() {
         }
 
         watchdogManager.onMediumRecovery = {
-            Log.i(TAG, "Watchdog: medium recovery -- restarting transport")
+            Timber.tag(TAG).i("Watchdog: medium recovery -- restarting transport")
             if (btOnlyMode) {
                 bluetoothManager.stop()
                 if (hasBluetoothPermissions()) {
@@ -510,7 +510,7 @@ class HotspotService : Service() {
         }
 
         watchdogManager.onHardRecovery = {
-            Log.i(TAG, "Watchdog: hard recovery -- full service restart")
+            Timber.tag(TAG).i("Watchdog: hard recovery -- full service restart")
             // Stop everything and re-start via intent to go through full lifecycle
             proxyManager.stop()
             bluetoothManager.stop()
@@ -525,7 +525,7 @@ class HotspotService : Service() {
         }
 
         watchdogManager.onDegradedMode = {
-            Log.w(TAG, "Watchdog: entering degraded mode")
+            Timber.tag(TAG).w("Watchdog: entering degraded mode")
             notificationHelper.showDegraded()
         }
 
@@ -540,6 +540,8 @@ class HotspotService : Service() {
         }
 
         watchdogManager.start(scope)
+    }
+
     private fun currentDiagnosticMetrics(): DiagnosticMetrics {
         val current = _state.value
         return DiagnosticMetrics(

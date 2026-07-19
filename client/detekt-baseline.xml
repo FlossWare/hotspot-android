@@ -85,6 +85,7 @@
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `transport can be set to USB`()</ID>
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `usb state with loopback address`()</ID>
     <ID>LongMethod:ClientScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ClientScreen(viewModel: ClientViewModel = viewModel())</ID>
+    <ID>LongMethod:TunnelService.kt$TunnelService$private fun connect(socksHost: String, socksPort: Int, transport: Transport = Transport.WIFI_DIRECT)</ID>
     <ID>LongMethod:UsbTunnel.kt$UsbTunnel$fun start()</ID>
     <ID>LongParameterList:ConnectionForm.kt$( selectedTransport: Int, socksAddress: String, onAddressChange: (String) -&gt; Unit, isConnected: Boolean, connectedTransport: Transport, pairedDevices: List&lt;BluetoothDeviceInfo&gt;, selectedBtDevice: BluetoothDeviceInfo?, onDeviceSelected: (BluetoothDeviceInfo) -&gt; Unit, onRefreshDevices: () -&gt; Unit, usbDevices: List&lt;UsbDeviceInfo&gt;, selectedUsbDevice: UsbDeviceInfo?, onUsbDeviceSelected: (UsbDeviceInfo) -&gt; Unit, onRefreshUsbDevices: () -&gt; Unit, onConnect: () -&gt; Unit, onDisconnect: () -&gt; Unit, connectEnabled: Boolean, modifier: Modifier = Modifier, )</ID>
     <ID>LoopWithTooManyJumpStatements:UsbTunnel.kt$UsbTunnel$while</ID>

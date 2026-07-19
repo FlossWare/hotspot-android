@@ -20,7 +20,10 @@ class SocksTunnel(
         val configFile = File(cacheDir, CONFIG_FILENAME)
         configFile.writeText(buildConfig(socksHost, socksPort, ipv6Enabled))
         tproxy.TProxyStartService(configFile.absolutePath, tunFd)
-        Timber.tag(TAG).i("transport_connect event=native_tunnel_started host=%s port=%d ipv6=%b", socksHost, socksPort, ipv6Enabled)
+        Timber.tag(TAG).i(
+            "transport_connect event=native_tunnel_started host=%s port=%d ipv6=%b",
+            socksHost, socksPort, ipv6Enabled,
+        )
     }
 
     fun stop() {
