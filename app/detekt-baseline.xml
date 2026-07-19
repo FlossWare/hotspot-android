@@ -57,6 +57,7 @@
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `AAAA query benefits from Happy Eyeballs prefetch`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `ByteArrayKey equality and hashCode`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse equality and hashCode`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse expires after expiresAt time`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns false for future time`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns true for past time`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `QTYPE constants have correct values`()</ID>
@@ -65,6 +66,7 @@
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery preserves domain name`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery returns null for short data`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache constants are correct`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache entry expires after TTL and subsequent query is cache miss`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache handles many unique domains without failure`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache hits are zero initially`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cached entry serves subsequent identical query as cache hit`()</ID>
@@ -439,12 +441,21 @@
     <ID>FunctionNaming:SessionHistoryTest.kt$SessionHistoryTest$@Test fun `toJsonArray includes all sessions`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks IPv6 link-local with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks IPv6 loopback with SSRF protection`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `CONNECT to hanging upstream times out without crashing server`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `SSRF protection blocks link-local address via real SOCKS5 connection`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `activeConnections returns to zero after client disconnects`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `bidirectional data relay through SOCKS5 tunnel`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `concurrent SOCKS5 connections are handled without data corruption`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `server handles connection closed during CONNECT request`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `server handles non-SOCKS5 data gracefully`()</ID>
+    <ID>FunctionNaming:Socks5IntegrationTest.kt$Socks5IntegrationTest$@Test fun `server handles truncated SOCKS5 request gracefully`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks loopback destination with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns CONNECTION_REFUSED for closed port`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns failure when no socket factory`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to echo server via SOCKS5`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with no-cache response bypasses cache`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with non-GET request forwards without caching`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT with auth to echo server via SOCKS5`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT with domain name uses dnsResolver`()</ID>
@@ -737,6 +748,7 @@
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
     <ID>TooManyFunctions:SecureChannel.kt$SecureChannel$Companion</ID>
     <ID>TooManyFunctions:SecureChannelTest.kt$SecureChannelTest</ID>
+    <ID>TooManyFunctions:Socks5IntegrationTest.kt$Socks5IntegrationTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
     <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
     <ID>TooManyFunctions:TransportSelectorTest.kt$TransportSelectorTest</ID>
