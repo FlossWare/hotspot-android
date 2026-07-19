@@ -403,4 +403,44 @@ class HotspotStateTest {
         val c = HotspotState(configuredPassphrase = "pass2")
         assertFalse(a == c)
     }
+
+    @Test
+    fun `default watchdog fields are healthy`() {
+        val state = HotspotState()
+        assertTrue(state.isHealthy)
+        assertFalse(state.isDegraded)
+    }
+
+    @Test
+    fun `isHealthy can be set to false`() {
+        val state = HotspotState(isHealthy = false)
+        assertFalse(state.isHealthy)
+    }
+
+    @Test
+    fun `isDegraded can be set to true`() {
+        val state = HotspotState(isDegraded = true)
+        assertTrue(state.isDegraded)
+    }
+
+    @Test
+    fun `copy preserves watchdog fields`() {
+        val state = HotspotState(isHealthy = false, isDegraded = true)
+        val copied = state.copy(isRunning = true)
+        assertFalse(copied.isHealthy)
+        assertTrue(copied.isDegraded)
+    }
+
+    @Test
+    fun `equality includes watchdog fields`() {
+        val a = HotspotState(isHealthy = false, isDegraded = true)
+        val b = HotspotState(isHealthy = false, isDegraded = true)
+        assertEquals(a, b)
+
+        val c = HotspotState(isHealthy = true, isDegraded = true)
+        assertFalse(a == c)
+
+        val d = HotspotState(isHealthy = false, isDegraded = false)
+        assertFalse(a == d)
+    }
 }

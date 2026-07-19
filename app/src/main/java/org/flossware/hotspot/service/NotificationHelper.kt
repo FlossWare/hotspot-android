@@ -51,4 +51,32 @@ class NotificationHelper(private val context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.notify(HotspotService.NOTIFICATION_ID, build(deviceCount))
     }
+
+    /**
+     * Shows a "connection unstable" notification when the watchdog enters
+     * degraded mode (too many recovery attempts in a short period).
+     */
+    fun showDegraded() {
+        val openIntent = Intent(context, MainActivity::class.java)
+        val openPending = PendingIntent.getActivity(
+            context, 0, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = NotificationCompat.Builder(context, HotspotService.CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.notification_degraded_title))
+            .setContentText(context.getString(R.string.notification_degraded_text))
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentIntent(openPending)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        val nm = context.getSystemService(NotificationManager::class.java)
+        nm.notify(DEGRADED_NOTIFICATION_ID, notification)
+    }
+
+    companion object {
+        /** Separate notification ID so the degraded alert does not replace the service notification. */
+        const val DEGRADED_NOTIFICATION_ID = 2
+    }
 }
