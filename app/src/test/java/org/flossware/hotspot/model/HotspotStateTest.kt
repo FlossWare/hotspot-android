@@ -403,4 +403,47 @@ class HotspotStateTest {
         val c = HotspotState(configuredPassphrase = "pass2")
         assertFalse(a == c)
     }
+
+    @Test
+    fun `default pairing fields are correct`() {
+        val state = HotspotState()
+        assertFalse(state.pairingRequired)
+        assertEquals("", state.pairingFingerprint)
+        assertEquals(0, state.pairedDeviceCount)
+    }
+
+    @Test
+    fun `pairing fields can be set`() {
+        val state = HotspotState(
+            pairingRequired = true,
+            pairingFingerprint = "abcd1234",
+            pairedDeviceCount = 3,
+        )
+        assertTrue(state.pairingRequired)
+        assertEquals("abcd1234", state.pairingFingerprint)
+        assertEquals(3, state.pairedDeviceCount)
+    }
+
+    @Test
+    fun `copy preserves pairing fields`() {
+        val state = HotspotState(
+            pairingRequired = true,
+            pairingFingerprint = "deadbeef",
+            pairedDeviceCount = 2,
+        )
+        val copied = state.copy(isRunning = true)
+        assertTrue(copied.pairingRequired)
+        assertEquals("deadbeef", copied.pairingFingerprint)
+        assertEquals(2, copied.pairedDeviceCount)
+    }
+
+    @Test
+    fun `equality includes pairing fields`() {
+        val a = HotspotState(pairingRequired = true, pairedDeviceCount = 1)
+        val b = HotspotState(pairingRequired = true, pairedDeviceCount = 1)
+        assertEquals(a, b)
+
+        val c = HotspotState(pairingRequired = false, pairedDeviceCount = 1)
+        assertFalse(a == c)
+    }
 }
