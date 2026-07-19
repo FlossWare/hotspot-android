@@ -7,6 +7,8 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,7 @@ class WifiConnector {
 
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private val timeoutHandler = Handler(Looper.getMainLooper())
 
     fun connect(context: Context, networkName: String, passphrase: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -56,11 +59,13 @@ class WifiConnector {
 
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                timeoutHandler.removeCallbacksAndMessages(null)
                 Timber.tag(TAG).i("wifi_connect event=connected ssid=%s", networkName)
                 _state.value = WifiConnectionState.Connected(network)
             }
 
             override fun onUnavailable() {
+                timeoutHandler.removeCallbacksAndMessages(null)
                 Timber.tag(TAG).w("wifi_connect event=unavailable ssid=%s", networkName)
                 _state.value = WifiConnectionState.Error(
                     "Failed to connect to $networkName",
@@ -72,6 +77,21 @@ class WifiConnector {
         try {
             cm.requestNetwork(request, callback)
             Timber.tag(TAG).i("wifi_connect event=requesting ssid=%s", networkName)
+
+            timeoutHandler.postDelayed({
+                if (_state.value is WifiConnectionState.Connecting) {
+                    Timber.tag(TAG).w("wifi_connect event=timeout ssid=%s", networkName)
+                    try {
+                        cm.unregisterNetworkCallback(callback)
+                    } catch (e: IllegalArgumentException) {
+                        Timber.tag(TAG).w(e, "wifi_connect event=timeout_unregister_failed")
+                    }
+                    _state.value = WifiConnectionState.Error(
+                        "Connection timed out — check the network name and password, " +
+                            "or look for a system Wi-Fi dialog to approve",
+                    )
+                }
+            }, CONNECT_TIMEOUT_MS)
         } catch (e: SecurityException) {
             Timber.tag(TAG).e(e, "wifi_connect event=security_error ssid=%s", networkName)
             _state.value = WifiConnectionState.Error(e.message ?: "Permission denied")
@@ -79,6 +99,7 @@ class WifiConnector {
     }
 
     fun disconnect() {
+        timeoutHandler.removeCallbacksAndMessages(null)
         networkCallback?.let { callback ->
             try {
                 connectivityManager?.unregisterNetworkCallback(callback)
@@ -93,5 +114,6 @@ class WifiConnector {
 
     companion object {
         private const val TAG = "WifiConnector"
+        private const val CONNECT_TIMEOUT_MS = 30_000L
     }
 }

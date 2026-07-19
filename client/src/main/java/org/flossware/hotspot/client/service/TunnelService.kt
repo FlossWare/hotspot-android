@@ -256,11 +256,16 @@ class TunnelService : VpnService() {
 
         scope.launch {
             val result = connector.state.first {
-                it is WifiConnectionState.Connected || it is WifiConnectionState.Error
+                it is WifiConnectionState.Connected ||
+                    it is WifiConnectionState.Error ||
+                    it is WifiConnectionState.ManualRequired
             }
             when (result) {
                 is WifiConnectionState.Connected -> {
                     underlyingNetwork = result.network
+                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
+                }
+                is WifiConnectionState.ManualRequired -> {
                     connect(socksHost, socksPort, Transport.WIFI_DIRECT)
                 }
                 is WifiConnectionState.Error -> {
