@@ -369,6 +369,7 @@ class HotspotService : Service() {
         private const val PREFS_NAME = "hotspot_prefs"
         private const val KEY_BT_OPT_IN = "bluetooth_opt_in"
         private const val KEY_PASSPHRASE = "wifi_direct_passphrase"
+        private const val KEY_PAIRING_REQUIRED = "pairing_required"
         const val ACTION_START = "org.flossware.hotspot.START"
         const val ACTION_STOP = "org.flossware.hotspot.STOP"
         const val ACTION_TOGGLE_BT = "org.flossware.hotspot.TOGGLE_BT"
@@ -468,6 +469,30 @@ class HotspotService : Service() {
                 action = ACTION_START_BT_ONLY
             }
             context.startForegroundService(intent)
+        }
+
+        /**
+         * Sets whether incoming connections require pairing (key-based auth).
+         * Default is false for backward compatibility.
+         */
+        fun setPairingRequired(context: Context, required: Boolean) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_PAIRING_REQUIRED, required)
+                .apply()
+            _state.value = _state.value.copy(pairingRequired = required)
+        }
+
+        fun getPairingRequired(context: Context): Boolean {
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_PAIRING_REQUIRED, false)
+        }
+
+        fun updatePairingState(fingerprint: String, pairedCount: Int) {
+            _state.value = _state.value.copy(
+                pairingFingerprint = fingerprint,
+                pairedDeviceCount = pairedCount,
+            )
         }
     }
 }

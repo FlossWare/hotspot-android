@@ -73,12 +73,14 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves configuredPassphrase`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves feature availability fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves fields correctly`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves pairing fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves usbConnected`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy with error preserves other fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default bluetooth fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default cache fields are zero`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default feature availability fields are true`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default pairing fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default power management fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default state has correct values`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default usbConnected is false`()</ID>
@@ -88,6 +90,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes bluetooth and cache fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes configuredPassphrase`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes feature availability fields`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes pairing fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes usbConnected`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality works for identical states`()</ID>
@@ -95,6 +98,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `inequality for different states`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `isIdle can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `multiple connected devices`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `pairing fields can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `socksAddress formats correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `socksAddress with custom host and port`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `toString contains key fields`()</ID>
@@ -155,6 +159,20 @@
     <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `response without content-length is cached when small enough`()</ID>
     <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `set-cookie prevents caching`()</ID>
     <ID>FunctionNaming:HttpCacheTest.kt$HttpCacheTest$@Test fun `vary header prevents caching`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `InMemoryKeyStorage deleteKeyPair clears storage`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `InMemoryKeyStorage roundtrips keypair`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `InMemoryKeyStorage starts with no keypair`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `different keys produce different fingerprints`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `generateKeyPair produces EdDSA keys`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getFingerprint is deterministic for same key`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getFingerprint returns 8 hex characters`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getOrCreateKeyPair generates keypair on first call`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getOrCreateKeyPair returns same keypair on subsequent calls`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getPublicKey returns non-empty encoded key`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `getPublicKeyBytes returns encoded public key`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `keypair persists across manager instances with same storage`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `reset clears the cached keypair`()</ID>
+    <ID>FunctionNaming:IdentityManagerTest.kt$IdentityManagerTest$@Test fun `static getFingerprint works with any public key`()</ID>
     <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `clear removes all entries`()</ID>
     <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `concurrent access does not crash`()</ID>
     <ID>FunctionNaming:LogCollectorTest.kt$LogCollectorTest$@Test fun `error with throwable includes exception message`()</ID>
@@ -202,6 +220,44 @@
     <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `equality based on all fields`()</ID>
     <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `hashCode consistent with equals`()</ID>
     <ID>FunctionNaming:PeerIdentityTest.kt$PeerIdentityTest$@Test fun `toString includes key fields`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `checkRateLimit allows first attempt`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `checkRateLimit allows up to MAX_FAILED_ATTEMPTS`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `checkRateLimit blocks after MAX_FAILED_ATTEMPTS`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `checkRateLimit is per-client`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `compareKeys equal arrays return 0`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `compareKeys larger first byte returns positive`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `compareKeys shorter array is smaller when prefix matches`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `compareKeys smaller first byte returns negative`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `compareKeys treats bytes as unsigned`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `completePairing adds peer to store`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generatePairingQrContent produces correct format`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generateSas differs for different keys`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generateSas is commutative`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generateSas is deterministic`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generateSas pads with leading zeros`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `generateSas produces 6-digit string`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `parsePairingQrContent returns null for empty string`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `parsePairingQrContent returns null for invalid prefix`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `parsePairingQrContent returns null for non-integer port`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `parsePairingQrContent returns null for too few parts`()</ID>
+    <ID>FunctionNaming:PairingManagerTest.kt$PairingManagerTest$@Test fun `parsePairingQrContent roundtrips with generate`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `InMemoryPeerStorage roundtrips peers`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `InMemoryPeerStorage starts empty`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `addPeer creates trusted peer with correct fields`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `addPeer makes peer trusted`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `addPeer replaces existing peer with same key`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `clear removes all peers`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `getPeer returns null for unknown key`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `getPeer returns stored peer`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `isTrusted returns false for unknown key`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `listPeers returns all peers`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `listPeers returns empty list when no peers`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `peers are persisted to storage`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `removePeer removes the peer`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `removePeer returns false for unknown key`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `size reflects number of peers`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `updateLastSeen does nothing for unknown key`()</ID>
+    <ID>FunctionNaming:PeerStoreTest.kt$PeerStoreTest$@Test fun `updateLastSeen updates timestamp`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when no socket factory for CONNECT`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when upstream connection fails`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT tunnel establishes connection`()</ID>
@@ -235,6 +291,31 @@
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `sendError writes proper HTTP response`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `start sets running to true`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `aeadEncrypt and aeadDecrypt roundtrip`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `aeadEncrypt produces ciphertext longer than plaintext (tag appended)`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `bidirectional communication works`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `encrypt and decrypt handles empty plaintext`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `encrypt and decrypt handles large payloads`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `encrypt and decrypt roundtrip via fromSharedSecret`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `encrypted frame starts with 4-byte length header`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `frame contains nonce after header`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `handshake loopback produces working channel pair`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `handshake produces unique session keys each time`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `hkdfExpand produces correct length`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `hkdfExpand produces deterministic output`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `hkdfExpand with different info produces different output`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `multiple sequential messages maintain correct nonce sequence`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `readDecrypted handles multiple frames in a stream`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `readFully reads exact number of bytes`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `second frame has nonce counter 1`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test fun `writeEncrypted and readDecrypted roundtrip via streams`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = Exception::class) fun `aeadDecrypt rejects tampered ciphertext`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = Exception::class) fun `aeadDecrypt rejects wrong key`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `decrypt rejects out-of-order frame`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `decrypt rejects replayed frame (duplicate nonce)`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `readDecrypted rejects negative frame length`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = SecurityException::class) fun `readDecrypted rejects oversized frame length`()</ID>
+    <ID>FunctionNaming:SecureChannelTest.kt$SecureChannelTest$@Test(expected = java.io.IOException::class) fun `readFully throws on premature EOF`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks loopback destination with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns CONNECTION_REFUSED for closed port`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`()</ID>
@@ -416,13 +497,19 @@
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
+    <ID>TooManyFunctions:HotspotService.kt$HotspotService$Companion</ID>
     <ID>TooManyFunctions:HotspotStateTest.kt$HotspotStateTest</ID>
     <ID>TooManyFunctions:HttpCacheTest.kt$HttpCacheTest</ID>
+    <ID>TooManyFunctions:IdentityManagerTest.kt$IdentityManagerTest</ID>
     <ID>TooManyFunctions:LogCollectorTest.kt$LogCollectorTest</ID>
     <ID>TooManyFunctions:LogExporterTest.kt$LogExporterTest</ID>
     <ID>TooManyFunctions:NsdDiscoveryTest.kt$NsdDiscoveryTest</ID>
+    <ID>TooManyFunctions:PairingManagerTest.kt$PairingManagerTest</ID>
+    <ID>TooManyFunctions:PeerStoreTest.kt$PeerStoreTest</ID>
     <ID>TooManyFunctions:ProxyServer.kt$ProxyServer</ID>
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
+    <ID>TooManyFunctions:SecureChannel.kt$SecureChannel$Companion</ID>
+    <ID>TooManyFunctions:SecureChannelTest.kt$SecureChannelTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
     <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
     <ID>TooManyFunctions:TransportSelectorTest.kt$TransportSelectorTest</ID>
