@@ -7,7 +7,7 @@ import android.os.IBinder
 import android.app.Service
 import android.os.PowerManager
 import android.os.SystemClock
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +54,7 @@ class HotspotService : Service() {
     }
 
     private fun startHotspot() {
-        Log.i(TAG, "Starting hotspot service")
+        Timber.tag(TAG).i("service_start event=hotspot_start")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
         networkManager.onNetworkLost = {
@@ -136,7 +136,7 @@ class HotspotService : Service() {
      * Binds the SOCKS5 proxy to the loopback address and starts Bluetooth transport.
      */
     private fun startBluetoothOnly() {
-        Log.i(TAG, "Starting hotspot in Bluetooth-only mode")
+        Timber.tag(TAG).i("service_start event=hotspot_start_bt_only")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
         networkManager.onNetworkLost = {
@@ -316,14 +316,14 @@ class HotspotService : Service() {
         ).apply {
             acquire(WAKE_LOCK_TIMEOUT_MS)
         }
-        Log.d(TAG, "WakeLock acquired")
+        Timber.tag(TAG).d("WakeLock acquired")
     }
 
     private fun releaseWakeLock() {
         wakeLock?.let {
             if (it.isHeld) {
                 it.release()
-                Log.d(TAG, "WakeLock released (idle)")
+                Timber.tag(TAG).d("WakeLock released (idle)")
             }
         }
         wakeLock = null
@@ -334,7 +334,7 @@ class HotspotService : Service() {
             // Already stopped or never started -- avoid double-cleanup
             return
         }
-        Log.i(TAG, "Stopping hotspot service")
+        Timber.tag(TAG).i("service_stop event=hotspot_stop")
 
         // 1. Cancel coroutines to stop accepting new work
         scope.cancel()

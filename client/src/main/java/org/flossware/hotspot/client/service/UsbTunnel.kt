@@ -5,7 +5,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbManager
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -95,13 +95,13 @@ class UsbTunnel(
                 val port = server.localPort
 
                 _state.value = UsbTunnelState.Connected(port)
-                Log.i(TAG, "USB tunnel local server on 127.0.0.1:$port")
+                Timber.tag(TAG).i( "USB tunnel local server on 127.0.0.1:$port")
 
                 while (running.get()) {
                     try {
                         val localSocket = server.accept()
                         if (debugMode) {
-                            Log.d(TAG, "New local connection on port $port")
+                            Timber.tag(TAG).d( "New local connection on port $port")
                         }
                         activeConnections.add(localSocket)
                         executor.execute { handleConnection(localSocket, connection, inEp, outEp) }
@@ -111,7 +111,7 @@ class UsbTunnel(
                 }
             } catch (e: Exception) {
                 _state.value = UsbTunnelState.Error(e.message ?: "USB connection failed")
-                Log.e(TAG, "USB tunnel error", e)
+                Timber.tag(TAG).e(e, "USB tunnel error")
             }
         }
     }
@@ -129,13 +129,13 @@ class UsbTunnel(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w( "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         _state.value = UsbTunnelState.Disconnected
-        Log.i(TAG, "USB tunnel stopped")
+        Timber.tag(TAG).i( "USB tunnel stopped")
     }
 
     private fun handleConnection(
@@ -154,7 +154,7 @@ class UsbTunnel(
                         if (count == -1) break
                         val sent = connection.bulkTransfer(outEndpoint, buffer, count, TRANSFER_TIMEOUT_MS)
                         if (sent < 0) {
-                            Log.w(TAG, "USB bulk send failed")
+                            Timber.tag(TAG).w( "USB bulk send failed")
                             break
                         }
                     }
@@ -186,11 +186,11 @@ class UsbTunnel(
             localToUsb.join()
             usbToLocal.join()
         } catch (e: Exception) {
-            Log.w(TAG, "USB relay error: ${e.message}")
+            Timber.tag(TAG).w( "USB relay error: ${e.message}")
         } finally {
             localSocket.closeSilently()
             activeConnections.remove(localSocket)
-            if (debugMode) Log.d(TAG, "USB relay connection closed")
+            if (debugMode) Timber.tag(TAG).d( "USB relay connection closed")
         }
     }
 

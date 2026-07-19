@@ -1,6 +1,6 @@
 package org.flossware.hotspot.proxy
 
-import android.util.Log
+import timber.log.Timber
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -39,12 +39,12 @@ class ProxyServer(
                 ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                Log.i(TAG, "Proxy listening on $bindAddress:$port")
+                Timber.tag(TAG).i( "Proxy listening on $bindAddress:$port")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
                         if (debugMode) {
-                            Log.d(TAG, "New connection from ${client.inetAddress.hostAddress}:${client.port}")
+                            Timber.tag(TAG).d( "New connection from ${client.inetAddress.hostAddress}:${client.port}")
                         }
                         activeSockets.add(client)
                         executor.execute {
@@ -59,7 +59,7 @@ class ProxyServer(
                     }
                 }
             } catch (e: IOException) {
-                Log.e(TAG, "Proxy server error", e)
+                Timber.tag(TAG).e(e, "Proxy server error")
             } finally {
                 ss?.close()
             }
@@ -77,12 +77,12 @@ class ProxyServer(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w( "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
-        Log.i(TAG, "Proxy server stopped")
+        Timber.tag(TAG).i( "Proxy server stopped")
     }
 
     val isRunning: Boolean get() = running.get()
@@ -95,7 +95,7 @@ class ProxyServer(
             val requestLine = readLine(input) ?: return
             val parts = requestLine.split(" ", limit = 3)
             if (parts.size < 3) {
-                Log.w(TAG, "Malformed request from $clientAddr: $requestLine")
+                Timber.tag(TAG).w( "Malformed request from $clientAddr: $requestLine")
                 sendError(client, 400, "Bad Request")
                 return
             }
@@ -103,7 +103,7 @@ class ProxyServer(
             val method = parts[0].uppercase()
             val target = parts[1]
 
-            if (debugMode) Log.d(TAG, "$method $target from $clientAddr")
+            if (debugMode) Timber.tag(TAG).d( "$method $target from $clientAddr")
 
             val headers = readHeaders(input)
 
@@ -112,7 +112,7 @@ class ProxyServer(
                 else -> handleHttp(client, input, method, target, headers)
             }
         } catch (e: IOException) {
-            Log.d(TAG, "Client handler error for $clientAddr: ${e.message}")
+            Timber.tag(TAG).d( "Client handler error for $clientAddr: ${e.message}")
         } finally {
             client.closeSilently()
         }
@@ -121,7 +121,7 @@ class ProxyServer(
     internal fun handleConnect(client: Socket, clientInput: InputStream, target: String) {
         val (host, port) = parseHostPort(target, 443)
         val factory = socketFactoryProvider() ?: run {
-            Log.w(TAG, "No socket factory available for CONNECT to $target")
+            Timber.tag(TAG).w( "No socket factory available for CONNECT to $target")
             sendError(client, 502, "No mobile network")
             return
         }
@@ -131,7 +131,7 @@ class ProxyServer(
             upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
-            Log.w(TAG, "Connection failed to $target: ${e.message}")
+            Timber.tag(TAG).w( "Connection failed to $target: ${e.message}")
             sendError(client, 502, "Bad Gateway")
             return
         }
@@ -166,7 +166,7 @@ class ProxyServer(
         headers: Map<String, String>,
     ) {
         val factory = socketFactoryProvider() ?: run {
-            Log.w(TAG, "No socket factory available for $method $urlString")
+            Timber.tag(TAG).w( "No socket factory available for $method $urlString")
             sendError(client, 502, "No mobile network")
             return
         }
@@ -174,7 +174,7 @@ class ProxyServer(
         val url = try {
             URL(urlString)
         } catch (e: Exception) {
-            Log.w(TAG, "Invalid URL from client: $urlString")
+            Timber.tag(TAG).w( "Invalid URL from client: $urlString")
             sendError(client, 400, "Invalid URL")
             return
         }
@@ -188,7 +188,7 @@ class ProxyServer(
             upstream = factory.createSocket(host, port)
             upstream.soTimeout = 60_000
         } catch (e: IOException) {
-            Log.w(TAG, "Connection failed to $host:$port: ${e.message}")
+            Timber.tag(TAG).w( "Connection failed to $host:$port: ${e.message}")
             sendError(client, 502, "Bad Gateway")
             return
         }
@@ -233,7 +233,7 @@ class ProxyServer(
                 _bytesTransferred.addAndGet(count.toLong())
             }
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Relay stream closed: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d( "Relay stream closed: ${e.message}")
         }
     }
 
@@ -250,7 +250,7 @@ class ProxyServer(
                 _bytesTransferred.addAndGet(count.toLong())
             }
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Relay bytes stream closed: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d( "Relay bytes stream closed: ${e.message}")
         }
     }
 
@@ -302,7 +302,7 @@ class ProxyServer(
             client.getOutputStream().write(response.toByteArray())
             client.getOutputStream().flush()
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Failed to send error response: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d( "Failed to send error response: ${e.message}")
         }
     }
 
@@ -310,7 +310,7 @@ class ProxyServer(
         try {
             close()
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Socket close: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d( "Socket close: ${e.message}")
         }
     }
 

@@ -1,6 +1,6 @@
 package org.flossware.hotspot.proxy
 
-import android.util.Log
+import timber.log.Timber
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -45,7 +45,7 @@ class DnsRelay(
                 sock = DatagramSocket(listenPort, bindAddress)
                 sock.soTimeout = 1000
                 socket = sock
-                Log.i(TAG, "DNS relay listening on $bindAddress:$listenPort")
+                Timber.tag(TAG).i("dns_start event=dns_relay_listen port=%d", listenPort)
 
                 val buffer = ByteArray(4096)
                 while (running.get()) {
@@ -61,7 +61,8 @@ class DnsRelay(
                     val queryData = packet.data.copyOf(packet.length)
 
                     if (debugMode) {
-                        Log.d(TAG, "DNS query from ${clientAddr.hostAddress}:$clientPort (${queryData.size}B)")
+                        Timber.tag(TAG).d("dns_query event=dns_query client=%s port=%d size=%d",
+                            clientAddr.hostAddress, clientPort, queryData.size)
                     }
 
                     queryExecutor.execute {
@@ -70,7 +71,7 @@ class DnsRelay(
                 }
             } catch (e: IOException) {
                 if (running.get()) {
-                    Log.e(TAG, "DNS relay error", e)
+                    Timber.tag(TAG).e(e, "DNS relay error")
                 }
             } finally {
                 sock?.close()
@@ -92,7 +93,7 @@ class DnsRelay(
             try {
                 t.join(SHUTDOWN_TIMEOUT_MS)
                 if (t.isAlive) {
-                    Log.w(TAG, "DNS relay thread did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                    Timber.tag(TAG).w("DNS relay thread did not terminate within %dms", SHUTDOWN_TIMEOUT_MS)
                 }
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
@@ -102,13 +103,13 @@ class DnsRelay(
         queryExecutor.shutdownNow()
         try {
             if (!queryExecutor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Query executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w("Query executor did not terminate within %dms", SHUTDOWN_TIMEOUT_MS)
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         cache.clear()
-        Log.i(TAG, "DNS relay stopped (cache: ${_cacheHits.get()} hits, ${_cacheMisses.get()} misses)")
+        Timber.tag(TAG).i("dns_stop event=dns_relay_stopped hits=%d misses=%d", _cacheHits.get(), _cacheMisses.get())
     }
 
     internal fun forwardQuery(
@@ -123,7 +124,12 @@ class DnsRelay(
             val cached = cache[cacheKey]
             if (cached != null && !cached.isExpired()) {
                 _cacheHits.incrementAndGet()
-                if (debugMode) Log.d(TAG, "DNS cache hit for ${clientAddr.hostAddress}:$clientPort")
+                if (debugMode) {
+                    Timber.tag(TAG).d(
+                        "dns_query event=cache_hit client=%s port=%d",
+                        clientAddr.hostAddress, clientPort,
+                    )
+                }
                 val response = patchTransactionId(cached.responseData, queryData)
                 val replyPacket = DatagramPacket(response, response.size, clientAddr, clientPort)
                 synchronized(listenSocket) {
@@ -134,7 +140,12 @@ class DnsRelay(
         }
 
         _cacheMisses.incrementAndGet()
-        if (debugMode) Log.d(TAG, "DNS cache miss for ${clientAddr.hostAddress}:$clientPort")
+        if (debugMode) {
+            Timber.tag(TAG).d(
+                "dns_query event=cache_miss client=%s port=%d",
+                clientAddr.hostAddress, clientPort,
+            )
+        }
 
         var upstream: DatagramSocket? = null
         try {
@@ -144,7 +155,12 @@ class DnsRelay(
             socketBinder(upstream)
 
             val dnsServer = upstreamDnsProvider()
-            if (debugMode) Log.d(TAG, "Forwarding DNS query to ${dnsServer.hostAddress}:$upstreamPort")
+            if (debugMode) {
+                Timber.tag(TAG).d(
+                    "dns_query event=forward server=%s port=%d",
+                    dnsServer.hostAddress, upstreamPort,
+                )
+            }
             val queryPacket = DatagramPacket(queryData, queryData.size, dnsServer, upstreamPort)
             upstream.send(queryPacket)
 
@@ -158,7 +174,10 @@ class DnsRelay(
             if (responseData.size < 2 || queryData.size < 2 ||
                 responseData[0] != queryData[0] || responseData[1] != queryData[1]
             ) {
-                Log.w(TAG, "DNS transaction ID mismatch for ${clientAddr.hostAddress}:$clientPort, dropping response")
+                Timber.tag(TAG).w(
+                    "DNS transaction ID mismatch for %s:%d, dropping response",
+                    clientAddr.hostAddress, clientPort,
+                )
                 return
             }
 
@@ -183,7 +202,7 @@ class DnsRelay(
                 listenSocket.send(replyPacket)
             }
         } catch (e: IOException) {
-            Log.w(TAG, "DNS forward failed for ${clientAddr.hostAddress}:$clientPort: ${e.message}")
+            Timber.tag(TAG).w("DNS forward failed for %s:%d: %s", clientAddr.hostAddress, clientPort, e.message)
         } finally {
             upstream?.close()
         }

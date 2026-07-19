@@ -1,6 +1,6 @@
 package org.flossware.hotspot.client.tunnel
 
-import android.util.Log
+import timber.log.Timber
 import hev.htproxy.TProxyService
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -19,13 +19,13 @@ class SocksTunnel(
         val configFile = File(cacheDir, CONFIG_FILENAME)
         configFile.writeText(buildConfig(socksHost, socksPort))
         tproxy.TProxyStartService(configFile.absolutePath, tunFd)
-        Log.i(TAG, "Native tunnel started -> $socksHost:$socksPort")
+        Timber.tag(TAG).i("transport_connect event=native_tunnel_started host=%s port=%d", socksHost, socksPort)
     }
 
     fun stop() {
         if (!running.getAndSet(false)) return
         tproxy.TProxyStopService()
-        Log.i(TAG, "Native tunnel stopped")
+        Timber.tag(TAG).i("transport_disconnect event=native_tunnel_stopped")
     }
 
     val isRunning: Boolean get() = running.get()

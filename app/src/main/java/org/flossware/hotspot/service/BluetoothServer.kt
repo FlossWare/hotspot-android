@@ -7,7 +7,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.flossware.hotspot.R
 import kotlinx.coroutines.flow.StateFlow
@@ -57,13 +57,13 @@ class BluetoothServer(
         val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = btManager?.adapter
         if (adapter == null) {
-            Log.w(TAG, "Bluetooth not supported on this device")
+            Timber.tag(TAG).w("Bluetooth not supported on this device")
             _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_not_supported))
             running.set(false)
             return
         }
         if (!adapter.isEnabled) {
-            Log.w(TAG, "Bluetooth is disabled")
+            Timber.tag(TAG).w("Bluetooth is disabled")
             _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_disabled))
             running.set(false)
             return
@@ -72,7 +72,7 @@ class BluetoothServer(
         try {
             serverSocket = adapter.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SERVICE_UUID)
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to create Bluetooth server", e)
+            Timber.tag(TAG).e(e, "Failed to create Bluetooth server")
             _state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_server_failed, e.message ?: ""))
             running.set(false)
             return
@@ -80,7 +80,7 @@ class BluetoothServer(
 
         unknownDeviceName = context.getString(R.string.unknown_device)
         _state.value = BluetoothState.Listening(adapter.name ?: unknownDeviceName)
-        Log.i(TAG, "Bluetooth RFCOMM listening as '${adapter.name}'")
+        Timber.tag(TAG).i("transport_connect event=bluetooth_listen name=%s", adapter.name)
 
         executor.execute {
             while (running.get()) {
@@ -89,7 +89,7 @@ class BluetoothServer(
                     executor.execute { handleClient(btSocket, socksPort) }
                 } catch (e: IOException) {
                     if (running.get()) {
-                        Log.w(TAG, "Bluetooth accept failed: ${e.message}")
+                        Timber.tag(TAG).w("Bluetooth accept failed: %s", e.message)
                     }
                     break
                 }
@@ -102,14 +102,14 @@ class BluetoothServer(
         try {
             serverSocket?.close()
         } catch (e: IOException) {
-            Log.d(TAG, "Server socket close: ${e.message}")
+            Timber.tag(TAG).d("Server socket close: %s", e.message)
         }
         serverSocket = null
         for (conn in activeConnections) {
             try {
                 conn.close()
             } catch (e: IOException) {
-                Log.d(TAG, "Connection close: ${e.message}")
+                Timber.tag(TAG).d("Connection close: %s", e.message)
             }
         }
         activeConnections.clear()
@@ -117,20 +117,20 @@ class BluetoothServer(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w("Executor did not terminate within %dms", SHUTDOWN_TIMEOUT_MS)
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         _state.value = BluetoothState.Idle
-        Log.i(TAG, "Bluetooth server stopped")
+        Timber.tag(TAG).i("transport_disconnect event=bluetooth_server_stopped")
     }
 
     @SuppressLint("MissingPermission")
     private fun handleClient(btSocket: BluetoothSocket, socksPort: Int) {
         // Reject unbonded devices to prevent unauthorized access
         if (btSocket.remoteDevice.bondState != BluetoothDevice.BOND_BONDED) {
-            Log.w(TAG, "Rejecting unbonded device: ${btSocket.remoteDevice.address}")
+            Timber.tag(TAG).w("Rejecting unbonded device: %s", btSocket.remoteDevice.address)
             btSocket.closeSilently()
             return
         }
@@ -147,7 +147,7 @@ class BluetoothServer(
             )
         }
 
-        Log.i(TAG, "Bluetooth client connected: ${device.deviceName} (${device.macAddress})")
+        Timber.tag(TAG).i("transport_connect event=bluetooth_client_connected device=%s", device.deviceName)
 
         var tcpSocket: Socket? = null
         try {
@@ -173,7 +173,7 @@ class BluetoothServer(
             btToTcp.join()
             tcpToBt.join()
         } catch (e: IOException) {
-            Log.w(TAG, "Bluetooth relay error for ${device.deviceName}: ${e.message}")
+            Timber.tag(TAG).w("Bluetooth relay error for %s: %s", device.deviceName, e.message)
         } finally {
             tcpSocket?.closeSilently()
             btSocket.closeSilently()
@@ -185,7 +185,7 @@ class BluetoothServer(
                     deviceName = sock.remoteDevice.name ?: unknownDeviceName,
                 )
             }
-            Log.i(TAG, "Bluetooth client disconnected: ${device.deviceName}")
+            Timber.tag(TAG).i("transport_disconnect event=bluetooth_client_disconnected device=%s", device.deviceName)
         }
     }
 

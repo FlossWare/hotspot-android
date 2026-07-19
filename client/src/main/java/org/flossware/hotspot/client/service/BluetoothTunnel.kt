@@ -3,7 +3,7 @@ package org.flossware.hotspot.client.service
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,19 +56,19 @@ class BluetoothTunnel(
                 val port = server.localPort
 
                 // Verify we can connect to the host before advertising the port
-                Log.i(TAG, "Testing Bluetooth connection to ${remoteDevice.address}")
+                Timber.tag(TAG).i( "Testing Bluetooth connection to ${remoteDevice.address}")
                 val testSocket = remoteDevice.createRfcommSocketToServiceRecord(SERVICE_UUID)
                 testSocket.connect()
                 testSocket.close()
 
                 _state.value = BluetoothTunnelState.Connected(port)
-                Log.i(TAG, "Bluetooth tunnel local server on 127.0.0.1:$port")
+                Timber.tag(TAG).i( "Bluetooth tunnel local server on 127.0.0.1:$port")
 
                 while (running.get()) {
                     try {
                         val localSocket = server.accept()
                         if (debugMode) {
-                            Log.d(TAG, "New local connection on port $port")
+                            Timber.tag(TAG).d( "New local connection on port $port")
                         }
                         activeConnections.add(localSocket)
                         executor.execute { handleConnection(localSocket) }
@@ -78,7 +78,7 @@ class BluetoothTunnel(
                 }
             } catch (e: IOException) {
                 _state.value = BluetoothTunnelState.Error(e.message ?: fallbackErrorMessage)
-                Log.e(TAG, "Bluetooth tunnel error", e)
+                Timber.tag(TAG).e(e, "Bluetooth tunnel error")
             }
         }
     }
@@ -94,13 +94,13 @@ class BluetoothTunnel(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w( "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         _state.value = BluetoothTunnelState.Disconnected
-        Log.i(TAG, "Bluetooth tunnel stopped")
+        Timber.tag(TAG).i( "Bluetooth tunnel stopped")
     }
 
     @SuppressLint("MissingPermission")
@@ -109,7 +109,7 @@ class BluetoothTunnel(
         try {
             btSocket = remoteDevice.createRfcommSocketToServiceRecord(SERVICE_UUID)
             btSocket.connect()
-            if (debugMode) Log.d(TAG, "Bluetooth RFCOMM connected to ${remoteDevice.address}")
+            if (debugMode) Timber.tag(TAG).d( "Bluetooth RFCOMM connected to ${remoteDevice.address}")
 
             val localToBt = Thread {
                 try {
@@ -130,12 +130,12 @@ class BluetoothTunnel(
             localToBt.join()
             btToLocal.join()
         } catch (e: IOException) {
-            Log.w(TAG, "Bluetooth relay error: ${e.message}")
+            Timber.tag(TAG).w( "Bluetooth relay error: ${e.message}")
         } finally {
             btSocket?.closeSilently()
             localSocket.closeSilently()
             activeConnections.remove(localSocket)
-            if (debugMode) Log.d(TAG, "Bluetooth relay connection closed")
+            if (debugMode) Timber.tag(TAG).d( "Bluetooth relay connection closed")
         }
     }
 

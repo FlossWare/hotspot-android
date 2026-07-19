@@ -1,6 +1,6 @@
 package org.flossware.hotspot.proxy
 
-import android.util.Log
+import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -74,7 +74,7 @@ class HttpCache(
         val key = "GET $host$path"
         val entry = entries[key] ?: run {
             _misses.incrementAndGet()
-            if (debugMode) Log.d(TAG, "Cache miss: $key")
+            if (debugMode) Timber.tag(TAG).d( "Cache miss: $key")
             return false
         }
 
@@ -83,13 +83,13 @@ class HttpCache(
                 currentSize.addAndGet(-entry.body.size.toLong())
             }
             _misses.incrementAndGet()
-            if (debugMode) Log.d(TAG, "Cache expired: $key")
+            if (debugMode) Timber.tag(TAG).d( "Cache expired: $key")
             return false
         }
 
         _hits.incrementAndGet()
         _dataSaved.addAndGet(entry.body.size.toLong())
-        if (debugMode) Log.d(TAG, "Cache hit: $key (${entry.body.size}B saved)")
+        if (debugMode) Timber.tag(TAG).d( "Cache hit: $key (${entry.body.size}B saved)")
 
         clientOutput.write(entry.statusLine.toByteArray())
         clientOutput.write(CRLF)
@@ -141,7 +141,7 @@ class HttpCache(
 
             headerCount++
             if (headerCount >= MAX_RESPONSE_HEADERS) {
-                if (debugMode) Log.d(TAG, "Too many response headers ($headerCount), stopping parse for $key")
+                if (debugMode) Timber.tag(TAG).d( "Too many response headers ($headerCount), stopping parse for $key")
                 break
             }
 
@@ -173,13 +173,13 @@ class HttpCache(
         if (hasExplicitMaxAge && maxAge <= 0) cacheable = false
 
         if (!cacheable || contentLength > maxEntryBytes || contentLength == 0) {
-            if (debugMode && !cacheable) Log.d(TAG, "Not cacheable (headers): $key")
+            if (debugMode && !cacheable) Timber.tag(TAG).d( "Not cacheable (headers): $key")
             relay(responseStream, clientOutput)
             return
         }
 
         if (!isCacheableContentType(contentType)) {
-            if (debugMode) Log.d(TAG, "Not cacheable (content-type: $contentType): $key")
+            if (debugMode) Timber.tag(TAG).d( "Not cacheable (content-type: $contentType): $key")
             relay(responseStream, clientOutput)
             return
         }
@@ -197,14 +197,14 @@ class HttpCache(
                 bodyBuffer.write(buf, 0, n)
                 totalRead += n
                 if (totalRead > maxEntryBytes) {
-                    if (debugMode) Log.d(TAG, "Response too large to cache: $key (${totalRead}B)")
+                    if (debugMode) Timber.tag(TAG).d( "Response too large to cache: $key (${totalRead}B)")
                     relay(responseStream, clientOutput)
                     return
                 }
             }
         } catch (e: IOException) {
             ioError = true
-            if (debugMode) Log.d(TAG, "IO error during cache read for $key: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d( "IO error during cache read for $key: ${e.message}")
         }
 
         val body = bodyBuffer.toByteArray()
@@ -219,7 +219,7 @@ class HttpCache(
             val old = entries.put(key, newEntry)
             if (old != null) currentSize.addAndGet(-old.body.size.toLong())
             currentSize.addAndGet(body.size.toLong())
-            if (debugMode) Log.d(TAG, "Cached: $key (${body.size}B, max-age=${maxAge}s)")
+            if (debugMode) Timber.tag(TAG).d( "Cached: $key (${body.size}B, max-age=${maxAge}s)")
         }
     }
 
@@ -236,7 +236,7 @@ class HttpCache(
             val oldest = entries.entries.minByOrNull { it.value.expiresAt } ?: break
             if (entries.remove(oldest.key, oldest.value)) {
                 currentSize.addAndGet(-oldest.value.body.size.toLong())
-                if (debugMode) Log.d(TAG, "Evicted: ${oldest.key}")
+                if (debugMode) Timber.tag(TAG).d( "Evicted: ${oldest.key}")
             }
         }
     }

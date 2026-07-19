@@ -11,7 +11,7 @@ import android.hardware.usb.UsbManager
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import android.util.Log
+import timber.log.Timber
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -103,9 +103,10 @@ class TunnelService : VpnService() {
                 socksPort = socksPort,
                 transport = transport,
             )
-            Log.i(TAG, "VPN tunnel established to $socksHost:$socksPort via $transport")
+            Timber.tag(TAG).i("service_start event=vpn_tunnel_established host=%s port=%d transport=%s",
+                socksHost, socksPort, transport)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to establish tunnel", e)
+            Timber.tag(TAG).e(e, "Failed to establish tunnel")
             val (errorType, errorMsg) = classifyConnectionError(e)
             _state.value = _state.value.copy(
                 isConnected = false,
@@ -207,7 +208,7 @@ class TunnelService : VpnService() {
             // Already disconnected -- avoid double-cleanup
             return
         }
-        Log.i(TAG, "Disconnecting VPN tunnel")
+        Timber.tag(TAG).i("service_stop event=vpn_tunnel_disconnecting")
 
         // 1. Cancel coroutines to stop accepting new work
         scope.cancel()
@@ -227,14 +228,14 @@ class TunnelService : VpnService() {
         try {
             tunInterface?.close()
         } catch (e: Exception) {
-            Log.w(TAG, "Error closing VPN interface: ${e.message}")
+            Timber.tag(TAG).w("Error closing VPN interface: %s", e.message)
         }
         tunInterface = null
 
         _state.value = VpnState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        Log.i(TAG, "VPN tunnel disconnected")
+        Timber.tag(TAG).i("service_stop event=vpn_tunnel_disconnected")
     }
 
     private fun buildNotification(): android.app.Notification {

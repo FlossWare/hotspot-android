@@ -6,7 +6,7 @@ import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.util.Log
+import timber.log.Timber
 import java.net.DatagramSocket
 import java.net.InetAddress
 import javax.net.SocketFactory
@@ -50,7 +50,7 @@ class NetworkManager(private val context: Context) {
         networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 this@NetworkManager.network = network
-                Log.i(TAG, "Mobile network available")
+                Timber.tag(TAG).i("Mobile network available")
             }
 
             override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
