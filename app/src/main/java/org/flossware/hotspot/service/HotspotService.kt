@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import org.flossware.hotspot.R
 import org.flossware.hotspot.metrics.MetricsCollector
 import org.flossware.hotspot.metrics.PerformanceMetrics
+import org.flossware.hotspot.model.HealthStatus
 import org.flossware.hotspot.model.HotspotState
 import java.net.InetAddress
 
@@ -31,6 +32,7 @@ class HotspotService : Service() {
     private val proxyManager = ProxyManager()
     private val bluetoothManager = BluetoothManager()
     private val usbServer = UsbServer()
+    private val watchdogManager = WatchdogManager()
     private lateinit var notificationHelper: NotificationHelper
     private var metricsCollector: MetricsCollector? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -133,6 +135,8 @@ class HotspotService : Service() {
             }
         }
 
+        startWatchdog()
+
         val passphrase = getPassphrase(this)
         wifiDirectManager.start(this, passphrase)
     }
@@ -230,6 +234,8 @@ class HotspotService : Service() {
                 }
             }
         }
+
+        startWatchdog()
     }
 
     private fun startServices(wifiState: WifiDirectState.GroupCreated) {
@@ -345,6 +351,9 @@ class HotspotService : Service() {
         }
         Log.i(TAG, "Stopping hotspot service")
 
+        // 0. Stop watchdog before tearing down subsystems
+        watchdogManager.stop()
+
         // 1. Cancel coroutines to stop accepting new work
         scope.cancel()
 
@@ -371,6 +380,92 @@ class HotspotService : Service() {
         _state.value = HotspotState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    /**
+     * Configures and starts the watchdog. Wires health-check callbacks to the
+     * current subsystem managers and recovery actions to restart them.
+     */
+    private fun startWatchdog() {
+        val btOnlyMode = _state.value.bluetoothOnlyMode
+
+        watchdogManager.proxyRunningCheck = { proxyManager.isRunning }
+        watchdogManager.wifiDirectHealthy = {
+            if (btOnlyMode) true
+            else wifiDirectManager.state.value is WifiDirectState.GroupCreated
+        }
+        watchdogManager.bluetoothHealthy = {
+            if (!_state.value.bluetoothOptIn) true
+            else bluetoothManager.status.value.enabled
+        }
+        watchdogManager.usbHealthy = {
+            // USB is optional -- only unhealthy if it was connected and then errored
+            usbServer.state.value !is UsbState.Error
+        }
+
+        watchdogManager.onSoftRecovery = {
+            Log.i(TAG, "Watchdog: soft recovery -- restarting proxy")
+            proxyManager.stop()
+            val bindAddr = if (btOnlyMode) {
+                InetAddress.getByName("127.0.0.1")
+            } else {
+                InetAddress.getByName(_state.value.socksHost)
+            }
+            proxyManager.start(
+                bindAddress = bindAddr,
+                socketFactoryProvider = { networkManager.socketFactory },
+                upstreamDnsProvider = {
+                    networkManager.upstreamDns ?: InetAddress.getByName("8.8.8.8")
+                },
+                socketBinder = { sock -> networkManager.bindSocket(sock) },
+            )
+        }
+
+        watchdogManager.onMediumRecovery = {
+            Log.i(TAG, "Watchdog: medium recovery -- restarting transport")
+            if (btOnlyMode) {
+                bluetoothManager.stop()
+                if (hasBluetoothPermissions()) {
+                    bluetoothManager.start(this, scope)
+                }
+            } else {
+                wifiDirectManager.stop()
+                val passphrase = getPassphrase(this)
+                wifiDirectManager.start(this, passphrase)
+            }
+        }
+
+        watchdogManager.onHardRecovery = {
+            Log.i(TAG, "Watchdog: hard recovery -- full service restart")
+            // Stop everything and re-start via intent to go through full lifecycle
+            proxyManager.stop()
+            bluetoothManager.stop()
+            usbServer.stop()
+            wifiDirectManager.stop()
+
+            if (btOnlyMode) {
+                startBluetoothOnly()
+            } else {
+                startHotspot()
+            }
+        }
+
+        watchdogManager.onDegradedMode = {
+            Log.w(TAG, "Watchdog: entering degraded mode")
+            notificationHelper.showDegraded()
+        }
+
+        // Collect watchdog state changes into HotspotState
+        scope.launch {
+            watchdogManager.state.collect { wdState ->
+                _state.value = _state.value.copy(
+                    isHealthy = wdState.healthStatus == HealthStatus.HEALTHY,
+                    isDegraded = wdState.isDegraded,
+                )
+            }
+        }
+
+        watchdogManager.start(scope)
     }
 
     override fun onDestroy() {

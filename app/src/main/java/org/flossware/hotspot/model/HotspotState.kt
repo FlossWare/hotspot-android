@@ -33,6 +33,8 @@ data class HotspotState(
     val pairingFingerprint: String = "",
     val pairedDeviceCount: Int = 0,
     val metricsSnapshot: MetricsSnapshot = MetricsSnapshot(),
+    val isHealthy: Boolean = true,
+    val isDegraded: Boolean = false,
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"

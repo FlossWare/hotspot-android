@@ -84,6 +84,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves pairing fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves usbConnected`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy preserves watchdog fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `copy with error preserves other fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default bluetooth fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default cache fields are zero`()</ID>
@@ -92,6 +93,7 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default power management fields are correct`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default state has correct values`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default usbConnected is false`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `default watchdog fields are healthy`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `destructuring works`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress formats correctly`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `dnsAddress with custom host and port`()</ID>
@@ -101,9 +103,12 @@
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes pairing fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes power management fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes usbConnected`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality includes watchdog fields`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `equality works for identical states`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `feature availability fields can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `inequality for different states`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `isDegraded can be set to true`()</ID>
+    <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `isHealthy can be set to false`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `isIdle can be set`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `multiple connected devices`()</ID>
     <ID>FunctionNaming:HotspotStateTest.kt$HotspotStateTest$@Test fun `pairing fields can be set`()</ID>
@@ -420,6 +425,45 @@
     <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `priorityFor THROUGHPUT_OPTIMIZED returns Wi-Fi, USB, Bluetooth order`()</ID>
     <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `select returns null when no transports are available`()</ID>
     <ID>FunctionNaming:TransportSelectorTest.kt$TransportSelectorTest$@Test fun `select returns the only available transport regardless of hint`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `backoff caps at MAX_BACKOFF_MS`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `backoff doubles with each failure`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `bluetooth failure triggers recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `counters reset after 30 minutes healthy`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `degraded mode after max hard restarts per hour`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `double stop is safe`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `hard recovery count resets after one hour`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `healthy subsystems produce no recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `initial state is default WatchdogState`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `isRunning false before start`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `lastCheckTimestamp updates on each check`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `lastHealthyTimestamp updates when healthy`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `nextBackoff caps at MAX_BACKOFF_MS`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `nextBackoff doubles the value`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `no further recovery in degraded mode`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `proxy failure triggers soft recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `recovering to healthy resets consecutive failures`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `recoveryLevel returns HARD for high failure counts`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `recoveryLevel returns MEDIUM for mid failure counts`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `recoveryLevel returns SOFT for low failure counts`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `six consecutive failures escalate to hard recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `start sets healthy state`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `stop resets state to default`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `subsystem check exception treated as unhealthy`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `three consecutive failures escalate to medium recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `two consecutive failures still trigger soft recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `usb failure triggers recovery`()</ID>
+    <ID>FunctionNaming:WatchdogManagerTest.kt$WatchdogManagerTest$@Test fun `wifi failure triggers recovery`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `HARD_RECOVERY_WINDOW_MS is 1 hour`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `HEALTHY_RESET_MS is 30 minutes`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `HEALTH_CHECK_INTERVAL_MS is 10 seconds`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `INITIAL_BACKOFF_MS is 1 second`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `MAX_BACKOFF_MS is 32 seconds`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `MAX_HARD_RESTARTS_PER_HOUR is 5`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `all HealthStatus values are present`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `copy preserves fields correctly`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `default state has correct values`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `equality works for identical states`()</ID>
+    <ID>FunctionNaming:WatchdogStateTest.kt$WatchdogStateTest$@Test fun `inequality for different states`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `DEFAULT_PASSPHRASE is defined and meets minimum length`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MAX_RETRIES is reasonable`()</ID>
     <ID>FunctionNaming:WifiDirectManagerTest.kt$WifiDirectManagerTest$@Test fun `MIN_PASSPHRASE_LENGTH is 8 for WPA2`()</ID>
@@ -451,11 +495,13 @@
     <ID>LongMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
+    <ID>LongMethod:HotspotService.kt$HotspotService$private fun startWatchdog()</ID>
     <ID>LongMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>LongMethod:PerformanceInfo.kt$@Composable fun PerformanceInfo( snapshot: MetricsSnapshot, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleConnect( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
     <ID>LongMethod:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
+    <ID>LongMethod:WatchdogManager.kt$WatchdogManager$internal fun performHealthCheck()</ID>
     <ID>LongParameterList:CollapsibleSection.kt$( title: String, modifier: Modifier = Modifier, subtitle: String? = null, badge: String? = null, initiallyExpanded: Boolean = true, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:HttpCache.kt$HttpCache$( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>LongParameterList:Socks5Server.kt$Socks5Server$( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
@@ -521,6 +567,8 @@
     <ID>TooGenericExceptionCaught:MetricsCollector.kt$MetricsCollector$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WatchdogManager.kt$WatchdogManager$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:WatchdogManagerTest.kt$WatchdogManagerTest$throw RuntimeException("boom")</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService$Companion</ID>
@@ -541,6 +589,8 @@
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>
     <ID>TooManyFunctions:Socks5ServerTest.kt$Socks5ServerTest</ID>
     <ID>TooManyFunctions:TransportSelectorTest.kt$TransportSelectorTest</ID>
+    <ID>TooManyFunctions:WatchdogManagerTest.kt$WatchdogManagerTest</ID>
+    <ID>TooManyFunctions:WatchdogStateTest.kt$WatchdogStateTest</ID>
     <ID>TooManyFunctions:WifiDirectManagerTest.kt$WifiDirectManagerTest</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$clientInput: InputStream</ID>
     <ID>UnusedParameter:HttpCache.kt$HttpCache$upstreamOutput: OutputStream</ID>
