@@ -35,6 +35,7 @@ data class HotspotState(
     val metricsSnapshot: MetricsSnapshot = MetricsSnapshot(),
     val isHealthy: Boolean = true,
     val isDegraded: Boolean = false,
+    val detectedMtu: Int? = null,
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"

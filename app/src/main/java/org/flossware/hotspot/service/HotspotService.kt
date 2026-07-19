@@ -22,6 +22,8 @@ import org.flossware.hotspot.metrics.MetricsCollector
 import org.flossware.hotspot.metrics.PerformanceMetrics
 import org.flossware.hotspot.model.HealthStatus
 import org.flossware.hotspot.model.HotspotState
+import org.flossware.hotspot.network.MtuCache
+import org.flossware.hotspot.network.MtuDetector
 import java.net.InetAddress
 
 class HotspotService : Service() {
@@ -35,6 +37,8 @@ class HotspotService : Service() {
     private val watchdogManager = WatchdogManager()
     private lateinit var notificationHelper: NotificationHelper
     private var metricsCollector: MetricsCollector? = null
+    private lateinit var mtuCache: MtuCache
+    private val mtuDetector = MtuDetector()
     private var wakeLock: PowerManager.WakeLock? = null
     private var startTimeElapsed: Long = 0L
     private var lastBytesTransferred: Long = 0L
@@ -44,6 +48,7 @@ class HotspotService : Service() {
         super.onCreate()
         networkManager = NetworkManager(this)
         notificationHelper = NotificationHelper(this)
+        mtuCache = MtuCache(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -164,6 +169,10 @@ class HotspotService : Service() {
         metricsCollector = MetricsCollector(this).also { it.start(scope) }
 
         val bindAddr = InetAddress.getByName("127.0.0.1")
+
+        // Run MTU detection after transport is established, before proxy starts
+        runMtuDetection(bindAddr, "bluetooth", "loopback")
+
         proxyManager.start(
             bindAddress = bindAddr,
             socketFactoryProvider = { networkManager.socketFactory },
@@ -243,6 +252,9 @@ class HotspotService : Service() {
 
         val bindAddr = InetAddress.getByName(wifiState.groupOwnerAddress)
 
+        // Run MTU detection after transport is established, before proxy starts
+        runMtuDetection(bindAddr, "wifi_direct", wifiState.groupOwnerAddress)
+
         proxyManager.start(
             bindAddress = bindAddr,
             socketFactoryProvider = { networkManager.socketFactory },
@@ -297,8 +309,39 @@ class HotspotService : Service() {
             bluetoothDeviceName = current.bluetoothDeviceName,
             bluetoothConnectedDevices = current.bluetoothConnectedDevices,
             usbConnected = current.usbConnected,
+            detectedMtu = current.detectedMtu,
         )
         notificationHelper.update(wifiState.connectedDevices.size)
+    }
+
+    /**
+     * Runs MTU detection in a background coroutine. Checks the cache first; if
+     * no cached value exists, probes the target address and caches the result.
+     * Updates [_state] with the detected MTU for UI display.
+     */
+    private fun runMtuDetection(
+        targetAddress: InetAddress,
+        transportType: String,
+        peerIdentifier: String,
+    ) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val cached = mtuCache.get(transportType, peerIdentifier)
+                if (cached != null) {
+                    Log.d(TAG, "Using cached MTU=$cached for $transportType/$peerIdentifier")
+                    _state.value = _state.value.copy(detectedMtu = cached)
+                    return@launch
+                }
+
+                val result = mtuDetector.detect(targetAddress)
+                mtuCache.put(transportType, peerIdentifier, result.mtu)
+                _state.value = _state.value.copy(detectedMtu = result.mtu)
+                Log.i(TAG, "MTU detected: ${result.mtu} via ${result.method}")
+            } catch (e: Exception) {
+                Log.w(TAG, "MTU detection failed: ${e.message}")
+                _state.value = _state.value.copy(detectedMtu = MtuDetector.FALLBACK_MTU)
+            }
+        }
     }
 
     private fun toggleBluetooth(enabled: Boolean) {

@@ -28,9 +28,11 @@ import org.flossware.hotspot.client.R
 import org.flossware.hotspot.client.model.ConnectionErrorType
 import org.flossware.hotspot.client.model.Transport
 import org.flossware.hotspot.client.model.VpnState
+import org.flossware.hotspot.client.network.ClientMtuManager
 import org.flossware.hotspot.client.tunnel.SocksTunnel
 import org.flossware.hotspot.client.tunnel.SocksTunnel.Companion.DNS_ADDRESS
 import java.net.ConnectException
+import java.net.InetAddress
 import java.net.NoRouteToHostException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -42,6 +44,12 @@ class TunnelService : VpnService() {
     private var bluetoothTunnel: BluetoothTunnel? = null
     private var usbTunnel: UsbTunnel? = null
     private var scope = CoroutineScope(Dispatchers.Main + Job())
+    private lateinit var mtuManager: ClientMtuManager
+
+    override fun onCreate() {
+        super.onCreate()
+        mtuManager = ClientMtuManager(this)
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -69,13 +77,17 @@ class TunnelService : VpnService() {
         startForeground(NOTIFICATION_ID, buildNotification())
 
         try {
+            val targetAddress = InetAddress.getByName(socksHost)
+            val mtuInfo = mtuManager.getMtu(transport, socksHost, targetAddress)
+            Log.i(TAG, "Using MTU=${mtuInfo.mtu} (cached=${mtuInfo.fromCache}, method=${mtuInfo.detectionMethod})")
+
             val builder = Builder()
                 .setSession("FlossWare Tunnel")
                 .addAddress("10.0.0.2", 32)
                 .addRoute("0.0.0.0", 0)
                 .addAddress("fd00::2", 128)
                 .addRoute("::", 0)
-                .setMtu(1500)
+                .setMtu(mtuInfo.mtu)
                 .addDisallowedApplication(packageName)
                 .addDnsServer(DNS_ADDRESS)
 
