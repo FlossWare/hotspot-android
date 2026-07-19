@@ -9,6 +9,7 @@ enum class ConnectionErrorType {
     TIMEOUT,
     VPN_DENIED,
     NO_TRANSPORTS,
+    WIFI_CONNECTION_FAILED,
     GENERIC,
 }
 

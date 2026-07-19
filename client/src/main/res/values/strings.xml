@@ -7,8 +7,15 @@
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
 
+    <string name="network_name_label">Network Name</string>
+    <string name="network_name_hint">DIRECT-xx-FlossHotspot</string>
+    <string name="password_label">Password</string>
+    <string name="password_hint">Enter hotspot password</string>
     <string name="socks_server_label">SOCKS5 Server</string>
     <string name="socks_server_hint">192.168.49.1:1080</string>
+    <string name="socks_address_helper">Default address works for most connections</string>
+    <string name="open_wifi_settings">Open Wi-Fi Settings</string>
+    <string name="wifi_manual_connect_hint">Connect to the hotspot network in Wi-Fi settings, then tap Connect.</string>
 
     <string name="notification_channel_name">VPN Tunnel</string>
     <string name="notification_title">FlossWare Tunnel</string>
@@ -31,6 +38,7 @@
     <string name="error_connection_timeout">Connection timed out. The hotspot may be out of range or not running. Move closer and try again.</string>
     <string name="error_no_transports">No connection methods available. This device does not support Wi-Fi, Bluetooth, or USB connections. Please check your device settings.</string>
     <string name="error_usb_not_available">USB not available</string>
+    <string name="error_wifi_connection_failed">Failed to connect to the hotspot Wi-Fi network. Check the network name and password.</string>
     <string name="error_usb_device_not_found">USB device disconnected. Reconnect the USB cable and try again.</string>
 
     <string name="transport_wifi_direct">Wi-Fi Direct</string>
@@ -49,4 +57,5 @@
     <string name="cd_flossware_logo">FlossWare logo</string>
     <string name="cd_wifi_transport_icon">Wi-Fi Direct transport</string>
     <string name="cd_bluetooth_transport_icon">Bluetooth transport</string>
+    <string name="cd_toggle_password">Toggle password visibility</string>
 </resources>

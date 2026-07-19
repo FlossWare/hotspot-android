@@ -205,13 +205,14 @@ class VpnStateTest {
     @Test
     fun `ConnectionErrorType enum has all expected values`() {
         val values = ConnectionErrorType.entries
-        assertEquals(7, values.size)
+        assertEquals(8, values.size)
         assertTrue(values.contains(ConnectionErrorType.NONE))
         assertTrue(values.contains(ConnectionErrorType.HOST_NOT_FOUND))
         assertTrue(values.contains(ConnectionErrorType.AUTH_FAILED))
         assertTrue(values.contains(ConnectionErrorType.TIMEOUT))
         assertTrue(values.contains(ConnectionErrorType.VPN_DENIED))
         assertTrue(values.contains(ConnectionErrorType.NO_TRANSPORTS))
+        assertTrue(values.contains(ConnectionErrorType.WIFI_CONNECTION_FAILED))
         assertTrue(values.contains(ConnectionErrorType.GENERIC))
     }
 

@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import android.net.Network
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -43,6 +44,8 @@ class TunnelService : VpnService() {
     private var socksTunnel: SocksTunnel? = null
     private var bluetoothTunnel: BluetoothTunnel? = null
     private var usbTunnel: UsbTunnel? = null
+    private var wifiConnector: WifiConnector? = null
+    private var underlyingNetwork: Network? = null
     private var scope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var mtuManager: ClientMtuManager
 
@@ -65,6 +68,13 @@ class TunnelService : VpnService() {
             ACTION_CONNECT_USB -> {
                 val deviceName = intent.getStringExtra(EXTRA_USB_DEVICE_NAME) ?: return START_NOT_STICKY
                 connectUsb(deviceName)
+            }
+            ACTION_CONNECT_WIFI -> {
+                val networkName = intent.getStringExtra(EXTRA_NETWORK_NAME) ?: return START_NOT_STICKY
+                val passphrase = intent.getStringExtra(EXTRA_PASSPHRASE) ?: ""
+                val host = intent.getStringExtra(EXTRA_SOCKS_HOST) ?: VpnState.DEFAULT_SOCKS_HOST
+                val port = intent.getIntExtra(EXTRA_SOCKS_PORT, VpnState.DEFAULT_SOCKS_PORT)
+                connectWifi(networkName, passphrase, host, port)
             }
             ACTION_DISCONNECT -> disconnect()
         }
@@ -114,6 +124,7 @@ class TunnelService : VpnService() {
             }
 
             tunInterface = tun
+            underlyingNetwork?.let { setUnderlyingNetworks(arrayOf(it)) }
 
             socksTunnel = SocksTunnel(
                 tunFd = tun.fd,
@@ -229,6 +240,42 @@ class TunnelService : VpnService() {
         }
     }
 
+    private fun connectWifi(
+        networkName: String,
+        passphrase: String,
+        socksHost: String,
+        socksPort: Int,
+    ) {
+        if (tunInterface != null) return
+
+        startForeground(NOTIFICATION_ID, buildNotification())
+
+        val connector = WifiConnector()
+        wifiConnector = connector
+        connector.connect(this, networkName, passphrase)
+
+        scope.launch {
+            val result = connector.state.first {
+                it is WifiConnectionState.Connected || it is WifiConnectionState.Error
+            }
+            when (result) {
+                is WifiConnectionState.Connected -> {
+                    underlyingNetwork = result.network
+                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
+                }
+                is WifiConnectionState.Error -> {
+                    _state.value = _state.value.copy(
+                        error = result.message,
+                        errorType = ConnectionErrorType.WIFI_CONNECTION_FAILED,
+                    )
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                else -> {}
+            }
+        }
+    }
+
     private fun disconnect() {
         if (tunInterface == null && socksTunnel == null && bluetoothTunnel == null && usbTunnel == null) {
             // Already disconnected -- avoid double-cleanup
@@ -249,6 +296,9 @@ class TunnelService : VpnService() {
         bluetoothTunnel = null
         usbTunnel?.stop()
         usbTunnel = null
+        wifiConnector?.disconnect()
+        wifiConnector = null
+        underlyingNetwork = null
 
         // 4. Close VPN interface
         try {
@@ -326,11 +376,14 @@ class TunnelService : VpnService() {
         const val ACTION_CONNECT = "org.flossware.hotspot.client.CONNECT"
         const val ACTION_CONNECT_BT = "org.flossware.hotspot.client.CONNECT_BT"
         const val ACTION_CONNECT_USB = "org.flossware.hotspot.client.CONNECT_USB"
+        const val ACTION_CONNECT_WIFI = "org.flossware.hotspot.client.CONNECT_WIFI"
         const val ACTION_DISCONNECT = "org.flossware.hotspot.client.DISCONNECT"
         const val EXTRA_SOCKS_HOST = "socks_host"
         const val EXTRA_SOCKS_PORT = "socks_port"
         const val EXTRA_BT_DEVICE_ADDRESS = "bt_device_address"
         const val EXTRA_USB_DEVICE_NAME = "usb_device_name"
+        const val EXTRA_NETWORK_NAME = "network_name"
+        const val EXTRA_PASSPHRASE = "passphrase"
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "TunnelService"
@@ -364,6 +417,23 @@ class TunnelService : VpnService() {
             val intent = Intent(context, TunnelService::class.java).apply {
                 action = ACTION_CONNECT_USB
                 putExtra(EXTRA_USB_DEVICE_NAME, deviceName)
+            }
+            context.startForegroundService(intent)
+        }
+
+        fun connectWifi(
+            context: Context,
+            networkName: String,
+            passphrase: String,
+            socksHost: String,
+            socksPort: Int,
+        ) {
+            val intent = Intent(context, TunnelService::class.java).apply {
+                action = ACTION_CONNECT_WIFI
+                putExtra(EXTRA_NETWORK_NAME, networkName)
+                putExtra(EXTRA_PASSPHRASE, passphrase)
+                putExtra(EXTRA_SOCKS_HOST, socksHost)
+                putExtra(EXTRA_SOCKS_PORT, socksPort)
             }
             context.startForegroundService(intent)
         }

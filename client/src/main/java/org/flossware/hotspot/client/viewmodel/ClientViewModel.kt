@@ -43,6 +43,10 @@ class ClientViewModel(application: Application) : AndroidViewModel(application) 
         TunnelService.connectUsb(getApplication(), deviceName)
     }
 
+    fun connectWifi(networkName: String, passphrase: String, socksHost: String, socksPort: Int) {
+        TunnelService.connectWifi(getApplication(), networkName, passphrase, socksHost, socksPort)
+    }
+
     fun disconnect() {
         TunnelService.disconnect(getApplication())
     }

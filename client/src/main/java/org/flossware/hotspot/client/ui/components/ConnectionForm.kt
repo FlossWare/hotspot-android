@@ -1,5 +1,8 @@
 package org.flossware.hotspot.client.ui.components
 
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
@@ -17,17 +22,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.flossware.hotspot.client.R
@@ -38,6 +51,10 @@ import org.flossware.hotspot.client.viewmodel.UsbDeviceInfo
 @Composable
 fun ConnectionForm(
     selectedTransport: Int,
+    networkName: String,
+    onNetworkNameChange: (String) -> Unit,
+    passphrase: String,
+    onPassphraseChange: (String) -> Unit,
     socksAddress: String,
     onAddressChange: (String) -> Unit,
     isConnected: Boolean,
@@ -59,6 +76,10 @@ fun ConnectionForm(
         Column(modifier = Modifier.padding(16.dp)) {
             when (selectedTransport) {
                 0 -> WifiDirectForm(
+                    networkName = networkName,
+                    onNetworkNameChange = onNetworkNameChange,
+                    passphrase = passphrase,
+                    onPassphraseChange = onPassphraseChange,
                     socksAddress = socksAddress,
                     onAddressChange = onAddressChange,
                     enabled = !isConnected,
@@ -100,10 +121,76 @@ fun ConnectionForm(
 
 @Composable
 private fun WifiDirectForm(
+    networkName: String,
+    onNetworkNameChange: (String) -> Unit,
+    passphrase: String,
+    onPassphraseChange: (String) -> Unit,
     socksAddress: String,
     onAddressChange: (String) -> Unit,
     enabled: Boolean,
 ) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        OutlinedTextField(
+            value = networkName,
+            onValueChange = onNetworkNameChange,
+            label = { Text(stringResource(R.string.network_name_label)) },
+            placeholder = { Text(stringResource(R.string.network_name_hint)) },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        var passwordVisible by remember { mutableStateOf(false) }
+        OutlinedTextField(
+            value = passphrase,
+            onValueChange = onPassphraseChange,
+            label = { Text(stringResource(R.string.password_label)) },
+            placeholder = { Text(stringResource(R.string.password_hint)) },
+            singleLine = true,
+            enabled = enabled,
+            visualTransformation = if (passwordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) {
+                            Icons.Default.VisibilityOff
+                        } else {
+                            Icons.Default.Visibility
+                        },
+                        contentDescription = stringResource(R.string.cd_toggle_password),
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+    } else {
+        val context = LocalContext.current
+        Text(
+            stringResource(R.string.wifi_manual_connect_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        OutlinedButton(
+            onClick = {
+                context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.open_wifi_settings))
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+
     OutlinedTextField(
         value = socksAddress,
         onValueChange = onAddressChange,
@@ -112,6 +199,13 @@ private fun WifiDirectForm(
         singleLine = true,
         enabled = enabled,
         modifier = Modifier.fillMaxWidth(),
+    )
+
+    Text(
+        stringResource(R.string.socks_address_helper),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
     )
 }
 

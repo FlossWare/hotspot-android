@@ -84,10 +84,21 @@
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `transport can be set to BLUETOOTH`()</ID>
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `transport can be set to USB`()</ID>
     <ID>FunctionNaming:VpnStateTest.kt$VpnStateTest$@Test fun `usb state with loopback address`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState Connecting identity`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState Error equality`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState Error holds message`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState Error inequality`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState Idle identity`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `WifiConnectionState ManualRequired identity`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `all state types are distinct`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `disconnect resets state to Idle`()</ID>
+    <ID>FunctionNaming:WifiConnectorTest.kt$WifiConnectorTest$@Test fun `initial state is Idle`()</ID>
     <ID>LongMethod:ClientScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ClientScreen(viewModel: ClientViewModel = viewModel())</ID>
+    <ID>LongMethod:ConnectionForm.kt$@Composable private fun WifiDirectForm( networkName: String, onNetworkNameChange: (String) -&gt; Unit, passphrase: String, onPassphraseChange: (String) -&gt; Unit, socksAddress: String, onAddressChange: (String) -&gt; Unit, enabled: Boolean, )</ID>
     <ID>LongMethod:TunnelService.kt$TunnelService$private fun connect(socksHost: String, socksPort: Int, transport: Transport = Transport.WIFI_DIRECT)</ID>
     <ID>LongMethod:UsbTunnel.kt$UsbTunnel$fun start()</ID>
-    <ID>LongParameterList:ConnectionForm.kt$( selectedTransport: Int, socksAddress: String, onAddressChange: (String) -&gt; Unit, isConnected: Boolean, connectedTransport: Transport, pairedDevices: List&lt;BluetoothDeviceInfo&gt;, selectedBtDevice: BluetoothDeviceInfo?, onDeviceSelected: (BluetoothDeviceInfo) -&gt; Unit, onRefreshDevices: () -&gt; Unit, usbDevices: List&lt;UsbDeviceInfo&gt;, selectedUsbDevice: UsbDeviceInfo?, onUsbDeviceSelected: (UsbDeviceInfo) -&gt; Unit, onRefreshUsbDevices: () -&gt; Unit, onConnect: () -&gt; Unit, onDisconnect: () -&gt; Unit, connectEnabled: Boolean, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:ConnectionForm.kt$( networkName: String, onNetworkNameChange: (String) -&gt; Unit, passphrase: String, onPassphraseChange: (String) -&gt; Unit, socksAddress: String, onAddressChange: (String) -&gt; Unit, enabled: Boolean, )</ID>
+    <ID>LongParameterList:ConnectionForm.kt$( selectedTransport: Int, networkName: String, onNetworkNameChange: (String) -&gt; Unit, passphrase: String, onPassphraseChange: (String) -&gt; Unit, socksAddress: String, onAddressChange: (String) -&gt; Unit, isConnected: Boolean, connectedTransport: Transport, pairedDevices: List&lt;BluetoothDeviceInfo&gt;, selectedBtDevice: BluetoothDeviceInfo?, onDeviceSelected: (BluetoothDeviceInfo) -&gt; Unit, onRefreshDevices: () -&gt; Unit, usbDevices: List&lt;UsbDeviceInfo&gt;, selectedUsbDevice: UsbDeviceInfo?, onUsbDeviceSelected: (UsbDeviceInfo) -&gt; Unit, onRefreshUsbDevices: () -&gt; Unit, onConnect: () -&gt; Unit, onDisconnect: () -&gt; Unit, connectEnabled: Boolean, modifier: Modifier = Modifier, )</ID>
     <ID>LoopWithTooManyJumpStatements:UsbTunnel.kt$UsbTunnel$while</ID>
     <ID>MagicNumber:LogExporter.kt$LogExporter$5</ID>
     <ID>MaxLineLength:LogExporter.kt$LogExporter$appendLine("App: ${context.applicationInfo.loadLabel(context.packageManager)} v$versionName (build $versionCode)")</ID>

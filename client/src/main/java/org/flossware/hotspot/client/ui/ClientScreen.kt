@@ -63,6 +63,8 @@ import org.flossware.hotspot.client.viewmodel.UsbDeviceInfo
 fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
     val state by viewModel.vpnState.collectAsState()
     var socksAddress by remember { mutableStateOf("${VpnState.DEFAULT_SOCKS_HOST}:${VpnState.DEFAULT_SOCKS_PORT}") }
+    var networkName by remember { mutableStateOf("") }
+    var passphrase by remember { mutableStateOf("") }
     var selectedTransport by remember { mutableIntStateOf(0) }
     var selectedBtDevice by remember { mutableStateOf<BluetoothDeviceInfo?>(null) }
     var pairedDevices by remember { mutableStateOf<List<BluetoothDeviceInfo>>(emptyList()) }
@@ -75,10 +77,7 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             when (selectedTransport) {
-                0 -> {
-                    val (host, port) = parseAddress(socksAddress)
-                    viewModel.connect(host, port)
-                }
+                0 -> connectWifiDirect(viewModel, networkName, passphrase, socksAddress)
                 1 -> selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
                 2 -> selectedUsbDevice?.let { viewModel.connectUsb(it.deviceName) }
             }
@@ -128,10 +127,7 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
             vpnLauncher.launch(vpnIntent)
         } else {
             when (selectedTransport) {
-                0 -> {
-                    val (host, port) = parseAddress(socksAddress)
-                    viewModel.connect(host, port)
-                }
+                0 -> connectWifiDirect(viewModel, networkName, passphrase, socksAddress)
                 1 -> selectedBtDevice?.let { viewModel.connectBluetooth(it.address) }
                 2 -> selectedUsbDevice?.let { viewModel.connectUsb(it.deviceName) }
             }
@@ -203,6 +199,10 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
 
             ConnectionForm(
                 selectedTransport = selectedTransport,
+                networkName = networkName,
+                onNetworkNameChange = { networkName = it },
+                passphrase = passphrase,
+                onPassphraseChange = { passphrase = it },
                 socksAddress = socksAddress,
                 onAddressChange = { socksAddress = it },
                 isConnected = state.isConnected,
@@ -258,6 +258,20 @@ fun ClientScreen(viewModel: ClientViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+private fun connectWifiDirect(
+    viewModel: ClientViewModel,
+    networkName: String,
+    passphrase: String,
+    socksAddress: String,
+) {
+    val (host, port) = parseAddress(socksAddress)
+    if (networkName.isNotBlank()) {
+        viewModel.connectWifi(networkName, passphrase, host, port)
+    } else {
+        viewModel.connect(host, port)
     }
 }
 
