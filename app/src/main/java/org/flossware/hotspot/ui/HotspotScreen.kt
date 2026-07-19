@@ -67,6 +67,7 @@ import org.flossware.hotspot.ui.components.CompatibilityTips
 import org.flossware.hotspot.ui.components.ConnectionInfo
 import org.flossware.hotspot.ui.components.DeviceList
 import org.flossware.hotspot.ui.components.HotspotToggle
+import org.flossware.hotspot.ui.components.PerformanceInfo
 import org.flossware.hotspot.ui.components.ProxyStats
 import org.flossware.hotspot.ui.components.SetupInstructions
 import org.flossware.hotspot.ui.components.UsbInfo
@@ -327,6 +328,8 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                 }
 
                 ProxyStats(state = state)
+
+                PerformanceInfo(snapshot = state.metricsSnapshot)
 
                 CompatibilityTips()
 

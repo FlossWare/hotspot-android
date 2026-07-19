@@ -4,8 +4,10 @@
   <CurrentIssues>
     <ID>ComplexCondition:DnsRelay.kt$DnsRelay$responseData.size &lt; 2 || queryData.size &lt; 2 || responseData[0] != queryData[0] || responseData[1] != queryData[1]</ID>
     <ID>CyclomaticComplexMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
+    <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
     <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
     <ID>CyclomaticComplexMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>CyclomaticComplexMethod:PerformanceInfo.kt$@Composable fun PerformanceInfo( snapshot: MetricsSnapshot, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:ProxyServerTest.kt$ProxyServerTest$private fun createPostEchoServer(): ServerSocket</ID>
     <ID>CyclomaticComplexMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>CyclomaticComplexMethod:Socks5ServerTest.kt$Socks5ServerTest$private fun createCacheFriendlyPostEchoServer(): ServerSocket</ID>
@@ -53,6 +55,12 @@
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop clears cache`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop closes socket and thread`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `boundary at 1 kbps`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `boundary at 1000 kbps`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `kbps range`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `mbps range`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `sub-kbps shows bps`()</ID>
+    <ID>FunctionNaming:FormatThroughputTest.kt$FormatThroughputTest$@Test fun `zero shows bps`()</ID>
     <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `hours minutes seconds`()</ID>
     <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `hours with minutes and seconds`()</ID>
     <ID>FunctionNaming:FormatUptimeTest.kt$FormatUptimeTest$@Test fun `large uptime`()</ID>
@@ -182,6 +190,22 @@
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips token values`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username in quotes`()</ID>
     <ID>FunctionNaming:LogExporterTest.kt$LogExporterTest$@Test fun `sanitize strips username with equals`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `MetricsSnapshot defaults are all zeros`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `MetricsSnapshot equality`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `dns queries track total and cache hits`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `getBytesRx returns zero for unknown transport`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `getBytesTx returns zero for unknown transport`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `getErrorBreakdown returns all types`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `initial state is all zeros`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `recordBytesRx increments per transport`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `recordBytesTx increments per transport`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `recordError tracks by type`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `recordReconnect increments counter`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `reset clears all metrics`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `snapshot captures current state`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `socks connections increment and decrement`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `throughput returns positive value after recording bytes`()</ID>
+    <ID>FunctionNaming:PerformanceMetricsTest.kt$PerformanceMetricsTest$@Test fun `throughput returns zero with no samples`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when no socket factory for CONNECT`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT returns 502 when upstream connection fails`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `CONNECT tunnel establishes connection`()</ID>
@@ -312,6 +336,7 @@
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startBluetoothOnly()</ID>
     <ID>LongMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
     <ID>LongMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
+    <ID>LongMethod:PerformanceInfo.kt$@Composable fun PerformanceInfo( snapshot: MetricsSnapshot, modifier: Modifier = Modifier, initiallyExpanded: Boolean = false, )</ID>
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleClient(client: Socket)</ID>
     <ID>LongMethod:Socks5Server.kt$Socks5Server$internal fun handleConnect( client: Socket, input: InputStream, output: OutputStream, host: String, port: Int, connectionBytes: AtomicLong = AtomicLong(0), )</ID>
     <ID>LongMethod:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT to port 80 with httpCache populates cache on miss then serves from cache on hit`()</ID>
@@ -377,6 +402,7 @@
     <ID>ReturnCount:Socks5Server.kt$Socks5Server$internal fun negotiate(input: InputStream, output: OutputStream): Boolean</ID>
     <ID>SwallowedException:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>ThrowsCount:Socks5Server.kt$Socks5Server$internal fun readAddress(input: InputStream): Pair&lt;String, Int&gt;</ID>
+    <ID>TooGenericExceptionCaught:MetricsCollector.kt$MetricsCollector$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
@@ -385,6 +411,8 @@
     <ID>TooManyFunctions:HttpCacheTest.kt$HttpCacheTest</ID>
     <ID>TooManyFunctions:LogCollectorTest.kt$LogCollectorTest</ID>
     <ID>TooManyFunctions:LogExporterTest.kt$LogExporterTest</ID>
+    <ID>TooManyFunctions:PerformanceMetrics.kt$PerformanceMetrics</ID>
+    <ID>TooManyFunctions:PerformanceMetricsTest.kt$PerformanceMetricsTest</ID>
     <ID>TooManyFunctions:ProxyServer.kt$ProxyServer</ID>
     <ID>TooManyFunctions:ProxyServerTest.kt$ProxyServerTest</ID>
     <ID>TooManyFunctions:Socks5Server.kt$Socks5Server</ID>

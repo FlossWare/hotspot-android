@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.flossware.hotspot.R
+import org.flossware.hotspot.metrics.MetricsCollector
+import org.flossware.hotspot.metrics.PerformanceMetrics
 import org.flossware.hotspot.model.HotspotState
 import java.net.InetAddress
 
@@ -30,6 +32,7 @@ class HotspotService : Service() {
     private val bluetoothManager = BluetoothManager()
     private val usbServer = UsbServer()
     private lateinit var notificationHelper: NotificationHelper
+    private var metricsCollector: MetricsCollector? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var startTimeElapsed: Long = 0L
     private var lastBytesTransferred: Long = 0L
@@ -68,6 +71,8 @@ class HotspotService : Service() {
         startTimeElapsed = SystemClock.elapsedRealtime()
         lastBytesTransferred = 0L
         idlePolls = 0
+        PerformanceMetrics.reset()
+        metricsCollector = MetricsCollector(this).also { it.start(scope) }
 
         scope.launch {
             wifiDirectManager.state.collect { wifiState ->
@@ -121,6 +126,7 @@ class HotspotService : Service() {
                         dataSaved = proxyManager.dataSaved,
                         uptimeSeconds = uptimeMs / 1000,
                         isIdle = idlePolls >= IDLE_THRESHOLD_POLLS,
+                        metricsSnapshot = PerformanceMetrics.snapshot(),
                     )
                     wifiDirectManager.refreshPeers()
                 }
@@ -150,6 +156,8 @@ class HotspotService : Service() {
         startTimeElapsed = SystemClock.elapsedRealtime()
         lastBytesTransferred = 0L
         idlePolls = 0
+        PerformanceMetrics.reset()
+        metricsCollector = MetricsCollector(this).also { it.start(scope) }
 
         val bindAddr = InetAddress.getByName("127.0.0.1")
         proxyManager.start(
@@ -217,6 +225,7 @@ class HotspotService : Service() {
                         dataSaved = proxyManager.dataSaved,
                         uptimeSeconds = uptimeMs / 1000,
                         isIdle = idlePolls >= IDLE_THRESHOLD_POLLS,
+                        metricsSnapshot = PerformanceMetrics.snapshot(),
                     )
                 }
             }
@@ -350,7 +359,12 @@ class HotspotService : Service() {
         // 4. Remove Wi-Fi Direct group
         wifiDirectManager.stop()
 
-        // 5. Release system resources
+        // 5. Stop metrics collection
+        metricsCollector?.stop()
+        metricsCollector = null
+        PerformanceMetrics.reset()
+
+        // 6. Release system resources
         networkManager.unregister()
         releaseWakeLock()
 

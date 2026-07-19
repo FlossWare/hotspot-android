@@ -1,5 +1,7 @@
 package org.flossware.hotspot.model
 
+import org.flossware.hotspot.metrics.MetricsSnapshot
+
 data class HotspotState(
     val isRunning: Boolean = false,
     val networkName: String = "",
@@ -27,6 +29,7 @@ data class HotspotState(
     val mobileDataAvailable: Boolean = true,
     val permissionsDenied: Boolean = false,
     val bluetoothOnlyMode: Boolean = false,
+    val metricsSnapshot: MetricsSnapshot = MetricsSnapshot(),
 ) {
     val socksAddress: String get() = "$socksHost:$socksPort"
     val dnsAddress: String get() = "$socksHost:$dnsPort"
