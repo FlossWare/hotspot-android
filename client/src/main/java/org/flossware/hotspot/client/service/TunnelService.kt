@@ -83,7 +83,8 @@ class TunnelService : VpnService() {
                 "Using MTU=%d (cached=%b, method=%s)",
                 mtuInfo.mtu, mtuInfo.fromCache, mtuInfo.detectionMethod,
             )
-            val ipv6Enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+            val ipv6Enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+                mtuInfo.mtu >= IPV6_MIN_MTU
 
             val builder = Builder()
                 .setSession("FlossWare Tunnel")
@@ -97,6 +98,8 @@ class TunnelService : VpnService() {
                 builder.addAddress("fd00::2", 128)
                 builder.addRoute("::", 0)
                 Timber.tag(TAG).i("IPv6 enabled (API %d): added fd00::2/128 route", Build.VERSION.SDK_INT)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Timber.tag(TAG).w("IPv6 disabled: MTU %d < %d minimum", mtuInfo.mtu, IPV6_MIN_MTU)
             } else {
                 Timber.tag(TAG).w("IPv6 routes skipped: requires API 28+ (current: %d)", Build.VERSION.SDK_INT)
             }
