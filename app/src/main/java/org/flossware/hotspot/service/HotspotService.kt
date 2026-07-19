@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.flossware.hotspot.R
+import org.flossware.hotspot.diagnostics.ConnectionPhase
+import org.flossware.hotspot.diagnostics.DiagnosticMetrics
+import org.flossware.hotspot.diagnostics.DiagnosticsManager
+import org.flossware.hotspot.diagnostics.TransportType
 import org.flossware.hotspot.model.HotspotState
 import java.net.InetAddress
 
@@ -39,6 +43,7 @@ class HotspotService : Service() {
         super.onCreate()
         networkManager = NetworkManager(this)
         notificationHelper = NotificationHelper(this)
+        _diagnosticsManager = DiagnosticsManager(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -57,9 +62,15 @@ class HotspotService : Service() {
         Log.i(TAG, "Starting hotspot service")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
+        _diagnosticsManager?.onSessionStart(TransportType.WIFI_DIRECT)
         networkManager.onNetworkLost = {
             _state.value = _state.value.copy(error = getString(R.string.error_mobile_data_lost))
             proxyManager.notifyNetworkLost()
+            _diagnosticsManager?.onError(
+                TransportType.WIFI_DIRECT,
+                "Mobile data lost",
+                currentDiagnosticMetrics(),
+            )
         }
         networkManager.unregister()
         startForeground(NOTIFICATION_ID, notificationHelper.build(0))
@@ -80,6 +91,11 @@ class HotspotService : Service() {
                         _state.value = _state.value.copy(
                             isRunning = false,
                             error = wifiState.message,
+                        )
+                        _diagnosticsManager?.onError(
+                            TransportType.WIFI_DIRECT,
+                            wifiState.message,
+                            currentDiagnosticMetrics(),
                         )
                     }
                     WifiDirectState.Idle -> {}
@@ -139,9 +155,15 @@ class HotspotService : Service() {
         Log.i(TAG, "Starting hotspot in Bluetooth-only mode")
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
+        _diagnosticsManager?.onSessionStart(TransportType.BLUETOOTH)
         networkManager.onNetworkLost = {
             _state.value = _state.value.copy(error = getString(R.string.error_mobile_data_lost))
             proxyManager.notifyNetworkLost()
+            _diagnosticsManager?.onError(
+                TransportType.BLUETOOTH,
+                "Mobile data lost",
+                currentDiagnosticMetrics(),
+            )
         }
         networkManager.unregister()
         startForeground(NOTIFICATION_ID, notificationHelper.build(0))
@@ -185,6 +207,10 @@ class HotspotService : Service() {
         _state.value = _state.value.copy(
             isRunning = true,
             socksHost = "127.0.0.1",
+        )
+        _diagnosticsManager?.onSessionEstablished(
+            TransportType.BLUETOOTH,
+            currentDiagnosticMetrics(),
         )
 
         scope.launch {
@@ -284,6 +310,10 @@ class HotspotService : Service() {
             usbConnected = current.usbConnected,
         )
         notificationHelper.update(wifiState.connectedDevices.size)
+        _diagnosticsManager?.onSessionEstablished(
+            TransportType.WIFI_DIRECT,
+            currentDiagnosticMetrics(),
+        )
     }
 
     private fun toggleBluetooth(enabled: Boolean) {
@@ -354,9 +384,21 @@ class HotspotService : Service() {
         networkManager.unregister()
         releaseWakeLock()
 
+        _diagnosticsManager?.onSessionEnd(currentDiagnosticMetrics())
         _state.value = HotspotState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    private fun currentDiagnosticMetrics(): DiagnosticMetrics {
+        val current = _state.value
+        return DiagnosticMetrics(
+            activeConnections = current.connectedDevices.size +
+                current.bluetoothConnectedDevices.size,
+            bytesTx = proxyManager.bytesTransferred,
+            bytesRx = 0L,
+            uptimeSeconds = current.uptimeSeconds,
+        )
     }
 
     override fun onDestroy() {
@@ -383,6 +425,10 @@ class HotspotService : Service() {
 
         private val _state = MutableStateFlow(HotspotState())
         val state: StateFlow<HotspotState> = _state.asStateFlow()
+
+        @Volatile
+        private var _diagnosticsManager: DiagnosticsManager? = null
+        val diagnosticsManager: DiagnosticsManager? get() = _diagnosticsManager
 
         fun start(context: Context) {
             val intent = Intent(context, HotspotService::class.java).apply {

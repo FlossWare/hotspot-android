@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -74,7 +75,10 @@ import org.flossware.hotspot.viewmodel.HotspotViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
+fun HotspotScreen(
+    viewModel: HotspotViewModel = viewModel(),
+    onNavigateToDiagnostics: () -> Unit = {},
+) {
     val state by viewModel.hotspotState.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -129,6 +133,12 @@ fun HotspotScreen(viewModel: HotspotViewModel = viewModel()) {
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
                 actions = {
+                    IconButton(onClick = onNavigateToDiagnostics) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.cd_diagnostics),
+                        )
+                    }
                     IconButton(onClick = {
                         val info = buildString {
                             appendLine("Status: ${if (state.isRunning) "Running" else "Stopped"}")
