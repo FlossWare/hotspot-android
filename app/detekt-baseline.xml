@@ -3,6 +3,8 @@
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>ComplexCondition:DnsRelay.kt$DnsRelay$responseData.size &lt; 2 || queryData.size &lt; 2 || responseData[0] != queryData[0] || responseData[1] != queryData[1]</ID>
+    <ID>ComplexCondition:DnsRelay.kt$DnsRelay$responseData.size &gt;= 2 &amp;&amp; queryData.size &gt;= 2 &amp;&amp; responseData[0] == queryData[0] &amp;&amp; responseData[1] == queryData[1]</ID>
+    <ID>CyclomaticComplexMethod:DnsRelay.kt$DnsRelay$internal fun forwardQuery( listenSocket: DatagramSocket, queryData: ByteArray, clientAddr: InetAddress, clientPort: Int, )</ID>
     <ID>CyclomaticComplexMethod:HotspotScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HotspotScreen(viewModel: HotspotViewModel = viewModel())</ID>
     <ID>CyclomaticComplexMethod:HotspotService.kt$HotspotService$private fun startHotspot()</ID>
     <ID>CyclomaticComplexMethod:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
@@ -15,10 +17,17 @@
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `equality for identical devices`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `inequality for different mac addresses`()</ID>
     <ID>FunctionNaming:ConnectedDeviceTest.kt$ConnectedDeviceTest$@Test fun `toString contains all fields`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `A and AAAA for different domains are both cache misses`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `AAAA query benefits from Happy Eyeballs prefetch`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `ByteArrayKey equality and hashCode`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse equality and hashCode`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns false for future time`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `CachedDnsResponse isExpired returns true for past time`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `QTYPE constants have correct values`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery creates A from AAAA query`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery creates AAAA from A query`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery preserves domain name`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `buildAlternateTypeQuery returns null for short data`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache constants are correct`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache handles many unique domains without failure`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `cache hits are zero initially`()</ID>
@@ -35,6 +44,10 @@
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with TTL exactly at MIN_TTL`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with truncated answer section returns default`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractMinTtl with zero TTL returns default`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQueryType returns A for A query`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQueryType returns AAAA for AAAA query`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQueryType returns null for short data`()</ID>
+    <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQueryType returns null for zero question count`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey handles deeply nested domain`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey handles single-label domain`()</ID>
     <ID>FunctionNaming:DnsRelayTest.kt$DnsRelayTest$@Test fun `extractQuestionKey ignores transaction ID`()</ID>
@@ -215,6 +228,8 @@
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `sendError writes proper HTTP response`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `start sets running to true`()</ID>
     <ID>FunctionNaming:ProxyServerTest.kt$ProxyServerTest$@Test fun `stop sets running to false`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks IPv6 link-local with SSRF protection`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks IPv6 loopback with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT blocks loopback destination with SSRF protection`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns CONNECTION_REFUSED for closed port`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`()</ID>
@@ -240,7 +255,15 @@
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `constantTimeEquals with unicode characters`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `double start is idempotent`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `handleClient closes connection on wrong version in request phase`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination allows IPv4-mapped IPv6 public addresses`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination allows global IPv6 addresses`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks IPv4-mapped IPv6 link-local`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks IPv4-mapped IPv6 loopback`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks IPv6 link-local`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks IPv6 loopback`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks IPv6 site-local`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isBlockedDestination blocks loopback and link-local`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `isIpv4Mapped detects mapped addresses correctly`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate accepts NO_AUTH among multiple methods`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate accepts NO_AUTH method`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate rejects empty stream`()</ID>
@@ -251,11 +274,13 @@
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate returns false on EOF during methods read`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `negotiate selects username password auth when configured`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses IPv4`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses IPv6 all-zeros`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses IPv6`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses domain name`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses full IPv6 address`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses high port numbers correctly`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses port zero`()</ID>
+    <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress parses truncated IPv6 throws`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on invalid domain length zero`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on truncated IPv4 data`()</ID>
     <ID>FunctionNaming:Socks5ServerTest.kt$Socks5ServerTest$@Test fun `readAddress throws on truncated port`()</ID>
@@ -330,6 +355,7 @@
     <ID>LoopWithTooManyJumpStatements:Socks5ServerTest.kt$Socks5ServerTest$while</ID>
     <ID>MagicNumber:BluetoothServer.kt$BluetoothServer$60_000</ID>
     <ID>MagicNumber:DnsRelay.kt$DnsRelay$0xC0</ID>
+    <ID>MagicNumber:DnsRelay.kt$DnsRelay$0xFF</ID>
     <ID>MagicNumber:DnsRelay.kt$DnsRelay$12</ID>
     <ID>MagicNumber:DnsRelay.kt$DnsRelay$5000</ID>
     <ID>MagicNumber:LogExporter.kt$LogExporter$5</ID>
@@ -342,6 +368,7 @@
     <ID>MagicNumber:Socks5Server.kt$Socks5Server$50</ID>
     <ID>MagicNumber:Socks5Server.kt$Socks5Server$65535</ID>
     <ID>MagicNumber:Socks5Server.kt$Socks5Server$80</ID>
+    <ID>MagicNumber:Socks5Server.kt$Socks5Server.Companion$11</ID>
     <ID>MagicNumber:UsbServer.kt$UsbServer$60_000</ID>
     <ID>MaxLineLength:BluetoothServer.kt$BluetoothServer$_state.value = BluetoothState.Error(context.getString(R.string.error_bluetooth_server_failed, e.message ?: ""))</ID>
     <ID>MaxLineLength:HttpCacheTest.kt$HttpCacheTest$assertFalse("Expired entry should not be served", smallCache.tryServeFromCache("expire-me.com", "GET / HTTP/1.1", "", out3))</ID>
@@ -368,6 +395,8 @@
     <ID>MaxLineLength:ProxyServerTest.kt$ProxyServerTest$val input = ByteArrayInputStream("Host: example.com\r\nContent-Type: text/html\r\nContent-Length: 42\r\n\r\n".toByteArray())</ID>
     <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")</ID>
     <ID>MaxLineLength:Socks5Server.kt$Socks5Server$Log.w(TAG, "Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")</ID>
+    <ID>NestedBlockDepth:DnsRelay.kt$DnsRelay$internal fun forwardQuery( listenSocket: DatagramSocket, queryData: ByteArray, clientAddr: InetAddress, clientPort: Int, )</ID>
+    <ID>NestedBlockDepth:DnsRelay.kt$DnsRelay$private fun prefetchQuery(queryData: ByteArray, dnsServer: InetAddress)</ID>
     <ID>NestedBlockDepth:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>ReturnCount:HttpCache.kt$HttpCache$fun cacheResponse( host: String, requestLine: String, responseStream: InputStream, clientOutput: OutputStream, upstreamOutput: OutputStream, clientInput: InputStream, requestHeaders: String = "", )</ID>
     <ID>ReturnCount:HttpCache.kt$HttpCache$fun tryServeFromCache( host: String, requestLine: String, requestHeaders: String, clientOutput: OutputStream, ): Boolean</ID>
@@ -379,6 +408,7 @@
     <ID>ThrowsCount:Socks5Server.kt$Socks5Server$internal fun readAddress(input: InputStream): Pair&lt;String, Int&gt;</ID>
     <ID>TooGenericExceptionCaught:ProxyServer.kt$ProxyServer$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Socks5Server.kt$Socks5Server$e: Exception</ID>
+    <ID>TooManyFunctions:DnsRelay.kt$DnsRelay</ID>
     <ID>TooManyFunctions:DnsRelayTest.kt$DnsRelayTest</ID>
     <ID>TooManyFunctions:HotspotService.kt$HotspotService : Service</ID>
     <ID>TooManyFunctions:HotspotStateTest.kt$HotspotStateTest</ID>

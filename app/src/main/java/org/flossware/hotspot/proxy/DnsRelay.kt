@@ -182,8 +182,67 @@ class DnsRelay(
             synchronized(listenSocket) {
                 listenSocket.send(replyPacket)
             }
+
+            // Happy Eyeballs v2 (RFC 8305): when an A query completes,
+            // prefetch the AAAA record in the background so it is cached
+            // when the client asks for it.
+            val qtype = extractQueryType(queryData)
+            if (qtype == QTYPE_A) {
+                val aaaaQuery = buildAlternateTypeQuery(queryData, QTYPE_AAAA)
+                if (aaaaQuery != null) {
+                    val aaaaKey = extractQuestionKey(aaaaQuery)
+                    if (aaaaKey != null && cache[aaaaKey] == null) {
+                        queryExecutor.execute {
+                            prefetchQuery(aaaaQuery, dnsServer)
+                        }
+                    }
+                }
+            }
         } catch (e: IOException) {
             Log.w(TAG, "DNS forward failed for ${clientAddr.hostAddress}:$clientPort: ${e.message}")
+        } finally {
+            upstream?.close()
+        }
+    }
+
+    /**
+     * Prefetches a DNS query in the background and caches the result.
+     * Used for Happy Eyeballs AAAA prefetching when an A query is seen.
+     */
+    private fun prefetchQuery(queryData: ByteArray, dnsServer: InetAddress) {
+        var upstream: DatagramSocket? = null
+        try {
+            upstream = DatagramSocket()
+            upstream.soTimeout = PREFETCH_TIMEOUT_MS
+
+            socketBinder(upstream)
+
+            val queryPacket = DatagramPacket(queryData, queryData.size, dnsServer, upstreamPort)
+            upstream.send(queryPacket)
+
+            val responseBuffer = ByteArray(4096)
+            val responsePacket = DatagramPacket(responseBuffer, responseBuffer.size)
+            upstream.receive(responsePacket)
+
+            val responseData = responsePacket.data.copyOf(responsePacket.length)
+            if (responseData.size >= 2 && queryData.size >= 2 &&
+                responseData[0] == queryData[0] && responseData[1] == queryData[1]
+            ) {
+                val cacheKey = extractQuestionKey(queryData)
+                if (cacheKey != null) {
+                    val ttl = extractMinTtl(responseData)
+                    if (ttl > 0) {
+                        evictIfNeeded()
+                        cache[cacheKey] = CachedDnsResponse(
+                            responseData = responseData,
+                            expiresAt = System.currentTimeMillis() + ttl * 1000L,
+                        )
+                        if (debugMode) Log.d(TAG, "Prefetched AAAA record")
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            if (debugMode) Log.d(TAG, "AAAA prefetch failed: ${e.message}")
         } finally {
             upstream?.close()
         }
@@ -197,6 +256,54 @@ class DnsRelay(
         // We include flags + question to distinguish queries
         val questionEnd = findQuestionEnd(queryData, 12) ?: return null
         return ByteArrayKey(queryData.copyOfRange(2, questionEnd))
+    }
+
+    /**
+     * Extracts the QTYPE from a DNS query packet.
+     * Returns the 16-bit query type (e.g. 1 for A, 28 for AAAA), or null if parsing fails.
+     */
+    internal fun extractQueryType(queryData: ByteArray): Int? {
+        if (queryData.size < 12) return null
+        val qdCount = ((queryData[4].toInt() and 0xFF) shl 8) or (queryData[5].toInt() and 0xFF)
+        if (qdCount == 0) return null
+        // Walk past the domain name labels to reach QTYPE
+        var pos = 12
+        while (pos < queryData.size) {
+            val len = queryData[pos].toInt() and 0xFF
+            if (len == 0) {
+                pos++ // null terminator
+                break
+            }
+            pos += 1 + len
+        }
+        if (pos + 2 > queryData.size) return null
+        return ((queryData[pos].toInt() and 0xFF) shl 8) or (queryData[pos + 1].toInt() and 0xFF)
+    }
+
+    /**
+     * Creates a copy of the DNS query with a different QTYPE.
+     * Used for Happy Eyeballs v2: when we see an A query, we create an AAAA query
+     * (and vice versa) to prefetch the alternate record type.
+     */
+    internal fun buildAlternateTypeQuery(queryData: ByteArray, newQtype: Int): ByteArray? {
+        if (queryData.size < 12) return null
+        val qdCount = ((queryData[4].toInt() and 0xFF) shl 8) or (queryData[5].toInt() and 0xFF)
+        if (qdCount == 0) return null
+        // Find the QTYPE offset by walking past domain name labels
+        var pos = 12
+        while (pos < queryData.size) {
+            val len = queryData[pos].toInt() and 0xFF
+            if (len == 0) {
+                pos++ // null terminator
+                break
+            }
+            pos += 1 + len
+        }
+        if (pos + 2 > queryData.size) return null
+        val result = queryData.copyOf()
+        result[pos] = ((newQtype shr 8) and 0xFF).toByte()
+        result[pos + 1] = (newQtype and 0xFF).toByte()
+        return result
     }
 
     private fun findQuestionEnd(data: ByteArray, offset: Int): Int? {
@@ -304,5 +411,11 @@ class DnsRelay(
         internal const val MIN_TTL = 10
         internal const val MAX_TTL = 3600
         private const val SHUTDOWN_TIMEOUT_MS = 3000L
+        private const val PREFETCH_TIMEOUT_MS = 3000
+
+        /** DNS query type for A (IPv4 address) records. */
+        internal const val QTYPE_A = 1
+        /** DNS query type for AAAA (IPv6 address) records. */
+        internal const val QTYPE_AAAA = 28
     }
 }

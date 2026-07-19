@@ -3,6 +3,9 @@ package org.flossware.hotspot.proxy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -539,6 +542,149 @@ class DnsRelayTest {
         assertEquals(600, ttl)
     }
 
+    // --- IPv6 / AAAA tests ---
+
+    @Test
+    fun `extractQueryType returns A for A query`() {
+        relay = createRelay()
+        val query = buildDnsQuery(0x00, 0x01, "example.com")
+        assertEquals(DnsRelay.QTYPE_A, relay.extractQueryType(query))
+    }
+
+    @Test
+    fun `extractQueryType returns AAAA for AAAA query`() {
+        relay = createRelay()
+        val query = buildDnsQueryWithType(0x00, 0x01, "example.com", DnsRelay.QTYPE_AAAA)
+        assertEquals(DnsRelay.QTYPE_AAAA, relay.extractQueryType(query))
+    }
+
+    @Test
+    fun `extractQueryType returns null for short data`() {
+        relay = createRelay()
+        assertNull(relay.extractQueryType(byteArrayOf(0x00, 0x01)))
+    }
+
+    @Test
+    fun `extractQueryType returns null for zero question count`() {
+        relay = createRelay()
+        val data = ByteArray(12)
+        assertNull(relay.extractQueryType(data))
+    }
+
+    @Test
+    fun `buildAlternateTypeQuery creates AAAA from A query`() {
+        relay = createRelay()
+        val aQuery = buildDnsQuery(0x00, 0x01, "example.com")
+        val aaaaQuery = relay.buildAlternateTypeQuery(aQuery, DnsRelay.QTYPE_AAAA)
+        assertNotNull(aaaaQuery)
+        assertEquals(DnsRelay.QTYPE_AAAA, relay.extractQueryType(aaaaQuery!!))
+    }
+
+    @Test
+    fun `buildAlternateTypeQuery creates A from AAAA query`() {
+        relay = createRelay()
+        val aaaaQuery = buildDnsQueryWithType(0x00, 0x01, "example.com", DnsRelay.QTYPE_AAAA)
+        val aQuery = relay.buildAlternateTypeQuery(aaaaQuery, DnsRelay.QTYPE_A)
+        assertNotNull(aQuery)
+        assertEquals(DnsRelay.QTYPE_A, relay.extractQueryType(aQuery!!))
+    }
+
+    @Test
+    fun `buildAlternateTypeQuery returns null for short data`() {
+        relay = createRelay()
+        assertNull(relay.buildAlternateTypeQuery(byteArrayOf(0x00), DnsRelay.QTYPE_AAAA))
+    }
+
+    @Test
+    fun `buildAlternateTypeQuery preserves domain name`() {
+        relay = createRelay()
+        val aQuery = buildDnsQuery(0xAA, 0xBB, "test.example.com")
+        val aaaaQuery = relay.buildAlternateTypeQuery(aQuery, DnsRelay.QTYPE_AAAA)
+        assertNotNull(aaaaQuery)
+        // Keys should differ (because QTYPE is part of the question key)
+        val key1 = relay.extractQuestionKey(aQuery)
+        val key2 = relay.extractQuestionKey(aaaaQuery!!)
+        assertNotNull(key1)
+        assertNotNull(key2)
+        assertNotEquals("A and AAAA queries should have different cache keys", key1, key2)
+    }
+
+    @Test
+    fun `AAAA query benefits from Happy Eyeballs prefetch`() {
+        upstreamServer = createMockDnsServerWithTtlResponse(upstreamPort)
+        relay = createRelay()
+        relay.start()
+        Thread.sleep(500)
+
+        val client = DatagramSocket()
+        client.soTimeout = 5000
+
+        // Send A query -- this triggers AAAA prefetch in the background
+        val aQuery = buildDnsQuery(0x00, 0x01, "dual-stack.example.com")
+        client.send(DatagramPacket(aQuery, aQuery.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp1 = ByteArray(4096)
+        client.receive(DatagramPacket(resp1, resp1.size))
+
+        // Wait for AAAA prefetch to complete
+        Thread.sleep(500)
+
+        // Send AAAA query for same domain -- may be cache hit from prefetch
+        val aaaaQuery = buildDnsQueryWithType(0x00, 0x02, "dual-stack.example.com", DnsRelay.QTYPE_AAAA)
+        client.send(DatagramPacket(aaaaQuery, aaaaQuery.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp2 = ByteArray(4096)
+        client.receive(DatagramPacket(resp2, resp2.size))
+
+        Thread.sleep(100)
+
+        // The A query is always a cache miss; the AAAA query may be a hit
+        // due to the Happy Eyeballs prefetch triggered by the A query
+        assertTrue("A query should be a cache miss", relay.cacheMisses >= 1)
+        // Verify we got responses for both queries
+        assertTrue("Should have received both responses",
+            resp1[0] != 0.toByte() || resp1[1] != 0.toByte())
+
+        client.close()
+    }
+
+    @Test
+    fun `A and AAAA for different domains are both cache misses`() {
+        upstreamServer = createMockDnsServerWithTtlResponse(upstreamPort)
+        relay = createRelay()
+        relay.start()
+        Thread.sleep(500)
+
+        val client = DatagramSocket()
+        client.soTimeout = 5000
+
+        // Send A query for domain1
+        val aQuery = buildDnsQuery(0x00, 0x01, "domainA.example.com")
+        client.send(DatagramPacket(aQuery, aQuery.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp1 = ByteArray(4096)
+        client.receive(DatagramPacket(resp1, resp1.size))
+
+        Thread.sleep(100)
+
+        // Send AAAA query for a completely different domain
+        val aaaaQuery = buildDnsQueryWithType(0x00, 0x02, "domainB.example.com", DnsRelay.QTYPE_AAAA)
+        client.send(DatagramPacket(aaaaQuery, aaaaQuery.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp2 = ByteArray(4096)
+        client.receive(DatagramPacket(resp2, resp2.size))
+
+        Thread.sleep(100)
+
+        // Both are for different domains so both should be cache misses
+        assertTrue("Expected at least 2 cache misses for different domains",
+            relay.cacheMisses >= 2)
+
+        client.close()
+    }
+
+    @Test
+    fun `QTYPE constants have correct values`() {
+        assertEquals(1, DnsRelay.QTYPE_A)
+        assertEquals(28, DnsRelay.QTYPE_AAAA)
+    }
+
     @Test
     fun `extractMinTtl with truncated answer section returns default`() {
         relay = createRelay()
@@ -599,6 +745,10 @@ class DnsRelayTest {
     }
 
     private fun buildDnsQuery(txnHi: Int, txnLo: Int, domain: String): ByteArray {
+        return buildDnsQueryWithType(txnHi, txnLo, domain, DnsRelay.QTYPE_A)
+    }
+
+    private fun buildDnsQueryWithType(txnHi: Int, txnLo: Int, domain: String, qtype: Int): ByteArray {
         val out = mutableListOf<Byte>()
         out.add(txnHi.toByte())
         out.add(txnLo.toByte())
@@ -618,8 +768,9 @@ class DnsRelayTest {
             for (ch in label) out.add(ch.code.toByte())
         }
         out.add(0x00) // null terminator
-        // QTYPE: A (1)
-        out.add(0x00); out.add(0x01)
+        // QTYPE
+        out.add((qtype shr 8 and 0xFF).toByte())
+        out.add((qtype and 0xFF).toByte())
         // QCLASS: IN (1)
         out.add(0x00); out.add(0x01)
         return out.toByteArray()

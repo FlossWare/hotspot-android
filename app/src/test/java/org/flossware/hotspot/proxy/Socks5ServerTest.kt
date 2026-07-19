@@ -1098,6 +1098,176 @@ class Socks5ServerTest {
         assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("10.0.0.1")))
     }
 
+    // --- IPv6 SSRF protection tests ---
+
+    @Test
+    fun `isBlockedDestination blocks IPv6 loopback`() {
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("::1")))
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("0:0:0:0:0:0:0:1")))
+    }
+
+    @Test
+    fun `isBlockedDestination blocks IPv6 link-local`() {
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("fe80::1")))
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("fe80::abcd:1234")))
+    }
+
+    @Test
+    fun `isBlockedDestination blocks IPv6 site-local`() {
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("fec0::1")))
+    }
+
+    @Test
+    fun `isBlockedDestination allows global IPv6 addresses`() {
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("2001:db8::1")))
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("2606:4700::1111")))
+    }
+
+    @Test
+    fun `isBlockedDestination blocks IPv4-mapped IPv6 loopback`() {
+        // ::ffff:127.0.0.1 — SSRF bypass attempt via IPv4-mapped IPv6
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("::ffff:127.0.0.1")))
+    }
+
+    @Test
+    fun `isBlockedDestination blocks IPv4-mapped IPv6 link-local`() {
+        // ::ffff:169.254.1.1 — IPv4-mapped link-local
+        assertTrue(Socks5Server.isBlockedDestination(InetAddress.getByName("::ffff:169.254.1.1")))
+    }
+
+    @Test
+    fun `isBlockedDestination allows IPv4-mapped IPv6 public addresses`() {
+        // ::ffff:8.8.8.8 — IPv4-mapped public address should be allowed
+        assertFalse(Socks5Server.isBlockedDestination(InetAddress.getByName("::ffff:8.8.8.8")))
+    }
+
+    @Test
+    fun `isIpv4Mapped detects mapped addresses correctly`() {
+        // ::ffff:192.168.1.1 = 0,0,0,0,0,0,0,0,0,0,ff,ff,c0,a8,01,01
+        val mapped = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0xFF.toByte(), 0xFF.toByte(),
+            192.toByte(), 168.toByte(), 1, 1)
+        assertTrue(Socks5Server.isIpv4Mapped(mapped))
+
+        // Pure IPv6 address (not mapped)
+        val pure = byteArrayOf(0x20, 0x01, 0x0d, 0xb8.toByte(),
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+        assertFalse(Socks5Server.isIpv4Mapped(pure))
+
+        // IPv4 address (wrong size)
+        val ipv4 = byteArrayOf(127, 0, 0, 1)
+        assertFalse(Socks5Server.isIpv4Mapped(ipv4))
+    }
+
+    // --- IPv6 CONNECT integration test ---
+
+    @Test
+    fun `CONNECT blocks IPv6 loopback with SSRF protection`() {
+        val ssrfPort = findFreePort()
+        val ssrfServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = ssrfPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            dnsResolver = { InetAddress.getByName("::1") },
+            ssrfProtection = true,
+        )
+        ssrfServer.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), ssrfPort)
+        client.soTimeout = 5000
+
+        // Negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // CONNECT with domain that resolves to ::1
+        val domain = "ipv6-loopback.test".toByteArray(Charsets.US_ASCII)
+        val req = ByteArray(4 + 1 + domain.size + 2)
+        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+        req[4] = domain.size.toByte()
+        System.arraycopy(domain, 0, req, 5, domain.size)
+        req[req.size - 2] = 0x00; req[req.size - 1] = 0x50
+        client.getOutputStream().write(req)
+        client.getOutputStream().flush()
+
+        val reply = ByteArray(10)
+        readFully(client.getInputStream(), reply)
+        assertEquals("Expected NOT_ALLOWED for IPv6 loopback",
+            Socks5Server.REPLY_NOT_ALLOWED, reply[1])
+
+        client.close()
+        ssrfServer.stop()
+    }
+
+    @Test
+    fun `CONNECT blocks IPv6 link-local with SSRF protection`() {
+        val ssrfPort = findFreePort()
+        val ssrfServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = ssrfPort,
+            socketFactoryProvider = { SocketFactory.getDefault() },
+            dnsResolver = { InetAddress.getByName("fe80::1") },
+            ssrfProtection = true,
+        )
+        ssrfServer.start()
+        Thread.sleep(300)
+
+        val client = Socket(InetAddress.getLoopbackAddress(), ssrfPort)
+        client.soTimeout = 5000
+
+        // Negotiate
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        // CONNECT with domain that resolves to fe80::1
+        val domain = "ipv6-linklocal.test".toByteArray(Charsets.US_ASCII)
+        val req = ByteArray(4 + 1 + domain.size + 2)
+        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+        req[4] = domain.size.toByte()
+        System.arraycopy(domain, 0, req, 5, domain.size)
+        req[req.size - 2] = 0x00; req[req.size - 1] = 0x50
+        client.getOutputStream().write(req)
+        client.getOutputStream().flush()
+
+        val reply = ByteArray(10)
+        readFully(client.getInputStream(), reply)
+        assertEquals("Expected NOT_ALLOWED for IPv6 link-local",
+            Socks5Server.REPLY_NOT_ALLOWED, reply[1])
+
+        client.close()
+        ssrfServer.stop()
+    }
+
+    @Test
+    fun `readAddress parses IPv6 all-zeros`() {
+        val addr = ByteArray(16) // all zeros = ::
+        val data = ByteArray(1 + 16 + 2)
+        data[0] = 0x04 // IPv6
+        System.arraycopy(addr, 0, data, 1, 16)
+        data[data.size - 2] = 0x00
+        data[data.size - 1] = 0x50 // port 80
+        val (host, port) = server.readAddress(ByteArrayInputStream(data))
+        assertTrue("Expected IPv6 all-zeros, got: $host",
+            host == "0:0:0:0:0:0:0:0" || host.contains("::"))
+        assertEquals(80, port)
+    }
+
+    @Test
+    fun `readAddress parses truncated IPv6 throws`() {
+        // IPv6 type but only 8 bytes of address instead of 16
+        val data = ByteArray(1 + 8)
+        data[0] = 0x04 // IPv6
+        try {
+            server.readAddress(ByteArrayInputStream(data))
+            assertTrue("Should have thrown IOException", false)
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Unexpected end of stream"))
+        }
+    }
+
     @Test
     fun `CONNECT returns HOST_UNREACHABLE for unresolvable domain`() {
         val failPort = findFreePort()
