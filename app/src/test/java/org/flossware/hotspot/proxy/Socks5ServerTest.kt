@@ -1285,6 +1285,65 @@ class Socks5ServerTest {
         cacheServer.stop()
     }
 
+    // --- Cache-Control no-cache bypass tests via SOCKS5 ---
+
+    @Test
+    fun `CONNECT to port 80 with no-cache response bypasses cache`() {
+        val echoServer = createNoCacheHttpServer()
+        val echoPort = echoServer.localPort
+        val httpCache = HttpCache()
+
+        val cachePort = findFreePort()
+        val cacheServer = Socks5Server(
+            bindAddress = InetAddress.getLoopbackAddress(),
+            port = cachePort,
+            socketFactoryProvider = { createRedirectingSocketFactory(echoPort) },
+            dnsResolver = { InetAddress.getLoopbackAddress() },
+            httpCache = httpCache,
+            ssrfProtection = false,
+        )
+        cacheServer.start()
+        Thread.sleep(500)
+
+        // First request -- no-cache prevents caching
+        sendSocksHttpGetToPort80(cachePort, "nocache-test.local")
+        Thread.sleep(300)
+
+        // Second request -- should NOT be a cache hit
+        sendSocksHttpGetToPort80(cachePort, "nocache-test.local")
+        Thread.sleep(200)
+
+        assertEquals("no-cache response should not produce cache hits", 0L, httpCache.hits)
+        echoServer.close()
+        cacheServer.stop()
+    }
+
+    private fun sendSocksHttpGetToPort80(socksPort: Int, hostname: String) {
+        val client = Socket(InetAddress.getLoopbackAddress(), socksPort)
+        client.soTimeout = 5000
+        client.getOutputStream().write(byteArrayOf(0x05, 0x01, 0x00))
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(2))
+
+        val domain = hostname.toByteArray(Charsets.US_ASCII)
+        val req = ByteArray(4 + 1 + domain.size + 2)
+        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
+        req[4] = domain.size.toByte()
+        System.arraycopy(domain, 0, req, 5, domain.size)
+        req[req.size - 2] = 0x00; req[req.size - 1] = 0x50
+        client.getOutputStream().write(req)
+        client.getOutputStream().flush()
+        readFully(client.getInputStream(), ByteArray(10))
+
+        client.getOutputStream().write("GET / HTTP/1.1\r\nHost: $hostname\r\n\r\n".toByteArray())
+        client.getOutputStream().flush()
+
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        val statusLine = reader.readLine()
+        assertTrue("Expected 200, got: $statusLine", statusLine?.contains("200") == true)
+        client.close()
+    }
+
     // --- Additional constantTimeEquals tests ---
 
     @Test
@@ -1427,6 +1486,39 @@ class Socks5ServerTest {
                             val response = "HTTP/1.1 200 OK\r\n" +
                                 "Content-Type: text/html\r\n" +
                                 "Content-Length: ${body.length}\r\n" +
+                                "\r\n" + body
+                            client.getOutputStream().write(response.toByteArray())
+                            client.getOutputStream().flush()
+                            client.close()
+                        } catch (_: Exception) {
+                        }
+                    }.start()
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        return server
+    }
+
+    private fun createNoCacheHttpServer(): ServerSocket {
+        val server = ServerSocket(0, 5, InetAddress.getLoopbackAddress())
+        Thread {
+            while (!server.isClosed) {
+                try {
+                    val client = server.accept()
+                    Thread {
+                        try {
+                            val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+                            while (true) {
+                                val line = reader.readLine() ?: break
+                                if (line.isEmpty()) break
+                            }
+                            val body = "no-cache content"
+                            val response = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: text/html\r\n" +
+                                "Content-Length: ${body.length}\r\n" +
+                                "Cache-Control: no-cache\r\n" +
                                 "\r\n" + body
                             client.getOutputStream().write(response.toByteArray())
                             client.getOutputStream().flush()

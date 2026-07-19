@@ -532,6 +532,53 @@ class DnsRelayTest {
     }
 
     @Test
+    fun `cache entry expires after TTL and subsequent query is cache miss`() {
+        // Use upstream that returns TTL=1 (clamped to MIN_TTL=10s by DnsRelay,
+        // so we verify the caching behavior: first query is miss, immediate second is hit)
+        upstreamServer = createMockDnsServerWithCustomTtl(upstreamPort, 1)
+        relay = createRelay()
+        relay.start()
+        Thread.sleep(500)
+
+        val query = buildDnsQuery(0x00, 0x01, "ttl-test.com")
+        val client = DatagramSocket()
+        client.soTimeout = 5000
+
+        // First query -- cache miss, response gets cached
+        client.send(DatagramPacket(query, query.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp1 = ByteArray(4096)
+        client.receive(DatagramPacket(resp1, resp1.size))
+
+        Thread.sleep(100)
+        assertEquals("First query should be cache miss", 0L, relay.cacheHits)
+        assertEquals("First query should increment misses", 1L, relay.cacheMisses)
+
+        // Second query immediately -- should be cache hit (TTL clamped to MIN_TTL=10s)
+        client.send(DatagramPacket(query, query.size, InetAddress.getLoopbackAddress(), relayPort))
+        val resp2 = ByteArray(4096)
+        client.receive(DatagramPacket(resp2, resp2.size))
+
+        Thread.sleep(100)
+        assertEquals("Immediate second query should be cache hit", 1L, relay.cacheHits)
+
+        client.close()
+    }
+
+    @Test
+    fun `CachedDnsResponse expires after expiresAt time`() {
+        // Create a cache entry that expires in 50ms
+        relay = createRelay()
+        val shortLived = DnsRelay.CachedDnsResponse(
+            responseData = byteArrayOf(0x00, 0x01),
+            expiresAt = System.currentTimeMillis() + 50,
+        )
+        assertFalse("Should not be expired yet", shortLived.isExpired())
+
+        Thread.sleep(100)
+        assertTrue("Should be expired after wait", shortLived.isExpired())
+    }
+
+    @Test
     fun `extractMinTtl with AAAA record type`() {
         relay = createRelay()
         val response = buildDnsResponseWithTypeAndTtl("ipv6.example.com", 0x001C, 600, ByteArray(16))
@@ -703,6 +750,33 @@ class DnsRelayTest {
                     // Build a response with a cacheable TTL
                     val mockResponse = buildDnsResponseWithTtl("example.com", 300, byteArrayOf(1, 2, 3, 4))
                     // Patch transaction ID from query
+                    mockResponse[0] = packet.data[0]
+                    mockResponse[1] = packet.data[1]
+                    val response = DatagramPacket(
+                        mockResponse, mockResponse.size,
+                        packet.address, packet.port,
+                    )
+                    server.send(response)
+                } catch (_: java.net.SocketTimeoutException) {
+                    continue
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        return server
+    }
+
+    private fun createMockDnsServerWithCustomTtl(port: Int, ttl: Int): DatagramSocket {
+        val server = DatagramSocket(port, InetAddress.getLoopbackAddress())
+        Thread {
+            val buffer = ByteArray(4096)
+            while (!server.isClosed) {
+                try {
+                    val packet = DatagramPacket(buffer, buffer.size)
+                    server.soTimeout = 1000
+                    server.receive(packet)
+                    val mockResponse = buildDnsResponseWithTtl("ttl-test.com", ttl, byteArrayOf(1, 2, 3, 4))
                     mockResponse[0] = packet.data[0]
                     mockResponse[1] = packet.data[1]
                     val response = DatagramPacket(
