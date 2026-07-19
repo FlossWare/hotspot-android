@@ -10,7 +10,7 @@ import android.net.wifi.p2p.WifiP2pGroup
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Looper
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.flossware.hotspot.R
 import kotlinx.coroutines.flow.StateFlow
@@ -127,7 +127,7 @@ class WifiDirectManager {
                 .build()
             mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
-                    Log.i(TAG, "Group created (custom config)")
+                    Timber.tag(TAG).i("transport_connect event=wifi_direct_group_created config=custom")
                     retryCount = 0
                     requestGroupInfo()
                 }
@@ -147,7 +147,7 @@ class WifiDirectManager {
 
         mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                Log.i(TAG, "Group created (legacy)")
+                Timber.tag(TAG).i("transport_connect event=wifi_direct_group_created config=legacy")
                 retryCount = 0
                 requestGroupInfo()
             }
@@ -155,7 +155,10 @@ class WifiDirectManager {
                 if (retryCount < MAX_RETRIES && reason != WifiP2pManager.P2P_UNSUPPORTED) {
                     retryCount++
                     val delayMs = RETRY_DELAYS_MS.getOrElse(retryCount - 1) { RETRY_DELAYS_MS.last() }
-                    Log.w(TAG, "Group creation failed (reason=$reason), retry $retryCount/$MAX_RETRIES in ${delayMs}ms")
+                    Timber.tag(TAG).w(
+                        "Group creation failed (reason=%d), retry %d/%d in %dms",
+                        reason, retryCount, MAX_RETRIES, delayMs,
+                    )
                     retryHandler?.postDelayed({
                         createGroupWithRetry()
                     }, delayMs)
@@ -183,10 +186,10 @@ class WifiDirectManager {
         val mgr = manager ?: return
         mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                Log.i(TAG, "Wi-Fi Direct group removed")
+                Timber.tag(TAG).i("transport_disconnect event=wifi_direct_group_removed")
             }
             override fun onFailure(reason: Int) {
-                Log.w(TAG, "Failed to remove Wi-Fi Direct group (reason=$reason)")
+                Timber.tag(TAG).w("Failed to remove Wi-Fi Direct group (reason=$reason)")
             }
         })
     }

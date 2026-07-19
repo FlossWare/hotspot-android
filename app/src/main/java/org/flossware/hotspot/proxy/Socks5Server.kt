@@ -1,6 +1,6 @@
 package org.flossware.hotspot.proxy
 
-import android.util.Log
+import timber.log.Timber
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -60,15 +60,14 @@ class Socks5Server(
                 ss = ServerSocket(port, 50, bindAddress)
                 ss.soTimeout = 0
                 serverSocket = ss
-                Log.i(TAG, "SOCKS5 listening on $bindAddress:$port" +
-                    if (requireAuth) " (auth required)" else " (no auth)")
+                Timber.tag(TAG).i("socks5_start event=socks5_listen port=$port auth=${requireAuth}")
                 while (running.get()) {
                     try {
                         val client = ss.accept()
                         val clientAddr = client.inetAddress
 
                         if (totalActiveConnections.get() >= maxTotalConnections) {
-                            Log.w(TAG, "Total connection limit reached ($maxTotalConnections), rejecting ${clientAddr.hostAddress}")
+                            logConnectionLimit(clientAddr)
                             client.closeSilently()
                             continue
                         }
@@ -76,7 +75,7 @@ class Socks5Server(
                         val clientCount = connectionsPerClient
                             .computeIfAbsent(clientAddr) { AtomicInteger(0) }
                         if (clientCount.get() >= maxConnectionsPerClient) {
-                            Log.w(TAG, "Per-client limit reached ($maxConnectionsPerClient) for ${clientAddr.hostAddress}")
+                            logClientLimit(clientAddr)
                             client.closeSilently()
                             continue
                         }
@@ -84,10 +83,7 @@ class Socks5Server(
                         clientCount.incrementAndGet()
                         totalActiveConnections.incrementAndGet()
                         activeSockets.add(client)
-                        if (debugMode) {
-                            Log.d(TAG, "Connection accepted from ${clientAddr.hostAddress}" +
-                                " (client: ${clientCount.get()}, total: ${totalActiveConnections.get()})")
-                        }
+                        if (debugMode) logConnectionAccepted(clientAddr, clientCount)
 
                         executor.execute {
                             try {
@@ -102,7 +98,7 @@ class Socks5Server(
                     }
                 }
             } catch (e: IOException) {
-                Log.e(TAG, "SOCKS5 server error", e)
+                Timber.tag(TAG).e(e, "SOCKS5 server error")
             } finally {
                 ss?.close()
             }
@@ -124,17 +120,39 @@ class Socks5Server(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w("Executor did not terminate within %dms", SHUTDOWN_TIMEOUT_MS)
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         connectionsPerClient.clear()
         totalActiveConnections.set(0)
-        Log.i(TAG, "SOCKS5 server stopped")
+        Timber.tag(TAG).i("socks5_stop event=socks5_server_stopped")
     }
 
     val isRunning: Boolean get() = running.get()
+
+    private fun logConnectionLimit(clientAddr: InetAddress) {
+        Timber.tag(TAG).w(
+            "Total connection limit reached (%d), rejecting %s",
+            maxTotalConnections, clientAddr.hostAddress,
+        )
+    }
+
+    private fun logClientLimit(clientAddr: InetAddress) {
+        Timber.tag(TAG).w(
+            "Per-client limit reached (%d) for %s",
+            maxConnectionsPerClient, clientAddr.hostAddress,
+        )
+    }
+
+    private fun logConnectionAccepted(clientAddr: InetAddress, clientCount: AtomicInteger) {
+        Timber.tag(TAG).d(
+            "socks5_connection_open client=%s count=%d total=%d",
+            clientAddr.hostAddress, clientCount.get(),
+            totalActiveConnections.get(),
+        )
+    }
 
     private fun releaseConnection(clientAddr: InetAddress) {
         totalActiveConnections.decrementAndGet()
@@ -154,42 +172,42 @@ class Socks5Server(
             val output = client.getOutputStream()
 
             if (!negotiate(input, output)) {
-                if (debugMode) Log.d(TAG, "Negotiation failed for $clientAddr")
+                if (debugMode) Timber.tag(TAG).d("Negotiation failed for %s", clientAddr)
                 return
             }
 
             val version = input.read()
             if (version == -1) {
-                if (debugMode) Log.d(TAG, "Connection closed during request from $clientAddr")
+                if (debugMode) Timber.tag(TAG).d("Connection closed during request from %s", clientAddr)
                 return
             }
             if (version != VERSION.toInt() and 0xFF) {
-                Log.w(TAG, "Invalid SOCKS version from $clientAddr: $version")
+                Timber.tag(TAG).w("Invalid SOCKS version from %s: %d", clientAddr, version)
                 return
             }
 
             val cmd = input.read()
             if (cmd == -1) {
-                if (debugMode) Log.d(TAG, "Connection closed reading command from $clientAddr")
+                if (debugMode) Timber.tag(TAG).d("Connection closed reading command from %s", clientAddr)
                 return
             }
             val reserved = input.read()
             if (reserved == -1) {
-                if (debugMode) Log.d(TAG, "Connection closed reading reserved byte from $clientAddr")
+                if (debugMode) Timber.tag(TAG).d("Connection closed reading reserved byte from %s", clientAddr)
                 return
             }
 
             val (host, port) = try {
                 readAddress(input)
             } catch (e: IOException) {
-                if (debugMode) Log.d(TAG, "Failed to read address from $clientAddr: ${e.message}")
+                if (debugMode) Timber.tag(TAG).d("Failed to read address from %s: %s", clientAddr, e.message)
                 sendReply(output, REPLY_ADDR_NOT_SUPPORTED)
                 return
             }
 
             when (cmd) {
                 CMD_CONNECT.toInt() and 0xFF -> {
-                    if (debugMode) Log.d(TAG, "CONNECT $host:$port from $clientAddr")
+                    if (debugMode) Timber.tag(TAG).d("CONNECT %s:%d from %s", host, port, clientAddr)
                     handleConnect(client, input, output, host, port, connectionBytes)
                 }
                 CMD_UDP_ASSOCIATE.toInt() and 0xFF -> {
@@ -197,18 +215,19 @@ class Socks5Server(
                     handleUdpAssociate(client, output)
                 }
                 else -> {
-                    Log.w(TAG, "Unsupported SOCKS command $cmd from $clientAddr")
+                    Timber.tag(TAG).w("Unsupported SOCKS command %d from %s", cmd, clientAddr)
                     sendReply(output, REPLY_CMD_NOT_SUPPORTED)
                 }
             }
         } catch (e: SocketTimeoutException) {
-            if (debugMode) Log.d(TAG, "Timeout handling client $clientAddr: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d("Timeout handling client %s: %s", clientAddr, e.message)
         } catch (e: IOException) {
-            Log.d(TAG, "Client handler error for $clientAddr: ${e.message}")
+            Timber.tag(TAG).d("Client handler error for %s: %s", clientAddr, e.message)
         } finally {
             val duration = System.currentTimeMillis() - startTime
             if (debugMode) {
-                Log.d(TAG, "Connection closed for $clientAddr: ${connectionBytes.get()}B transferred in ${duration}ms")
+                Timber.tag(TAG).d("socks5_connection_close event=connection_closed client=%s bytes=%d duration_ms=%d",
+                    clientAddr, connectionBytes.get(), duration)
             }
             client.closeSilently()
         }
@@ -296,12 +315,12 @@ class Socks5Server(
         val passMatch = constantTimeEquals(clientPass, password ?: "")
 
         return if (userMatch && passMatch) {
-            if (debugMode) Log.d(TAG, "Authentication succeeded for user '$clientUser'")
+            if (debugMode) Timber.tag(TAG).d("Authentication succeeded")
             output.write(byteArrayOf(AUTH_VERSION, AUTH_SUCCESS))
             output.flush()
             true
         } else {
-            Log.w(TAG, "Authentication failed for user '$clientUser'")
+            Timber.tag(TAG).w("Authentication failed")
             output.write(byteArrayOf(AUTH_VERSION, AUTH_FAILURE))
             output.flush()
             false
@@ -353,7 +372,7 @@ class Socks5Server(
     ) {
         val clientAddr = client.inetAddress?.hostAddress ?: "unknown"
         val factory = socketFactoryProvider() ?: run {
-            Log.w(TAG, "No socket factory available for CONNECT to $host:$port")
+            Timber.tag(TAG).w("No socket factory available for CONNECT to %s:%d", host, port)
             sendReply(output, REPLY_GENERAL_FAILURE)
             return
         }
@@ -361,13 +380,13 @@ class Socks5Server(
         val resolved = try {
             dnsResolver(host)
         } catch (e: Exception) {
-            Log.w(TAG, "DNS resolution failed for $host: ${e.message}")
+            Timber.tag(TAG).w("DNS resolution failed for %s: %s", host, e.message)
             sendReply(output, REPLY_HOST_UNREACHABLE)
             return
         }
 
         if (ssrfProtection && isBlockedDestination(resolved)) {
-            Log.w(TAG, "SSRF blocked: CONNECT to $host:$port ($resolved) from $clientAddr")
+            Timber.tag(TAG).w("SSRF blocked: CONNECT to %s:%d from %s", host, port, clientAddr)
             sendReply(output, REPLY_NOT_ALLOWED)
             return
         }
@@ -382,7 +401,7 @@ class Socks5Server(
             upstream = factory.createSocket(resolved, port)
             upstream.soTimeout = SOCKET_TIMEOUT_MS
         } catch (e: IOException) {
-            Log.w(TAG, "Connection refused to $host:$port ($resolved): ${e.message}")
+            Timber.tag(TAG).w("Connection refused to %s:%d: %s", host, port, e.message)
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -411,8 +430,8 @@ class Socks5Server(
             clientToServer.join()
             serverToClient.join()
             if (debugMode) {
-                Log.d(TAG, "Connection closed: $clientAddr -> $host:$port" +
-                    " (${connectionBytes.get()} bytes)")
+                Timber.tag(TAG).d("socks5_connection_close event=relay_closed client=%s host=%s port=%d bytes=%d",
+                    clientAddr, host, port, connectionBytes.get())
             }
         } finally {
             upstream.closeSilently()
@@ -488,7 +507,7 @@ class Socks5Server(
             upstream = factory.createSocket(resolved, 80)
             upstream.soTimeout = SOCKET_TIMEOUT_MS
         } catch (e: IOException) {
-            Log.w(TAG, "Connection refused to $host:80 ($resolved): ${e.message}")
+            Timber.tag(TAG).w("Connection refused to %s:80: %s", host, e.message)
             sendReply(output, REPLY_CONNECTION_REFUSED)
             return
         }
@@ -524,7 +543,7 @@ class Socks5Server(
             }
 
             if (cache.tryServeFromCache(host, requestLine, headers.toString(), output)) {
-                if (debugMode) Log.d(TAG, "Served from cache: $host $requestLine")
+                if (debugMode) Timber.tag(TAG).d("Served from cache: %s %s", host, requestLine)
                 upstream.closeSilently()
                 return
             }
@@ -587,7 +606,7 @@ class Socks5Server(
                 connectionBytes?.addAndGet(count.toLong())
             }
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Relay stream closed: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d("Relay stream closed: %s", e.message)
         }
     }
 
@@ -604,7 +623,7 @@ class Socks5Server(
         try {
             close()
         } catch (e: IOException) {
-            if (debugMode) Log.d(TAG, "Socket close: ${e.message}")
+            if (debugMode) Timber.tag(TAG).d("Socket close: %s", e.message)
         }
     }
 

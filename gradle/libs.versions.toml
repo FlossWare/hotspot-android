@@ -13,10 +13,12 @@ junit = "4.13.2"
 androidxTestExt = "1.2.1"
 androidxTestRunner = "1.6.2"
 coroutinesTest = "1.9.0"
+timber = "5.0.1"
 detekt = "1.23.7"
 kover = "0.9.1"
 
 [libraries]
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

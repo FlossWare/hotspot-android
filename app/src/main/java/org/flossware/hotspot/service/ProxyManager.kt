@@ -1,6 +1,6 @@
 package org.flossware.hotspot.service
 
-import android.util.Log
+import timber.log.Timber
 import org.flossware.hotspot.model.HotspotState
 import org.flossware.hotspot.proxy.DnsRelay
 import org.flossware.hotspot.proxy.HttpCache
@@ -70,7 +70,7 @@ class ProxyManager {
      * this method logs the event for observability.
      */
     fun notifyNetworkLost() {
-        Log.w(TAG, "Mobile network lost — new proxy connections will fail until network returns")
+        Timber.tag(TAG).w("Mobile network lost -- new proxy connections will fail until network returns")
     }
 
     /** Stops all proxy components and clears the HTTP cache. */

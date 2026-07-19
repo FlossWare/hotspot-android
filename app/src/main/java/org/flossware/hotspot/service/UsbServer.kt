@@ -8,7 +8,7 @@ import android.hardware.usb.UsbAccessory
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import android.util.Log
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,7 +49,7 @@ class UsbServer(
 
         val usbManager = context.getSystemService(Context.USB_SERVICE) as? UsbManager
         if (usbManager == null) {
-            Log.w(TAG, "USB not supported on this device")
+            Timber.tag(TAG).w( "USB not supported on this device")
             _state.value = UsbState.Error("USB not supported")
             running.set(false)
             return
@@ -75,7 +75,7 @@ class UsbServer(
                     UsbManager.ACTION_USB_ACCESSORY_DETACHED -> {
                         closeAccessory()
                         _state.value = UsbState.Idle
-                        Log.i(TAG, "USB accessory detached")
+                        Timber.tag(TAG).i( "USB accessory detached")
                     }
                 }
             }
@@ -98,7 +98,7 @@ class UsbServer(
             openAccessory(usbManager, accessories[0], socksPort)
         }
 
-        Log.i(TAG, "USB server started, waiting for accessory")
+        Timber.tag(TAG).i( "USB server started, waiting for accessory")
     }
 
     fun stop() {
@@ -107,13 +107,13 @@ class UsbServer(
         executor.shutdownNow()
         try {
             if (!executor.awaitTermination(SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                Log.w(TAG, "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
+                Timber.tag(TAG).w( "Executor did not terminate within ${SHUTDOWN_TIMEOUT_MS}ms")
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
         _state.value = UsbState.Idle
-        Log.i(TAG, "USB server stopped")
+        Timber.tag(TAG).i( "USB server stopped")
     }
 
     fun unregisterReceiver(context: Context) {
@@ -132,7 +132,7 @@ class UsbServer(
 
         val pfd = usbManager.openAccessory(accessory)
         if (pfd == null) {
-            Log.e(TAG, "Failed to open USB accessory")
+            Timber.tag(TAG).e( "Failed to open USB accessory")
             _state.value = UsbState.Error("Failed to open USB accessory")
             return
         }
@@ -140,7 +140,7 @@ class UsbServer(
 
         val name = accessory.description ?: accessory.model ?: "USB Accessory"
         _state.value = UsbState.Connected(name)
-        Log.i(TAG, "USB accessory connected: $name")
+        Timber.tag(TAG).i( "USB accessory connected: $name")
 
         executor.execute { relayToSocks(pfd, socksPort) }
     }
@@ -174,12 +174,12 @@ class UsbServer(
             usbToTcp.join()
             tcpToUsb.join()
         } catch (e: IOException) {
-            Log.w(TAG, "USB relay error: ${e.message}")
+            Timber.tag(TAG).w( "USB relay error: ${e.message}")
         } finally {
             tcpSocket?.closeSilently()
             usbInput.closeSilently()
             usbOutput.closeSilently()
-            if (debugMode) Log.d(TAG, "USB relay connection closed")
+            if (debugMode) Timber.tag(TAG).d( "USB relay connection closed")
         }
     }
 

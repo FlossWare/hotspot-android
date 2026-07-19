@@ -1,6 +1,6 @@
 package org.flossware.hotspot.log
 
-import android.util.Log
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -24,8 +24,8 @@ data class LogEntry(
  * Singleton that captures app log messages in a thread-safe ring buffer.
  *
  * Call the convenience methods ([i], [d], [w], [e]) instead of [android.util.Log]
- * directly. Each method both stores the entry in the ring buffer *and* forwards
- * to the standard Android log.
+ * directly. Each method stores the entry in the ring buffer *and* forwards
+ * to [Timber] for structured output.
  *
  * The buffer holds the most recent [MAX_ENTRIES] (1000) entries. Older entries
  * are discarded when the limit is reached.
@@ -37,27 +37,40 @@ object LogCollector {
 
     fun i(tag: String, message: String): Int {
         addEntry(tag, "I", message)
-        return Log.i(tag, message)
+        Timber.tag(tag).i(message)
+        return 0
     }
 
     fun d(tag: String, message: String): Int {
         addEntry(tag, "D", message)
-        return Log.d(tag, message)
+        Timber.tag(tag).d(message)
+        return 0
     }
 
     fun w(tag: String, message: String): Int {
         addEntry(tag, "W", message)
-        return Log.w(tag, message)
+        Timber.tag(tag).w(message)
+        return 0
     }
 
     fun e(tag: String, message: String): Int {
         addEntry(tag, "E", message)
-        return Log.e(tag, message)
+        Timber.tag(tag).e(message)
+        return 0
     }
 
     fun e(tag: String, message: String, throwable: Throwable): Int {
         addEntry(tag, "E", "$message: ${throwable.message}")
-        return Log.e(tag, message, throwable)
+        Timber.tag(tag).e(throwable, message)
+        return 0
+    }
+
+    /**
+     * Called by [StructuredTree] to record entries from Timber calls
+     * without re-entering Timber (avoiding recursion).
+     */
+    internal fun record(tag: String, level: String, message: String) {
+        addEntry(tag, level, message)
     }
 
     private fun addEntry(tag: String, level: String, message: String) {
