@@ -70,6 +70,9 @@ class SocksTunnel(
                 socks5:
                   port: $socksPort
                   address: $socksHost
+                dns:
+                  address: $socksHost
+                  port: 5353
                 mapdns:
                   address: $DNS_ADDRESS
                   port: 53
