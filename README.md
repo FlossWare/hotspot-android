@@ -2,6 +2,7 @@
 
 Free Android app that shares your phone's mobile data via Wi-Fi -- bypasses carrier hotspot restrictions without root. All apps work transparently.
 
+
 [![Android CI](https://github.com/FlossWare/hotspot-android/actions/workflows/android.yml/badge.svg)](https://github.com/FlossWare/hotspot-android/actions/workflows/android.yml)
 
 ## The Problem
