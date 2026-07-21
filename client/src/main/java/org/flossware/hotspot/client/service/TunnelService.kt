@@ -269,6 +269,13 @@ class TunnelService : VpnService() {
             when (result) {
                 is WifiConnectionState.Connected -> {
                     underlyingNetwork = result.network
+                    // Bind as early as possible so MTU probes succeed
+                    underlyingNetwork?.let { network ->
+                        setUnderlyingNetworks(arrayOf(network))
+                        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                        cm.bindProcessToNetwork(network)
+                        Timber.tag(TAG).i("wifi_connect event=bound_process_to_network netId=%s", network)
+                    }
                     connect(socksHost, socksPort, Transport.WIFI_DIRECT)
                 }
                 is WifiConnectionState.ManualRequired -> {
