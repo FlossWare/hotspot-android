@@ -74,6 +74,7 @@ class SocksTunnelTest {
         val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
         assertTrue(config.startsWith("tunnel:"))
         assertTrue(config.contains("socks5:"))
+        assertTrue(config.contains("dns:"))
         assertTrue(config.contains("mapdns:"))
         assertTrue(config.contains("misc:"))
     }
@@ -83,11 +84,20 @@ class SocksTunnelTest {
         val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
         val lines = config.lines()
         val topLevelKeys = lines.filter { it.endsWith(":") && !it.startsWith(" ") }
-        assertEquals(4, topLevelKeys.size)
+        assertEquals(5, topLevelKeys.size)
         assertTrue(topLevelKeys.contains("tunnel:"))
         assertTrue(topLevelKeys.contains("socks5:"))
+        assertTrue(topLevelKeys.contains("dns:"))
         assertTrue(topLevelKeys.contains("mapdns:"))
         assertTrue(topLevelKeys.contains("misc:"))
+    }
+
+    @Test
+    fun `buildConfig contains dns block for DNS resolution`() {
+        val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
+        assertTrue(config.contains("dns:"))
+        assertTrue(config.contains("address: ${SocksTunnel.DNS_ADDRESS}"))
+        assertTrue(config.contains("port: 5353"))
     }
 
     @Test
