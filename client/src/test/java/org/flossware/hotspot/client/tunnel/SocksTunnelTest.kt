@@ -94,9 +94,11 @@ class SocksTunnelTest {
 
     @Test
     fun `buildConfig contains dns block for DNS resolution`() {
-        val config = SocksTunnel.buildConfig("192.168.49.1", 1080)
+        // Uses a host distinct from DNS_ADDRESS (198.18.0.2) so this assertion can't
+        // pass coincidentally against the unrelated mapdns block below it.
+        val config = SocksTunnel.buildConfig("10.1.2.3", 1080)
         assertTrue(config.contains("dns:"))
-        assertTrue(config.contains("address: ${SocksTunnel.DNS_ADDRESS}"))
+        assertTrue(config.contains("address: 10.1.2.3"))
         assertTrue(config.contains("port: 5353"))
     }
 

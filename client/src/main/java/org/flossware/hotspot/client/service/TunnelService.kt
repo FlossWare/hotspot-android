@@ -125,11 +125,11 @@ class TunnelService : VpnService() {
             }
 
             tunInterface = tun
+            // Process is already bound to the underlying network in connectWifi(), before
+            // MTU detection ran. Only the VPN's own underlying-network association needs
+            // to happen here, post-establish().
             underlyingNetwork?.let { network ->
                 setUnderlyingNetworks(arrayOf(network))
-                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                cm.bindProcessToNetwork(network)
-                Timber.tag(TAG).i("service_start event=bound_process_to_wifi_network netId=%s", network)
             }
 
             socksTunnel = SocksTunnel(
