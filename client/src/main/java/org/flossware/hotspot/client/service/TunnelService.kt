@@ -6,14 +6,9 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
-import android.net.ConnectivityManager
-import android.net.Network
 import android.net.VpnService
-import android.os.Build
 import android.os.ParcelFileDescriptor
-import timber.log.Timber
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,33 +22,17 @@ import kotlinx.coroutines.launch
 import org.flossware.hotspot.client.ClientApp
 import org.flossware.hotspot.client.MainActivity
 import org.flossware.hotspot.client.R
-import org.flossware.hotspot.client.model.ConnectionErrorType
 import org.flossware.hotspot.client.model.Transport
 import org.flossware.hotspot.client.model.VpnState
-import org.flossware.hotspot.client.network.ClientMtuManager
 import org.flossware.hotspot.client.tunnel.SocksTunnel
 import org.flossware.hotspot.client.tunnel.SocksTunnel.Companion.DNS_ADDRESS
-import java.net.ConnectException
-import java.net.InetAddress
-import java.net.NoRouteToHostException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 class TunnelService : VpnService() {
 
     private var tunInterface: ParcelFileDescriptor? = null
     private var socksTunnel: SocksTunnel? = null
     private var bluetoothTunnel: BluetoothTunnel? = null
-    private var usbTunnel: UsbTunnel? = null
-    private var wifiConnector: WifiConnector? = null
-    private var underlyingNetwork: Network? = null
     private var scope = CoroutineScope(Dispatchers.Main + Job())
-    private lateinit var mtuManager: ClientMtuManager
-
-    override fun onCreate() {
-        super.onCreate()
-        mtuManager = ClientMtuManager(this)
-    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -66,17 +45,6 @@ class TunnelService : VpnService() {
                 val address = intent.getStringExtra(EXTRA_BT_DEVICE_ADDRESS) ?: return START_NOT_STICKY
                 connectBluetooth(address)
             }
-            ACTION_CONNECT_USB -> {
-                val deviceName = intent.getStringExtra(EXTRA_USB_DEVICE_NAME) ?: return START_NOT_STICKY
-                connectUsb(deviceName)
-            }
-            ACTION_CONNECT_WIFI -> {
-                val networkName = intent.getStringExtra(EXTRA_NETWORK_NAME) ?: return START_NOT_STICKY
-                val passphrase = intent.getStringExtra(EXTRA_PASSPHRASE) ?: ""
-                val host = intent.getStringExtra(EXTRA_SOCKS_HOST) ?: VpnState.DEFAULT_SOCKS_HOST
-                val port = intent.getIntExtra(EXTRA_SOCKS_PORT, VpnState.DEFAULT_SOCKS_PORT)
-                connectWifi(networkName, passphrase, host, port)
-            }
             ACTION_DISCONNECT -> disconnect()
         }
         return START_NOT_STICKY
@@ -88,56 +56,29 @@ class TunnelService : VpnService() {
         startForeground(NOTIFICATION_ID, buildNotification())
 
         try {
-            val targetAddress = InetAddress.getByName(socksHost)
-            val mtuInfo = mtuManager.getMtu(transport, socksHost, targetAddress)
-            Timber.tag(TAG).i(
-                "Using MTU=%d (cached=%b, method=%s)",
-                mtuInfo.mtu, mtuInfo.fromCache, mtuInfo.detectionMethod,
-            )
-            val ipv6Enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-                mtuInfo.mtu >= IPV6_MIN_MTU
-
             val builder = Builder()
                 .setSession("FlossWare Tunnel")
                 .addAddress("10.0.0.2", 32)
                 .addRoute("0.0.0.0", 0)
-                .setMtu(mtuInfo.mtu)
+                .addAddress("fd00::2", 128)
+                .addRoute("::", 0)
+                .setMtu(1500)
                 .addDisallowedApplication(packageName)
                 .addDnsServer(DNS_ADDRESS)
 
-            if (ipv6Enabled) {
-                builder.addAddress("fd00::2", 128)
-                builder.addRoute("::", 0)
-                Timber.tag(TAG).i("IPv6 enabled (API %d): added fd00::2/128 route", Build.VERSION.SDK_INT)
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                Timber.tag(TAG).w("IPv6 disabled: MTU %d < %d minimum", mtuInfo.mtu, IPV6_MIN_MTU)
-            } else {
-                Timber.tag(TAG).w("IPv6 routes skipped: requires API 28+ (current: %d)", Build.VERSION.SDK_INT)
-            }
-
             val tun = builder.establish() ?: run {
-                _state.value = _state.value.copy(
-                    error = getString(R.string.error_vpn_permission_denied),
-                    errorType = ConnectionErrorType.VPN_DENIED,
-                )
+                _state.value = _state.value.copy(error = "VPN permission denied")
                 stopSelf()
                 return
             }
 
             tunInterface = tun
-            // Process is already bound to the underlying network in connectWifi(), before
-            // MTU detection ran. Only the VPN's own underlying-network association needs
-            // to happen here, post-establish().
-            underlyingNetwork?.let { network ->
-                setUnderlyingNetworks(arrayOf(network))
-            }
 
             socksTunnel = SocksTunnel(
                 tunFd = tun.fd,
                 socksHost = socksHost,
                 socksPort = socksPort,
                 cacheDir = cacheDir,
-                ipv6Enabled = ipv6Enabled,
             ).also { it.start() }
 
             _state.value = VpnState(
@@ -146,15 +87,12 @@ class TunnelService : VpnService() {
                 socksPort = socksPort,
                 transport = transport,
             )
-            Timber.tag(TAG).i("service_start event=vpn_tunnel_established host=%s port=%d transport=%s",
-                socksHost, socksPort, transport)
+            Log.i(TAG, "VPN tunnel established to $socksHost:$socksPort via $transport")
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Failed to establish tunnel")
-            val (errorType, errorMsg) = classifyConnectionError(e)
+            Log.e(TAG, "Failed to establish tunnel", e)
             _state.value = _state.value.copy(
                 isConnected = false,
-                error = errorMsg,
-                errorType = errorType,
+                error = e.message ?: "Connection failed",
             )
             disconnect()
         }
@@ -169,16 +107,13 @@ class TunnelService : VpnService() {
         val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = btManager?.adapter
         if (adapter == null) {
-            _state.value = _state.value.copy(error = getString(R.string.error_bluetooth_not_available))
+            _state.value = _state.value.copy(error = "Bluetooth not available")
             stopSelf()
             return
         }
 
         val device = adapter.getRemoteDevice(deviceAddress)
-        val btTunnel = BluetoothTunnel(
-            remoteDevice = device,
-            fallbackErrorMessage = getString(R.string.error_bluetooth_connection_failed),
-        )
+        val btTunnel = BluetoothTunnel(device)
         bluetoothTunnel = btTunnel
         btTunnel.start()
 
@@ -199,141 +134,19 @@ class TunnelService : VpnService() {
         }
     }
 
-    private fun connectUsb(deviceName: String) {
-        if (tunInterface != null) return
-
-        startForeground(NOTIFICATION_ID, buildNotification())
-
-        val usbManager = getSystemService(Context.USB_SERVICE) as? UsbManager
-        if (usbManager == null) {
-            _state.value = _state.value.copy(
-                error = getString(R.string.error_usb_not_available),
-                errorType = ConnectionErrorType.GENERIC,
-            )
-            stopSelf()
-            return
-        }
-
-        val device = usbManager.deviceList.values.firstOrNull { it.deviceName == deviceName }
-        if (device == null) {
-            _state.value = _state.value.copy(
-                error = getString(R.string.error_usb_device_not_found),
-                errorType = ConnectionErrorType.HOST_NOT_FOUND,
-            )
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
-            return
-        }
-
-        val tunnel = UsbTunnel(usbManager, device)
-        usbTunnel = tunnel
-        tunnel.start()
-
-        scope.launch {
-            val result = tunnel.state.first {
-                it is UsbTunnelState.Connected || it is UsbTunnelState.Error
-            }
-            when (result) {
-                is UsbTunnelState.Connected ->
-                    connect("127.0.0.1", result.localPort, Transport.USB)
-                is UsbTunnelState.Error -> {
-                    _state.value = _state.value.copy(error = result.message)
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
-                }
-                else -> {}
-            }
-        }
-    }
-
-    private fun connectWifi(
-        networkName: String,
-        passphrase: String,
-        socksHost: String,
-        socksPort: Int,
-    ) {
-        if (tunInterface != null) return
-
-        startForeground(NOTIFICATION_ID, buildNotification())
-
-        val connector = WifiConnector()
-        wifiConnector = connector
-        connector.connect(this, networkName, passphrase)
-
-        scope.launch {
-            val result = connector.state.first {
-                it is WifiConnectionState.Connected ||
-                    it is WifiConnectionState.Error ||
-                    it is WifiConnectionState.ManualRequired
-            }
-            when (result) {
-                is WifiConnectionState.Connected -> {
-                    underlyingNetwork = result.network
-                    // Bind as early as possible so MTU probes succeed
-                    underlyingNetwork?.let { network ->
-                        setUnderlyingNetworks(arrayOf(network))
-                        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                        cm.bindProcessToNetwork(network)
-                        Timber.tag(TAG).i("wifi_connect event=bound_process_to_network netId=%s", network)
-                    }
-                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
-                }
-                is WifiConnectionState.ManualRequired -> {
-                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
-                }
-                is WifiConnectionState.Error -> {
-                    _state.value = _state.value.copy(
-                        error = result.message,
-                        errorType = ConnectionErrorType.WIFI_CONNECTION_FAILED,
-                    )
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
-                }
-                else -> {}
-            }
-        }
-    }
-
     private fun disconnect() {
-        if (tunInterface == null && socksTunnel == null && bluetoothTunnel == null && usbTunnel == null) {
-            // Already disconnected -- avoid double-cleanup
-            return
-        }
-        Timber.tag(TAG).i("service_stop event=vpn_tunnel_disconnecting")
-
-        // 1. Cancel coroutines to stop accepting new work
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
-
-        // 2. Stop the native tun2socks tunnel
         socksTunnel?.stop()
         socksTunnel = null
-
-        // 3. Stop transport tunnels
         bluetoothTunnel?.stop()
         bluetoothTunnel = null
-        usbTunnel?.stop()
-        usbTunnel = null
-        wifiConnector?.disconnect()
-        wifiConnector = null
-        if (underlyingNetwork != null) {
-            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            cm.bindProcessToNetwork(null)
-        }
-        underlyingNetwork = null
-
-        // 4. Close VPN interface
-        try {
-            tunInterface?.close()
-        } catch (e: Exception) {
-            Timber.tag(TAG).w("Error closing VPN interface: %s", e.message)
-        }
+        tunInterface?.close()
         tunInterface = null
-
         _state.value = VpnState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        Timber.tag(TAG).i("service_stop event=vpn_tunnel_disconnected")
+        Log.i(TAG, "VPN tunnel disconnected")
     }
 
     private fun buildNotification(): android.app.Notification {
@@ -364,31 +177,6 @@ class TunnelService : VpnService() {
             .build()
     }
 
-    /**
-     * Classifies a connection exception into a user-friendly error type and message.
-     */
-    private fun classifyConnectionError(e: Exception): Pair<ConnectionErrorType, String> {
-        return when (e) {
-            is UnknownHostException, is NoRouteToHostException ->
-                ConnectionErrorType.HOST_NOT_FOUND to getString(R.string.error_host_not_found)
-            is SocketTimeoutException ->
-                ConnectionErrorType.TIMEOUT to getString(R.string.error_connection_timeout)
-            is ConnectException -> {
-                val msg = e.message?.lowercase() ?: ""
-                when {
-                    msg.contains("refused") || msg.contains("unreachable") ->
-                        ConnectionErrorType.HOST_NOT_FOUND to getString(R.string.error_host_not_found)
-                    msg.contains("timed out") ->
-                        ConnectionErrorType.TIMEOUT to getString(R.string.error_connection_timeout)
-                    else ->
-                        ConnectionErrorType.GENERIC to (e.message ?: getString(R.string.error_generic_connection_failed))
-                }
-            }
-            else ->
-                ConnectionErrorType.GENERIC to (e.message ?: getString(R.string.error_generic_connection_failed))
-        }
-    }
-
     override fun onDestroy() {
         disconnect()
         super.onDestroy()
@@ -397,23 +185,13 @@ class TunnelService : VpnService() {
     companion object {
         const val ACTION_CONNECT = "org.flossware.hotspot.client.CONNECT"
         const val ACTION_CONNECT_BT = "org.flossware.hotspot.client.CONNECT_BT"
-        const val ACTION_CONNECT_USB = "org.flossware.hotspot.client.CONNECT_USB"
-        const val ACTION_CONNECT_WIFI = "org.flossware.hotspot.client.CONNECT_WIFI"
         const val ACTION_DISCONNECT = "org.flossware.hotspot.client.DISCONNECT"
         const val EXTRA_SOCKS_HOST = "socks_host"
         const val EXTRA_SOCKS_PORT = "socks_port"
         const val EXTRA_BT_DEVICE_ADDRESS = "bt_device_address"
-        const val EXTRA_USB_DEVICE_NAME = "usb_device_name"
-        const val EXTRA_NETWORK_NAME = "network_name"
-        const val EXTRA_PASSPHRASE = "passphrase"
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "TunnelService"
-
-        /** IPv6 minimum MTU per RFC 8200. */
-        internal const val IPV6_MIN_MTU = 1280
-        /** Default MTU for IPv4-only mode. */
-        internal const val IPV4_DEFAULT_MTU = 1500
 
         private val _state = MutableStateFlow(VpnState())
         val state: StateFlow<VpnState> = _state.asStateFlow()
@@ -435,48 +213,11 @@ class TunnelService : VpnService() {
             context.startForegroundService(intent)
         }
 
-        fun connectUsb(context: Context, deviceName: String) {
-            val intent = Intent(context, TunnelService::class.java).apply {
-                action = ACTION_CONNECT_USB
-                putExtra(EXTRA_USB_DEVICE_NAME, deviceName)
-            }
-            context.startForegroundService(intent)
-        }
-
-        fun connectWifi(
-            context: Context,
-            networkName: String,
-            passphrase: String,
-            socksHost: String,
-            socksPort: Int,
-        ) {
-            val intent = Intent(context, TunnelService::class.java).apply {
-                action = ACTION_CONNECT_WIFI
-                putExtra(EXTRA_NETWORK_NAME, networkName)
-                putExtra(EXTRA_PASSPHRASE, passphrase)
-                putExtra(EXTRA_SOCKS_HOST, socksHost)
-                putExtra(EXTRA_SOCKS_PORT, socksPort)
-            }
-            context.startForegroundService(intent)
-        }
-
         fun disconnect(context: Context) {
             val intent = Intent(context, TunnelService::class.java).apply {
                 action = ACTION_DISCONNECT
             }
             context.startService(intent)
-        }
-
-        fun updateTransportAvailability(
-            wifiAvailable: Boolean,
-            bluetoothAvailable: Boolean,
-            usbAvailable: Boolean,
-        ) {
-            _state.value = _state.value.copy(
-                wifiAvailable = wifiAvailable,
-                bluetoothAvailable = bluetoothAvailable,
-                usbAvailable = usbAvailable,
-            )
         }
     }
 }
