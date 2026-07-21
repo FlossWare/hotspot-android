@@ -14,7 +14,7 @@ internal fun buildConfig(
                   address: $socksHost
                   port: 5353
                 mapdns:
-                  address: $DNS_ADDRESS
+                  address: 198.18.0.2
                   port: 53
                   network: 100.64.0.0
                   netmask: 255.192.0.0
