@@ -2,10 +2,10 @@ package org.flossware.hotspot.client.service
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.hardware.usb.UsbManager
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
@@ -32,6 +32,8 @@ class TunnelService : VpnService() {
     private var tunInterface: ParcelFileDescriptor? = null
     private var socksTunnel: SocksTunnel? = null
     private var bluetoothTunnel: BluetoothTunnel? = null
+    private var usbTunnel: UsbTunnel? = null
+    private var wifiConnector: WifiConnector? = null
     private var scope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -44,6 +46,17 @@ class TunnelService : VpnService() {
             ACTION_CONNECT_BT -> {
                 val address = intent.getStringExtra(EXTRA_BT_DEVICE_ADDRESS) ?: return START_NOT_STICKY
                 connectBluetooth(address)
+            }
+            ACTION_CONNECT_USB -> {
+                val deviceName = intent.getStringExtra(EXTRA_USB_DEVICE_NAME) ?: return START_NOT_STICKY
+                connectUsb(deviceName)
+            }
+            ACTION_CONNECT_WIFI -> {
+                val networkName = intent.getStringExtra(EXTRA_WIFI_NETWORK_NAME) ?: return START_NOT_STICKY
+                val passphrase = intent.getStringExtra(EXTRA_WIFI_PASSPHRASE) ?: ""
+                val host = intent.getStringExtra(EXTRA_SOCKS_HOST) ?: VpnState.DEFAULT_SOCKS_HOST
+                val port = intent.getIntExtra(EXTRA_SOCKS_PORT, VpnState.DEFAULT_SOCKS_PORT)
+                connectWifi(networkName, passphrase, host, port)
             }
             ACTION_DISCONNECT -> disconnect()
         }
@@ -62,7 +75,7 @@ class TunnelService : VpnService() {
                 .addRoute("0.0.0.0", 0)
                 .addAddress("fd00::2", 128)
                 .addRoute("::", 0)
-                .setMtu(1500)
+                .setMtu(1280)
                 .addDisallowedApplication(packageName)
                 .addDnsServer(DNS_ADDRESS)
 
@@ -79,6 +92,7 @@ class TunnelService : VpnService() {
                 socksHost = socksHost,
                 socksPort = socksPort,
                 cacheDir = cacheDir,
+                ipv6Enabled = true,
             ).also { it.start() }
 
             _state.value = VpnState(
@@ -134,6 +148,72 @@ class TunnelService : VpnService() {
         }
     }
 
+    private fun connectUsb(deviceName: String) {
+        if (tunInterface != null) return
+
+        startForeground(NOTIFICATION_ID, buildNotification())
+
+        val usbManager = getSystemService(Context.USB_SERVICE) as? UsbManager
+        val device = usbManager?.deviceList?.get(deviceName)
+        if (usbManager == null || device == null) {
+            _state.value = _state.value.copy(error = "USB device not found")
+            stopSelf()
+            return
+        }
+
+        val tunnel = UsbTunnel(usbManager, device)
+        usbTunnel = tunnel
+        tunnel.start()
+
+        scope.launch {
+            val result = tunnel.state.first {
+                it is UsbTunnelState.Connected || it is UsbTunnelState.Error
+            }
+            when (result) {
+                is UsbTunnelState.Connected ->
+                    connect("127.0.0.1", result.localPort, Transport.USB)
+                is UsbTunnelState.Error -> {
+                    _state.value = _state.value.copy(error = result.message)
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                else -> {}
+            }
+        }
+    }
+
+    private fun connectWifi(networkName: String, passphrase: String, socksHost: String, socksPort: Int) {
+        if (tunInterface != null) return
+
+        startForeground(NOTIFICATION_ID, buildNotification())
+
+        val connector = WifiConnector()
+        wifiConnector = connector
+        connector.connect(this, networkName, passphrase)
+
+        scope.launch {
+            val result = connector.state.first {
+                it is WifiConnectionState.Connected ||
+                    it is WifiConnectionState.Error ||
+                    it is WifiConnectionState.ManualRequired
+            }
+            when (result) {
+                is WifiConnectionState.Connected -> {
+                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
+                }
+                is WifiConnectionState.ManualRequired -> {
+                    connect(socksHost, socksPort, Transport.WIFI_DIRECT)
+                }
+                is WifiConnectionState.Error -> {
+                    _state.value = _state.value.copy(error = result.message)
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                else -> {}
+            }
+        }
+    }
+
     private fun disconnect() {
         scope.cancel()
         scope = CoroutineScope(Dispatchers.Main + Job())
@@ -141,6 +221,10 @@ class TunnelService : VpnService() {
         socksTunnel = null
         bluetoothTunnel?.stop()
         bluetoothTunnel = null
+        usbTunnel?.stop()
+        usbTunnel = null
+        wifiConnector?.disconnect()
+        wifiConnector = null
         tunInterface?.close()
         tunInterface = null
         _state.value = VpnState()
@@ -185,10 +269,15 @@ class TunnelService : VpnService() {
     companion object {
         const val ACTION_CONNECT = "org.flossware.hotspot.client.CONNECT"
         const val ACTION_CONNECT_BT = "org.flossware.hotspot.client.CONNECT_BT"
+        const val ACTION_CONNECT_USB = "org.flossware.hotspot.client.CONNECT_USB"
+        const val ACTION_CONNECT_WIFI = "org.flossware.hotspot.client.CONNECT_WIFI"
         const val ACTION_DISCONNECT = "org.flossware.hotspot.client.DISCONNECT"
         const val EXTRA_SOCKS_HOST = "socks_host"
         const val EXTRA_SOCKS_PORT = "socks_port"
         const val EXTRA_BT_DEVICE_ADDRESS = "bt_device_address"
+        const val EXTRA_USB_DEVICE_NAME = "usb_device_name"
+        const val EXTRA_WIFI_NETWORK_NAME = "wifi_network_name"
+        const val EXTRA_WIFI_PASSPHRASE = "wifi_passphrase"
         const val NOTIFICATION_ID = 1
 
         private const val TAG = "TunnelService"
@@ -213,11 +302,48 @@ class TunnelService : VpnService() {
             context.startForegroundService(intent)
         }
 
+        fun connectUsb(context: Context, deviceName: String) {
+            val intent = Intent(context, TunnelService::class.java).apply {
+                action = ACTION_CONNECT_USB
+                putExtra(EXTRA_USB_DEVICE_NAME, deviceName)
+            }
+            context.startForegroundService(intent)
+        }
+
+        fun connectWifi(
+            context: Context,
+            networkName: String,
+            passphrase: String,
+            socksHost: String,
+            socksPort: Int,
+        ) {
+            val intent = Intent(context, TunnelService::class.java).apply {
+                action = ACTION_CONNECT_WIFI
+                putExtra(EXTRA_WIFI_NETWORK_NAME, networkName)
+                putExtra(EXTRA_WIFI_PASSPHRASE, passphrase)
+                putExtra(EXTRA_SOCKS_HOST, socksHost)
+                putExtra(EXTRA_SOCKS_PORT, socksPort)
+            }
+            context.startForegroundService(intent)
+        }
+
         fun disconnect(context: Context) {
             val intent = Intent(context, TunnelService::class.java).apply {
                 action = ACTION_DISCONNECT
             }
             context.startService(intent)
+        }
+
+        fun updateTransportAvailability(
+            wifiAvailable: Boolean,
+            bluetoothAvailable: Boolean,
+            usbAvailable: Boolean,
+        ) {
+            _state.value = _state.value.copy(
+                wifiAvailable = wifiAvailable,
+                bluetoothAvailable = bluetoothAvailable,
+                usbAvailable = usbAvailable,
+            )
         }
     }
 }

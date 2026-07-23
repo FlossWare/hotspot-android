@@ -50,11 +50,10 @@ class SocksTunnel(
     companion object {
         private const val TAG = "SocksTunnel"
         internal const val CONFIG_FILENAME = "tun2socks.yml"
+        const val DNS_ADDRESS = "198.18.0.2"
 
-        /** IPv6 minimum MTU per RFC 8200. */
-        private const val IPV6_MIN_MTU = 1280
-        /** Default MTU for IPv4-only mode. */
-        private const val IPV4_DEFAULT_MTU = 1500
+        internal const val IPV6_MIN_MTU = 1280
+        internal const val IPV4_DEFAULT_MTU = 1500
 
         internal fun buildConfig(
             socksHost: String,
@@ -72,7 +71,7 @@ class SocksTunnel(
                   address: $socksHost
                   port: 5353
                 mapdns:
-                  address: 198.18.0.2
+                  address: $DNS_ADDRESS
                   port: 53
                   network: 100.64.0.0
                   netmask: 255.192.0.0
