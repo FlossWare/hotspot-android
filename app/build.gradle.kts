@@ -14,8 +14,8 @@ android {
         applicationId = "org.flossware.hotspot"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 26
-        versionName = "0.26"
+        versionCode = 27
+        versionName = "0.27"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
