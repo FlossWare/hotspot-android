@@ -181,7 +181,7 @@ class Socks5Server(
                 if (debugMode) Timber.tag(TAG).d("Connection closed during request from %s", clientAddr)
                 return
             }
-            if (version != VERSION.toInt() and 0xFF) {
+            if (version != (VERSION.toInt() and 0xFF)) {
                 Timber.tag(TAG).w("Invalid SOCKS version from %s: %d", clientAddr, version)
                 return
             }
@@ -236,7 +236,7 @@ class Socks5Server(
     internal fun negotiate(input: InputStream, output: OutputStream): Boolean {
         val version = input.read()
         if (version == -1) return false
-        if (version != VERSION.toInt() and 0xFF) {
+        if (version != (VERSION.toInt() and 0xFF)) {
             output.write(byteArrayOf(VERSION, AUTH_NO_ACCEPTABLE))
             output.flush()
             return false
@@ -284,7 +284,7 @@ class Socks5Server(
     internal fun authenticateUsernamePassword(input: InputStream, output: OutputStream): Boolean {
         val authVersion = input.read()
         if (authVersion == -1) return false
-        if (authVersion != AUTH_VERSION.toInt() and 0xFF) {
+        if (authVersion != (AUTH_VERSION.toInt() and 0xFF)) {
             output.write(byteArrayOf(AUTH_VERSION, AUTH_FAILURE))
             output.flush()
             return false
